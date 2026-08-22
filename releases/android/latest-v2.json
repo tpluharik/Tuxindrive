@@ -1,8 +1,8 @@
 {
-  "version": "0.26.21",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.21/TuxInDrive-0.26.21-android.apk",
-  "sha256": "cac0c56c56f74e0bd5de221c51a9b5534b06549d65119ef4ae420d6b96a77c13",
-  "notes": "Automatic aggregate bandwidth protection with configurable network headroom",
-  "expires_at": "2026-11-20T19:40:18.817765+00:00",
-  "signature": "27hFoYO1+bk4aeKVVEbZakJLqMjpGYZLwwLynL8IykgVYnmBj2i47jDiczGy49Kv7eWqPNJVqEvivo0zueSTAA=="
+  "version": "0.26.22",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.22/TuxInDrive-0.26.22-android.apk",
+  "sha256": "4a38421019575a28c6cc163052ddd43c9f20a139d094fd62222f957977ea85fc",
+  "notes": "Monitor-safe maximum dialog sizing with reliable scrolling",
+  "expires_at": "2026-11-20T20:33:08.184823+00:00",
+  "signature": "+SOQwcQAabCqNq/A79z6XZhF1IyMZJfc+xJLVL2NgZxjr5Y4bRGU77Mz/oqrCdyt7K/zuWAIQZIlZJVCNdMICg=="
 }

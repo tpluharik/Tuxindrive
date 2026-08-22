@@ -1,8 +1,8 @@
 {
-  "version": "0.26.21",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.21/tuxindrive_0.26.21_all.deb",
-  "sha256": "f8989a28aca189e4c0e90f6444627da3c4ba90fa29a880b4b8961f2f700a59ef",
-  "notes": "Automatic aggregate bandwidth protection with configurable network headroom",
-  "expires_at": "2026-11-20T19:40:18.376485+00:00",
-  "signature": "J5flM4bDMMHV4RP/opIP9IWkuVBCcy/eJuE/jbt3+a8HH+Q/Uiuxj/pIBu2IVbel7S3dK7uQn96oLlGPmA96Dg=="
+  "version": "0.26.22",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.22/tuxindrive_0.26.22_all.deb",
+  "sha256": "a093679fddcaafca7ec17c0f05c02f45d5a42218f8eafcf7af41f8800eff5cea",
+  "notes": "Monitor-safe maximum dialog sizing with reliable scrolling",
+  "expires_at": "2026-11-20T20:33:07.754760+00:00",
+  "signature": "drNXCyrk3UZb2T8V/ZSPDwoSzJVKRvW8F94mhetPPdX30tUj6BeyD13h5IQzJWHTi4nx77KQam6XLNmraVNVBQ=="
 }

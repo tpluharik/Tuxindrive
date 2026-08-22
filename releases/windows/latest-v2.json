@@ -1,8 +1,8 @@
 {
-  "version": "0.26.21",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.21/TuxInDrive-0.26.21-windows-x64-setup.exe",
-  "sha256": "9f53b23143b13552f6a94e4aa1cd00f8c957259ffb3cf1b07a1b811b7bdfee8c",
-  "notes": "Automatic aggregate bandwidth protection with configurable network headroom",
-  "expires_at": "2026-11-20T19:40:18.461881+00:00",
-  "signature": "LrH3kC0kdQ4PwDtiZGgxzGBzxPa+ueA2aAJb6z/Im75CI1Xw6oTeo9+q9utLeDbLVlFfNfT0QoGMHXvq1exRAg=="
+  "version": "0.26.22",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.22/TuxInDrive-0.26.22-windows-x64-setup.exe",
+  "sha256": "5ccc5e34db8ec8c76e10f4fac802a3914edef4f5f517f2ded5e131e50df1e44f",
+  "notes": "Monitor-safe maximum dialog sizing with reliable scrolling",
+  "expires_at": "2026-11-20T20:33:07.831523+00:00",
+  "signature": "UyYz4wZOFxTSzcKHB82PcGN73NZNpVdiFLfeoKxCub2nCKSaij2pvsTWCvPRrnUOsS3C/HY2d1xboIYjYpX1Cg=="
 }
