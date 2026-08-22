@@ -1,6 +1,6 @@
 # TuxInDrive architecture
 
-This document describes how TuxInDrive 0.26.21 is implemented. It complements
+This document describes how TuxInDrive 0.26.22 is implemented. It complements
 the task-oriented [user guide](USER_GUIDE.md), persisted-field
 [configuration reference](CONFIGURATION.md), and threat-focused
 [security guide](SECURITY_HARDENING.md).

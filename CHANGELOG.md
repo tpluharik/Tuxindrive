@@ -2,6 +2,16 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.22 — monitor-safe responsive dialogs
+
+- Opened desktop settings and other dialogs at 92% of the active monitor's
+  usable work area without requesting window-manager maximization or extending
+  across panels and screen edges.
+- Removed a false window-sized minimum from the inner scroll canvas that could
+  clip the left edge and create horizontal overflow as soon as a dialog opened.
+- Kept both axes scrollable after later resizing so every control remains
+  reachable on smaller displays.
+
 ## 0.26.21 — automatic aggregate bandwidth protection
 
 - Fixed process-local rclone limits multiplying when synchronization, update

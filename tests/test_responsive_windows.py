@@ -6,13 +6,24 @@ REPOSITORY = Path(__file__).resolve().parents[1]
 
 
 class ResponsiveWindowTests(unittest.TestCase):
-    def test_client_windows_do_not_force_maximization(self) -> None:
+    def test_client_dialogs_use_monitor_safe_maximum_without_forced_maximization(self) -> None:
         source = (REPOSITORY / "src/tuxindrive/app.py").read_text(encoding="utf-8")
 
         self.assertIn("self.set_resizable(True)", source)
         self.assertNotIn("self.maximize()", source)
-        self.assertIn("workarea.width * 0.92", source)
-        self.assertIn("workarea.height * 0.92", source)
+        self.assertIn("max(1, int(workarea.width * 0.92))", source)
+        self.assertIn("max(1, int(workarea.height * 0.92))", source)
+        self.assertNotIn("min(target_width", source)
+
+    def test_dialog_scroll_canvas_does_not_force_window_sized_minimum(self) -> None:
+        source = (REPOSITORY / "src/tuxindrive/app.py").read_text(encoding="utf-8")
+
+        responsive_dialog = source[source.index("class ResponsiveDialog"):source.index("class OAuthWizard")]
+        self.assertNotIn("wrapper.set_size_request", responsive_dialog)
+        self.assertIn("scroll.set_min_content_width(1)", responsive_dialog)
+        self.assertIn("scroll.set_min_content_height(1)", responsive_dialog)
+        self.assertIn("scroll.set_propagate_natural_width(False)", responsive_dialog)
+        self.assertIn("scroll.set_propagate_natural_height(False)", responsive_dialog)
 
     def test_wide_job_controls_do_not_set_the_window_minimum_width(self) -> None:
         source = (REPOSITORY / "src/tuxindrive/app.py").read_text(encoding="utf-8")

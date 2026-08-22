@@ -1,7 +1,7 @@
 # TuxInDrive configuration reference
 
 This reference describes the persisted desktop configuration in TuxInDrive
-0.26.21. Normal changes should be made in **Settings**, **Connect account**, or
+0.26.22. Normal changes should be made in **Settings**, **Connect account**, or
 **Add/Edit folder**. Stop TuxInDrive and make a backup before manually editing
 JSON; a syntactically valid but inconsistent mapping can still synchronize the
 wrong location.

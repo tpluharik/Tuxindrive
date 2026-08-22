@@ -7,7 +7,15 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.21
+## Current baseline: 0.26.22
+
+### Completed in 0.26.22: monitor-safe responsive dialogs
+
+Desktop settings and every responsive dialog now open at 92% of the active
+monitor work area, leaving room for decorations and desktop panels without
+forcing maximization. The inner canvas no longer imposes a window-sized minimum,
+and automatic two-axis scrolling keeps controls reachable after a resize or on
+small displays.
 
 ### Completed in 0.26.21: automatic aggregate bandwidth protection
 

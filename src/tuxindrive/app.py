@@ -172,7 +172,6 @@ class ResponsiveDialog(Gtk.Dialog):
             return
         self._responsive_content_ready = True
         self.set_resizable(True)
-        requested_width, requested_height = self.get_default_size()
         display = Gdk.Display.get_default()
         monitor = None
         if display is not None:
@@ -186,15 +185,13 @@ class ResponsiveDialog(Gtk.Dialog):
                 monitor = display.get_monitor(0)
         if monitor is not None:
             workarea = monitor.get_workarea()
-            # Keep the dialog's intended size on large displays and cap it to
-            # the monitor on small displays. The scrollable canvas below keeps
-            # every control reachable without forcing the top-level window to
-            # adopt the content's (potentially very large) natural width.
-            target_width = requested_width if requested_width > 0 else 720
-            target_height = requested_height if requested_height > 0 else 560
+            # Use nearly all of the active monitor's usable area without
+            # requesting a true window-manager maximization. Workarea excludes
+            # desktop panels, and the remaining margin accommodates window
+            # decorations. Oversized content is handled by the scroll view.
             self.set_default_size(
-                min(target_width, max(320, int(workarea.width * 0.92))),
-                min(target_height, max(240, int(workarea.height * 0.92))),
+                max(1, int(workarea.width * 0.92)),
+                max(1, int(workarea.height * 0.92)),
             )
 
         area = self.get_content_area()
@@ -204,10 +201,6 @@ class ResponsiveDialog(Gtk.Dialog):
         wrapper = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=area.get_spacing())
         wrapper.set_hexpand(True)
         wrapper.set_vexpand(True)
-        wrapper.set_size_request(
-            requested_width if requested_width > 0 else -1,
-            requested_height if requested_height > 0 else -1,
-        )
         packing: list[tuple[Gtk.Widget, bool, bool, int, Gtk.PackType]] = []
         for child in children:
             packing.append((
