@@ -35,18 +35,18 @@ service manager. All `/v1/` endpoints require a bearer token.
 
 ## Installation
 
-Download `tuxindrive-server_0.26.20_all.deb` from the matching
-[GitHub Release](https://github.com/tpluharik/Tuxindrive/releases/tag/v0.26.20),
+Download `tuxindrive-server_0.26.21_all.deb` from the matching
+[GitHub Release](https://github.com/tpluharik/Tuxindrive/releases/tag/v0.26.21),
 then install that local file. The leading `./` is required so APT treats the
 name as a file instead of searching configured package repositories:
 
 ```bash
 cd ~/Downloads
-sudo apt install ./tuxindrive-server_0.26.20_all.deb
+sudo apt install ./tuxindrive-server_0.26.21_all.deb
 ```
 
 If configuration of the defective 0.26.12 preview was left unfinished,
-installing 0.26.20 replaces its launcher and completes the pending package
+installing 0.26.21 replaces its launcher and completes the pending package
 configuration. If APT asks to repair dependencies afterward, run:
 
 ```bash
@@ -58,9 +58,9 @@ Build and inspect the package:
 
 ```bash
 sh scripts/build-server-deb.sh
-dpkg-deb --info dist/tuxindrive-server_0.26.20_all.deb
-dpkg-deb --contents dist/tuxindrive-server_0.26.20_all.deb
-sudo apt install ./dist/tuxindrive-server_0.26.20_all.deb
+dpkg-deb --info dist/tuxindrive-server_0.26.21_all.deb
+dpkg-deb --contents dist/tuxindrive-server_0.26.21_all.deb
+sudo apt install ./dist/tuxindrive-server_0.26.21_all.deb
 ```
 
 The package creates a locked `tuxindrive-server` system account, a root-owned
@@ -150,6 +150,8 @@ The default configuration is `/etc/tuxindrive-server/server.json`:
   "quota_mib_per_tenant": 512,
   "default_ttl_seconds": 86400,
   "global_bandwidth_limit": "10M",
+  "automatic_bandwidth_control": true,
+  "bandwidth_headroom_percent": 20,
   "max_concurrent_requests": 16,
   "max_requests_per_source": 4,
   "request_timeout_seconds": 30,
@@ -164,7 +166,10 @@ The default configuration is `/etc/tuxindrive-server/server.json`:
 Request admission is bounded globally and per source before a worker starts.
 Every accepted connection receives a read deadline. Relay admission is also
 bounded globally and per tenant; idle relays expire, total time/bytes remain
-capped, and both relay directions use the configured global bandwidth clock.
+capped, and both relay directions use the same configured global bandwidth
+clock as the headless agent. Automatic protection reserves the configured
+headroom before traffic is admitted, preventing agent and relay roles from
+independently consuming the complete ceiling.
 The systemd unit independently caps tasks, file descriptors and memory.
 
 `token_hashes` maps token SHA-256 digests to tenant IDs. The bootstrap mapping

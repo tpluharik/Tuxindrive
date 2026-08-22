@@ -163,6 +163,13 @@ class SyncEngine:
         return bool(monitor and monitor.healthy)
 
     def configure_jobs(self, jobs: list[SyncJob], accounts: list[Account] | None = None) -> None:
+        # One regular transfer and one responsive update can overlap the
+        # configured persistent mounts. Reserve a fair process-local share for
+        # every possible consumer so their aggregate cannot multiply the cap.
+        streaming_consumers = sum(
+            1 for job in jobs if job.enabled and job.mode is SyncMode.VIRTUAL_DRIVE
+        )
+        self.bandwidth.configure_parallel_budget(streaming_consumers + 2)
         provider_by_remote = {
             account.remote: account.provider for account in (accounts or [])
         }

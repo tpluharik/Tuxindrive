@@ -1,7 +1,7 @@
 # TuxInDrive configuration reference
 
 This reference describes the persisted desktop configuration in TuxInDrive
-0.26.20. Normal changes should be made in **Settings**, **Connect account**, or
+0.26.21. Normal changes should be made in **Settings**, **Connect account**, or
 **Add/Edit folder**. Stop TuxInDrive and make a backup before manually editing
 JSON; a syntactically valid but inconsistent mapping can still synchronize the
 wrong location.
@@ -61,6 +61,8 @@ job state (`initialized`, last run/status/error) is persisted with the job.
 | `visual_theme` | `nordic_glass` | Validated visual theme identifier. |
 | `network_policy` | `maximum` | Transfer policy selected in Settings. |
 | `global_bandwidth_limit` | `10M` | Shared upload/download ceiling; empty means unlimited. |
+| `automatic_bandwidth_control` | `true` | Reserve headroom and divide the ceiling across simultaneous process-local consumers. |
+| `bandwidth_headroom_percent` | `20` | Portion retained for other applications/devices; clamped to 0–80%. |
 | `allow_metered_networks` | `true` | Permit scheduled work on metered connections. |
 | `pause_below_battery_percent` | `0` | Pause threshold; zero disables battery pausing. |
 | `schedule_start`, `schedule_end` | empty | Optional daily transfer window. |
@@ -85,6 +87,14 @@ stricter. The global controller covers synchronization, streaming mounts,
 metadata scans, verification/repair, updates, native GitHub operations, Proton
 operations, and Android network work. Native operations without a byte-rate
 option are serialized while the global limit is active.
+
+Automatic bandwidth protection is enabled by default because rclone limits are
+process-local. It first keeps the configured headroom free, then divides the
+remaining rate by one ordinary transfer, one responsive update, and every
+enabled streaming drive. For example, `10M` with 20% headroom and two streaming
+drives gives each possible consumer 2 MiB/s, keeping their worst-case aggregate
+at 8 MiB/s. Disabling the option restores the literal legacy per-process limit and
+can therefore multiply total traffic when several streaming drives are active.
 
 The network usage panel is a device-interface meter, not per-job accounting.
 Its current rates and local-day totals can include traffic from other

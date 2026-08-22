@@ -12,6 +12,7 @@ from unittest import mock
 
 from tuxindrive.models import AppConfig, AppSettings
 from tuxindrive.server import (
+    HeadlessAgent,
     ServerConfig,
     ServerError,
     TuxInDriveServer,
@@ -34,7 +35,7 @@ class ServerStoreTests(unittest.TestCase):
             self.assertEqual(items[0]["body"], b"ciphertext")
             self.assertTrue(store.acknowledge_mail("tenant", "device", created["id"]))
             self.assertEqual(store.list_mail("tenant", "device"), [])
-            store.close()
+        store.close()
 
     def test_object_is_content_addressed_and_tenant_isolated(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -74,6 +75,22 @@ class ServerStoreTests(unittest.TestCase):
             store._connection.commit()
             self.assertEqual(store.list_mail("tenant", "device"), [])
             store.close()
+
+
+class ServerBandwidthTests(unittest.TestCase):
+    def test_headless_agent_can_share_the_server_bandwidth_controller(self):
+        from tuxindrive.bandwidth import GlobalBandwidthController
+
+        with tempfile.TemporaryDirectory() as folder, mock.patch.dict(
+            os.environ,
+            {"XDG_CONFIG_HOME": folder, "XDG_DATA_HOME": folder, "XDG_CACHE_HOME": folder},
+        ):
+            controller = GlobalBandwidthController(
+                "10M", automatic=True, headroom_percent=20
+            )
+            agent = HeadlessAgent("", "10M", bandwidth=controller)
+            self.assertIs(agent.bandwidth, controller)
+            self.assertIs(agent.engine.bandwidth, controller)
 
 
 class ServerConfigurationTests(unittest.TestCase):

@@ -18,21 +18,21 @@ The dependency-install step is required when using an isolated Python environmen
 
 CI pins third-party actions by immutable commit, runs high-severity Bandit checks and `pip-audit`, and publishes a CycloneDX dependency SBOM with the package.
 
-The TuxInDrive development suite contains **381 automated tests: 370 Python tests and 11 Android JVM tests**. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Server coverage adds private initialization, launcher argument forwarding and private package-library isolation, schema/TLS/token validation, tenant-isolated opaque storage, expiry/quota bounds, bounded authenticated requests and relays, authenticated loopback HTTP, default-off client integration, relay rejection, read-only MCP, graphical package integration and its fixed no-shell privilege boundary. Desktop layout coverage verifies bounded dialogs, resizable client/server windows, and isolated scrolling for wide synchronized-folder actions. The server API integration tests use only a temporary loopback listener and random ciphertext-like bytes.
+The TuxInDrive development suite contains **385 automated tests: 373 Python tests and 12 Android JVM tests**. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Server coverage adds private initialization, launcher argument forwarding and private package-library isolation, schema/TLS/token validation, tenant-isolated opaque storage, expiry/quota bounds, bounded authenticated requests and relays, authenticated loopback HTTP, default-off client integration, shared agent/relay bandwidth control, relay rejection, read-only MCP, graphical package integration and its fixed no-shell privilege boundary. Desktop layout coverage verifies bounded dialogs, resizable client/server windows, and isolated scrolling for wide synchronized-folder actions. The server API integration tests use only a temporary loopback listener and random ciphertext-like bytes.
 
 ## Test groups
 
 | Test module | Tests | What it verifies |
 |---|---:|---|
 | `test_audit.py` | 2 | Private audit persistence, filtering and malformed historical-line handling. |
-| `test_bandwidth.py` | 12 | Directional syntax and invalid values, stricter global/job limits, independent upload/download clocks, network-slot admission and release, update byte clock and bounded scan jitter. |
+| `test_bandwidth.py` | 13 | Directional syntax and invalid values, stricter global/job limits, automatic headroom/fair division, independent upload/download clocks, network-slot admission and release, update byte clock and bounded scan jitter. |
 | `test_bootstrap.py` | 7 | Linux/macOS transfer-engine selection, rejection and identity-cached revalidation of incompatible/replaced rclone versions, supported CPU architectures, and pinned release checksums. |
 | `test_capabilities.py` | 3 | Complete provider records and conservative adaptive-mode restrictions. |
 | `test_config.py` | 11 | Round-trip persistence, bandwidth/theme/cache/visibility validation, legacy path compatibility, unchanged-write suppression, private permissions, and invalid configuration quarantine. |
 | `test_delta.py` | 1 | Rolling BLAKE2 block signatures identify only modified ranges and calculate transferred bytes. |
 | `test_diagnostics.py` | 1 | Startup failures are written before GTK imports, allowing diagnosis when the graphical runtime cannot start. |
 | `test_platform_support.py` | 5 | Safe distribution parsing, Linux/macOS/Windows machine-readable capabilities and unsupported-architecture blocking. |
-| `test_engine.py` | 52 | Full and incremental modes, atomic reservation, global rates/admission, jitter/backoff, deletion/conflict safety, streaming/mount recovery, offline hydration, marker confinement, symlink rejection and engine replacement. |
+| `test_engine.py` | 53 | Full and incremental modes, atomic reservation, aggregate streaming budgets, global rates/admission, jitter/backoff, deletion/conflict safety, streaming/mount recovery, offline hydration, marker confinement, symlink rejection and engine replacement. |
 | `test_github_sync.py` | 6 | Credential-free GitHub URL/branch/item safety, redirect migration, global admission and guarded commit/fetch/rebase/push orchestration. |
 | `test_folder_layout.py` | 11 | Persistent selection during asynchronous cloud-tree loading, safe account-switch defaults, before/after drag ordering, cross-group moves, group-header append, Ungrouped fallback, self-drop handling, endpoint-path preservation, GTK text-payload round-trip and malformed-payload rejection. |
 | `test_i18n_help.py` | 3 | Six-language UI fallback, Arabic/Hebrew RTL detection, complete localized in-app help topics and localized drag/collapse guidance. |
@@ -51,13 +51,13 @@ The TuxInDrive development suite contains **381 automated tests: 370 Python test
 | `test_policies.py` | 7 | Maximum-usage defaults plus controlled battery, metered-network and normal/overnight schedule decisions, including fail-open probe handling. |
 | `test_recovery.py` | 8 | Local archive/restore behavior, disabled retention, malformed/foreign record rejection, expiry pruning, mass-change and ransomware-suffix blocking, and integrity-audit parsing. |
 | `test_security.py` | 8 | Empty/absolute/parent path rejection, symlink refusal, confined atomic installation, Ed25519-only keys and signed transaction tamper detection. |
-| `test_server.py` | 24 | Private initialization, race-resistant root configuration writes, package-launcher forwarding and private library isolation, TLS/URL/token validation, default-off client flag, opaque mailbox/object/rendezvous/collaboration isolation, expiry/quota bounds, bounded authenticated HTTP and relay admission, relay rejection, read-only MCP, GUI/desktop packaging and private staging-file permission rejection. |
+| `test_server.py` | 25 | Private initialization, race-resistant root configuration writes, shared agent/relay bandwidth control, package-launcher forwarding and private library isolation, TLS/URL/token validation, default-off client flag, opaque mailbox/object/rendezvous/collaboration isolation, expiry/quota bounds, bounded authenticated HTTP and relay admission, relay rejection, read-only MCP, GUI/desktop packaging and private staging-file permission rejection. |
 | `test_themes.py` | 5 | Nordic Glass, Bento Cloud and Midnight Sync registration; shared components and distinct palettes; Midnight-only dark preference; persisted selection; safe legacy/invalid fallback. |
 | `test_tor.py` | 4 | Fail-closed transport policy, private bridge handling, Onion client authorization validation and revocation. |
 | `test_rclone.py` | 19 | OAuth question parsing, callback handling, remote validation, provider behavior, Proton protection, and automatic Secret Service-backed rclone configuration encryption. |
 | `test_updater.py` | 16 | Version validation/comparison, platform-channel selection, trusted URLs, expiry/checksum/tamper rejection, globally rate-limited downloads, size/partial cleanup, privileged immutable staging and signed release coherence. |
 
-Android JVM coverage is kept beside the mobile source: `MobileValidationTest` contains 5 tests for bandwidth and version inputs, `MobileNetworkControllerTest` contains 2 tests for serialized access and exception-safe permit release, `ProfileQrTest` contains 2 cross-platform protocol/tamper tests, and `ProfileImporterTest` contains 2 tests for the encrypted rclone configuration plus its independent unlock key. Release CI runs `testSideloadReleaseUnitTest`; main-branch package CI runs `testSideloadDebugUnitTest` before lint and assembly. The Android build also needs the pinned `rclone.aar`; CI creates it before Gradle runs.
+Android JVM coverage is kept beside the mobile source: `MobileValidationTest` contains 6 tests for bandwidth, automatic headroom, and version inputs, `MobileNetworkControllerTest` contains 2 tests for serialized access and exception-safe permit release, `ProfileQrTest` contains 2 cross-platform protocol/tamper tests, and `ProfileImporterTest` contains 2 tests for the encrypted rclone configuration plus its independent unlock key. Release CI runs `testSideloadReleaseUnitTest`; main-branch package CI runs `testSideloadDebugUnitTest` before lint and assembly. The Android build also needs the pinned `rclone.aar`; CI creates it before Gradle runs.
 
 ## Important safety invariants covered
 
@@ -99,9 +99,9 @@ Android JVM coverage is kept beside the mobile source: `MobileValidationTest` co
 
 ```bash
 sh scripts/build-deb.sh
-dpkg-deb --info dist/tuxindrive_0.26.20_all.deb
-dpkg-deb --contents dist/tuxindrive_0.26.20_all.deb
-sha256sum dist/tuxindrive_0.26.20_all.deb
+dpkg-deb --info dist/tuxindrive_0.26.21_all.deb
+dpkg-deb --contents dist/tuxindrive_0.26.21_all.deb
+sha256sum dist/tuxindrive_0.26.21_all.deb
 ```
 
 The CI **Static security analysis** step must run before tests and packaging:
@@ -116,8 +116,8 @@ The release is blocked on any high-severity Bandit result or unresolved dependen
 Release manifests must be signed outside Git with the Ed25519 release key:
 
 ```bash
-python3 scripts/sign-update.py --version 0.26.20 \
-  --package dist/tuxindrive_0.26.20_all.deb \
+python3 scripts/sign-update.py --version 0.26.21 \
+  --package dist/tuxindrive_0.26.21_all.deb \
   --output update/latest-v2.json \
   --private-key /secure/offline/TuxInDrive-update-signing-private.pem
 ```
@@ -133,8 +133,8 @@ private bootstrap and installed module layout:
 
 ```bash
 sh scripts/build-server-deb.sh
-dpkg-deb --info dist/tuxindrive-server_0.26.20_all.deb
-dpkg-deb --contents dist/tuxindrive-server_0.26.20_all.deb
+dpkg-deb --info dist/tuxindrive-server_0.26.21_all.deb
+dpkg-deb --contents dist/tuxindrive-server_0.26.21_all.deb
 PYTHONPATH=src python3 -m unittest -v tests.test_server
 ```
 

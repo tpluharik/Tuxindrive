@@ -2,6 +2,17 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.21 — automatic aggregate bandwidth protection
+
+- Fixed process-local rclone limits multiplying when synchronization, update
+  download, and several streaming mounts were active at the same time.
+- Added default-on automatic protection that reserves 20% of the configured
+  ceiling and fairly divides the remainder across every possible simultaneous
+  streaming/transfer consumer. The reserve is configurable from 0–80%.
+- Budgeted the responsive update lane separately and made the optional server
+  agent and relay share one controller instead of independently receiving the
+  complete ceiling.
+
 ## 0.26.20 — server and update-channel security hardening
 
 - Made the server configuration directory root-owned and read-only to the

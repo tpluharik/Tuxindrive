@@ -466,6 +466,12 @@ private fun SettingsScreen(
     var wifiOnly by remember { mutableStateOf(repository.wifiOnly()) }
     var chargingOnly by remember { mutableStateOf(repository.chargingOnly()) }
     var bandwidthLimit by remember { mutableStateOf(repository.bandwidthLimit()) }
+    var automaticBandwidth by remember {
+        mutableStateOf(repository.automaticBandwidthControl())
+    }
+    var bandwidthHeadroom by remember {
+        mutableStateOf(repository.bandwidthHeadroomPercent().toString())
+    }
     var engine by remember { mutableStateOf("Checking…") }
     var updateStatus by remember { mutableStateOf("TuxInDrive ${BuildConfig.VERSION_NAME}") }
     var updateBusy by remember { mutableStateOf(false) }
@@ -493,6 +499,32 @@ private fun SettingsScreen(
                 },
                 label = { Text("Global bandwidth limit") },
                 supportingText = { Text("Combined safety target, for example 10M or 2M:10M") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        item {
+            SettingSwitch(
+                "Automatic bandwidth protection",
+                "Reserve capacity for other apps and avoid filling the connection",
+                automaticBandwidth,
+            ) { enabled ->
+                automaticBandwidth = enabled
+                repository.setAutomaticBandwidthControl(enabled)
+            }
+        }
+        item {
+            OutlinedTextField(
+                value = bandwidthHeadroom,
+                onValueChange = { value ->
+                    val candidate = value.filter { character -> character.isDigit() }.take(2)
+                    if (candidate.isBlank() || (candidate.toIntOrNull() ?: 81) <= 80) {
+                        bandwidthHeadroom = candidate
+                        candidate.toIntOrNull()?.let(repository::setBandwidthHeadroomPercent)
+                    }
+                },
+                label = { Text("Reserved network headroom (%)") },
+                supportingText = { Text("0–80%; default 20%") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )

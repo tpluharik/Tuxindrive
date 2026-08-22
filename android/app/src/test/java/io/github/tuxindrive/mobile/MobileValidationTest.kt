@@ -32,6 +32,22 @@ class MobileValidationTest {
     }
 
     @Test
+    fun automaticBandwidthProtectionReservesHeadroom() {
+        assertEquals(
+            "8388608B",
+            MobileValidation.protectedBandwidth("10M", automatic = true, headroomPercent = 20),
+        )
+        assertEquals(
+            "2M:10M",
+            MobileValidation.protectedBandwidth("2M:10M", automatic = false, headroomPercent = 20),
+        )
+        assertEquals(
+            "419430B:2097152B",
+            MobileValidation.protectedBandwidth("1M:5M", automatic = true, headroomPercent = 60),
+        )
+    }
+
+    @Test
     fun versionComparisonIsNumericAndPadsMissingParts() {
         assertTrue(MobileValidation.isNewer("0.10.0", "0.9.9"))
         assertFalse(MobileValidation.isNewer("0.26.6", "0.26.6"))

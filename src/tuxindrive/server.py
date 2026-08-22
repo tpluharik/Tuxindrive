@@ -72,6 +72,8 @@ class ServerConfig:
     quota_mib_per_tenant: int = 512
     default_ttl_seconds: int = 86400
     global_bandwidth_limit: str = "10M"
+    automatic_bandwidth_control: bool = True
+    bandwidth_headroom_percent: int = 20
     max_concurrent_requests: int = 16
     max_requests_per_source: int = 4
     request_timeout_seconds: int = 30
@@ -97,6 +99,10 @@ class ServerConfig:
         result.quota_mib_per_tenant = max(16, min(1024 * 1024, int(result.quota_mib_per_tenant)))
         result.default_ttl_seconds = max(60, min(30 * 86400, int(result.default_ttl_seconds)))
         result.global_bandwidth_limit = normalize_bandwidth_limit(result.global_bandwidth_limit)
+        result.automatic_bandwidth_control = bool(result.automatic_bandwidth_control)
+        result.bandwidth_headroom_percent = min(
+            80, max(0, int(result.bandwidth_headroom_percent))
+        )
         result.max_concurrent_requests = max(4, min(256, int(result.max_concurrent_requests)))
         result.max_requests_per_source = max(
             1,
@@ -253,13 +259,18 @@ def load_config(path: Path) -> ServerConfig:
 class HeadlessAgent:
     """Reuse the production sync/peer engines without importing GTK."""
 
-    def __init__(self, client_config: str, bandwidth_limit: str) -> None:
+    def __init__(
+        self,
+        client_config: str,
+        bandwidth_limit: str,
+        bandwidth: GlobalBandwidthController | None = None,
+    ) -> None:
         self.store = ConfigStore(Path(client_config).expanduser()) if client_config else ConfigStore()
         try:
             self.config = self.store.load()
         except RuntimeError:
             self.config = AppConfig()
-        self.bandwidth = GlobalBandwidthController(bandwidth_limit)
+        self.bandwidth = bandwidth or GlobalBandwidthController(bandwidth_limit)
         self.proton = ProtonDriveClient(self.config.settings.proton_drive_path)
         self.engine = SyncEngine(self.config.settings.rclone_path, proton=self.proton, bandwidth=self.bandwidth)
         self.peers = PeerManager(self.config.settings.rclone_path)
@@ -357,9 +368,23 @@ class TuxInDriveServer(ThreadingHTTPServer):
     def __init__(self, config: ServerConfig) -> None:
         self.config = config
         self.store = ServerStore(Path(config.database).expanduser(), config.quota_mib_per_tenant * 1024 * 1024)
-        self.agent = HeadlessAgent(config.client_config, config.global_bandwidth_limit) if "agent" in config.enabled_roles else None
+        self.bandwidth = GlobalBandwidthController(
+            config.global_bandwidth_limit,
+            automatic=config.automatic_bandwidth_control,
+            headroom_percent=config.bandwidth_headroom_percent,
+        )
+        # Relay and agent traffic must share one clock; independent controllers
+        # would each permit the complete configured ceiling.
+        self.agent = (
+            HeadlessAgent(
+                config.client_config,
+                config.global_bandwidth_limit,
+                bandwidth=self.bandwidth,
+            )
+            if "agent" in config.enabled_roles
+            else None
+        )
         self.limiter = RateLimiter()
-        self.bandwidth = GlobalBandwidthController(config.global_bandwidth_limit)
         self._request_slots = threading.BoundedSemaphore(config.max_concurrent_requests)
         self._request_lock = threading.Lock()
         self._requests_by_source: dict[str, int] = {}

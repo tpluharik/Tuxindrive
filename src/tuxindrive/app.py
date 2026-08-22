@@ -2726,6 +2726,10 @@ class ProfileDialog(ResponsiveDialog):
             self.controller.bandwidth.configure(
                 self.controller.config.settings.global_bandwidth_limit
             )
+            self.controller.bandwidth.configure_automatic(
+                self.controller.config.settings.automatic_bandwidth_control,
+                self.controller.config.settings.bandwidth_headroom_percent,
+            )
             self.controller.engine = SyncEngine(
                 self.controller.config.settings.rclone_path,
                 proton=self.controller.proton,
@@ -4154,6 +4158,28 @@ class MainWindow(Gtk.ApplicationWindow):
         global_bandwidth.set_text(
             self.controller.config.settings.global_bandwidth_limit
         )
+        automatic_bandwidth = Gtk.CheckButton(
+            label="Automatically reserve bandwidth for other applications"
+        )
+        automatic_bandwidth.set_active(
+            self.controller.config.settings.automatic_bandwidth_control
+        )
+        automatic_bandwidth.set_tooltip_text(
+            "Keeps headroom and fairly divides the global ceiling across simultaneous syncs and streaming drives"
+        )
+        bandwidth_headroom = Gtk.SpinButton.new_with_range(0, 80, 5)
+        bandwidth_headroom.set_value(
+            self.controller.config.settings.bandwidth_headroom_percent
+        )
+        bandwidth_headroom.set_tooltip_text(
+            "Percentage of the configured ceiling kept free for calls, browsing, and other devices"
+        )
+        bandwidth_protection = Gtk.Grid(column_spacing=12, row_spacing=6)
+        bandwidth_protection.attach(automatic_bandwidth, 0, 0, 2, 1)
+        bandwidth_protection.attach(
+            Gtk.Label(label="Reserved network headroom (%)", xalign=0), 0, 1, 1, 1
+        )
+        bandwidth_protection.attach(bandwidth_headroom, 1, 1, 1, 1)
         battery = Gtk.SpinButton.new_with_range(0, 100, 5)
         battery.set_value(self.controller.config.settings.pause_below_battery_percent)
         battery.set_tooltip_text("0 disables battery pausing")
@@ -4181,7 +4207,7 @@ class MainWindow(Gtk.ApplicationWindow):
         schedule_end = Gtk.Entry()
         schedule_end.set_placeholder_text("Allowed until HH:MM")
         schedule_end.set_text(self.controller.config.settings.schedule_end)
-        for widget in (theme_frame, launch, notifications, minimized, nautilus, network_usage, live_activity, policy, metered, global_bandwidth, battery, cache_row, streaming_refresh, schedule_start, schedule_end, server_integration, server_url, server_token, server_ca, server_hint):
+        for widget in (theme_frame, launch, notifications, minimized, nautilus, network_usage, live_activity, policy, metered, global_bandwidth, bandwidth_protection, battery, cache_row, streaming_refresh, schedule_start, schedule_end, server_integration, server_url, server_token, server_ca, server_hint):
             dialog.get_content_area().pack_start(widget, False, False, 6)
         dialog.add_button("Test server connection", 5)
         dialog.add_button("Peer-to-peer sharing…", 3)
@@ -4235,7 +4261,17 @@ class MainWindow(Gtk.ApplicationWindow):
             self.controller.config.settings.network_policy = policy.get_active_id() or "maximum"
             self.controller.config.settings.allow_metered_networks = metered.get_active()
             self.controller.config.settings.global_bandwidth_limit = bandwidth_value
+            self.controller.config.settings.automatic_bandwidth_control = (
+                automatic_bandwidth.get_active()
+            )
+            self.controller.config.settings.bandwidth_headroom_percent = (
+                bandwidth_headroom.get_value_as_int()
+            )
             self.controller.bandwidth.configure(bandwidth_value)
+            self.controller.bandwidth.configure_automatic(
+                automatic_bandwidth.get_active(),
+                bandwidth_headroom.get_value_as_int(),
+            )
             self.controller.config.settings.pause_below_battery_percent = battery.get_value_as_int()
             self.controller.config.settings.streaming_cache_max_gib = cache_max.get_value_as_int()
             self.controller.config.settings.streaming_cache_min_free_gib = cache_free.get_value_as_int()
@@ -4616,7 +4652,9 @@ class TuxInDriveApplication(Gtk.Application):
         except RuntimeError:
             self.config = AppConfig()
         self.bandwidth = GlobalBandwidthController(
-            self.config.settings.global_bandwidth_limit
+            self.config.settings.global_bandwidth_limit,
+            automatic=self.config.settings.automatic_bandwidth_control,
+            headroom_percent=self.config.settings.bandwidth_headroom_percent,
         )
         self.updater = UpdateManager(__version__, bandwidth=self.bandwidth)
         set_language(self.config.settings.language)

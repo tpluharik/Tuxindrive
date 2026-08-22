@@ -171,6 +171,10 @@ class ServerWindow(Gtk.ApplicationWindow):
         self.quota = Gtk.SpinButton.new_with_range(16, 1024 * 1024, 16); self.quota.set_value(512)
         self.ttl = Gtk.SpinButton.new_with_range(60, 30 * 86400, 60); self.ttl.set_value(86400)
         self.bandwidth = Gtk.Entry(text="10M")
+        self.automatic_bandwidth = Gtk.CheckButton(label="Automatic bandwidth protection")
+        self.automatic_bandwidth.set_active(True)
+        self.bandwidth_headroom = Gtk.SpinButton.new_with_range(0, 80, 5)
+        self.bandwidth_headroom.set_value(20)
         self.max_requests = Gtk.SpinButton.new_with_range(4, 256, 1); self.max_requests.set_value(16)
         self.max_source_requests = Gtk.SpinButton.new_with_range(1, 256, 1); self.max_source_requests.set_value(4)
         self.request_timeout = Gtk.SpinButton.new_with_range(5, 300, 1); self.request_timeout.set_value(30)
@@ -180,12 +184,14 @@ class ServerWindow(Gtk.ApplicationWindow):
         _row(limits, 0, "Quota per tenant (MiB)", self.quota)
         _row(limits, 1, "Default expiry (seconds)", self.ttl)
         _row(limits, 2, "Global bandwidth limit", self.bandwidth)
-        _row(limits, 3, "Concurrent requests", self.max_requests)
-        _row(limits, 4, "Requests per source", self.max_source_requests)
-        _row(limits, 5, "Request timeout (seconds)", self.request_timeout)
-        _row(limits, 6, "Concurrent relays", self.max_relays)
-        _row(limits, 7, "Relays per tenant", self.max_tenant_relays)
-        _row(limits, 8, "Relay idle timeout (seconds)", self.relay_idle_timeout)
+        _row(limits, 3, "Automatic bandwidth protection", self.automatic_bandwidth)
+        _row(limits, 4, "Reserved headroom (%)", self.bandwidth_headroom)
+        _row(limits, 5, "Concurrent requests", self.max_requests)
+        _row(limits, 6, "Requests per source", self.max_source_requests)
+        _row(limits, 7, "Request timeout (seconds)", self.request_timeout)
+        _row(limits, 8, "Concurrent relays", self.max_relays)
+        _row(limits, 9, "Relays per tenant", self.max_tenant_relays)
+        _row(limits, 10, "Relay idle timeout (seconds)", self.relay_idle_timeout)
         box.pack_start(limits, False, False, 0)
 
         self.relay_targets = Gtk.TextView(); self.relay_targets.set_monospace(True)
@@ -260,6 +266,8 @@ class ServerWindow(Gtk.ApplicationWindow):
         self.database.set_text(config.database); self.client_config.set_text(config.client_config)
         self.quota.set_value(config.quota_mib_per_tenant); self.ttl.set_value(config.default_ttl_seconds)
         self.bandwidth.set_text(config.global_bandwidth_limit)
+        self.automatic_bandwidth.set_active(config.automatic_bandwidth_control)
+        self.bandwidth_headroom.set_value(config.bandwidth_headroom_percent)
         self.max_requests.set_value(config.max_concurrent_requests)
         self.max_source_requests.set_value(config.max_requests_per_source)
         self.request_timeout.set_value(config.request_timeout_seconds)
@@ -289,6 +297,8 @@ class ServerWindow(Gtk.ApplicationWindow):
             "token_hashes": dict(self._tokens), "quota_mib_per_tenant": self.quota.get_value_as_int(),
             "default_ttl_seconds": self.ttl.get_value_as_int(),
             "global_bandwidth_limit": self.bandwidth.get_text().strip(),
+            "automatic_bandwidth_control": self.automatic_bandwidth.get_active(),
+            "bandwidth_headroom_percent": self.bandwidth_headroom.get_value_as_int(),
             "max_concurrent_requests": self.max_requests.get_value_as_int(),
             "max_requests_per_source": self.max_source_requests.get_value_as_int(),
             "request_timeout_seconds": self.request_timeout.get_value_as_int(),

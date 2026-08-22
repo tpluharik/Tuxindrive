@@ -7,6 +7,7 @@ from tuxindrive.bandwidth import (
     GlobalBandwidthController,
     effective_rclone_limit,
     normalize_bandwidth_limit,
+    protected_bandwidth_limit,
 )
 
 
@@ -34,6 +35,20 @@ class GlobalBandwidthControllerTests(unittest.TestCase):
         self.assertEqual(controller.rclone_args("2M"), ["--bwlimit", "2M"])
         controller.configure("off")
         self.assertFalse(controller.enabled)
+
+    def test_automatic_limit_reserves_headroom_and_divides_parallel_consumers(self):
+        self.assertEqual(
+            protected_bandwidth_limit("10M", headroom_percent=20, parallel_budget=2),
+            "4194304B",
+        )
+        self.assertEqual(
+            protected_bandwidth_limit("2M:10M", headroom_percent=25, parallel_budget=2),
+            "786432B:3932160B",
+        )
+        controller = GlobalBandwidthController("10M", automatic=True, headroom_percent=20)
+        controller.configure_parallel_budget(2)
+        self.assertEqual(controller.rclone_args(), ["--bwlimit", "4194304B"])
+        self.assertEqual(controller.rclone_args("2M"), ["--bwlimit", "2M"])
 
     def test_in_process_downloads_share_one_rate_clock(self):
         controller = GlobalBandwidthController("1")

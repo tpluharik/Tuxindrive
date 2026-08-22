@@ -270,6 +270,19 @@ class SyncEngineCommandTests(unittest.TestCase):
         for command in commands:
             self.assertEqual(command[command.index("--bwlimit") + 1], "3M")
 
+    def test_automatic_limit_budgets_sync_with_all_streaming_drives(self):
+        controller = GlobalBandwidthController(
+            "10M", automatic=True, headroom_percent=20
+        )
+        engine = SyncEngine("/usr/bin/rclone", bandwidth=controller)
+        streams = [
+            SyncJob("google", f"/data/Stream{index}", mode=SyncMode.VIRTUAL_DRIVE)
+            for index in range(2)
+        ]
+        engine.configure_jobs(streams)
+        command = engine.command_for_job(SyncJob("google", "/data/Sync"))
+        self.assertEqual(command[command.index("--bwlimit") + 1], "2097152B")
+
     def test_incremental_job_is_reserved_before_waiting_for_network_slot(self):
         with tempfile.TemporaryDirectory() as temporary:
             engine = SyncEngine(

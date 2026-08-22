@@ -161,10 +161,12 @@ class RcloneCore(private val context: Context) {
     }
 
     fun bisync(local: File, remote: String, remotePath: String, workDirectory: File, firstRun: Boolean) {
-        setBandwidthLimit(
-            context.getSharedPreferences("mobile-state", Context.MODE_PRIVATE)
-                .getString("global-bandwidth-limit", "10M").orEmpty(),
-        )
+        val preferences = context.getSharedPreferences("mobile-state", Context.MODE_PRIVATE)
+        setBandwidthLimit(MobileValidation.protectedBandwidth(
+            preferences.getString("global-bandwidth-limit", "10M").orEmpty(),
+            preferences.getBoolean("automatic-bandwidth-control", true),
+            preferences.getInt("bandwidth-headroom-percent", 20),
+        ).orEmpty())
         local.mkdirs()
         workDirectory.mkdirs()
         val destination = "${remote.removeSuffix(":")}:$remotePath"
@@ -207,7 +209,7 @@ class MobileRepository(context: Context) {
 
     fun initialize() {
         core.initialize()
-        core.setBandwidthLimit(bandwidthLimit())
+        core.setBandwidthLimit(effectiveBandwidthLimit())
     }
     fun engineVersion() = core.version()
     fun checkUpdate() = MobileNetworkController.exclusive { updater.check() }
@@ -248,12 +250,29 @@ class MobileRepository(context: Context) {
     fun showNetworkUsage(): Boolean = preferences.getBoolean("show-network-usage", true)
     fun showActivityLog(): Boolean = preferences.getBoolean("show-activity-log", true)
     fun bandwidthLimit(): String = preferences.getString("global-bandwidth-limit", "10M").orEmpty()
+    fun automaticBandwidthControl(): Boolean =
+        preferences.getBoolean("automatic-bandwidth-control", true)
+    fun bandwidthHeadroomPercent(): Int =
+        preferences.getInt("bandwidth-headroom-percent", 20).coerceIn(0, 80)
+    private fun effectiveBandwidthLimit(): String = MobileValidation.protectedBandwidth(
+        bandwidthLimit(), automaticBandwidthControl(), bandwidthHeadroomPercent(),
+    ).orEmpty()
 
     fun setBandwidthLimit(value: String): Boolean {
         val normalized = MobileValidation.normalizeBandwidth(value) ?: return false
         preferences.edit().putString("global-bandwidth-limit", normalized).apply()
-        runCatching { core.setBandwidthLimit(normalized) }
+        runCatching { core.setBandwidthLimit(effectiveBandwidthLimit()) }
         return true
+    }
+
+    fun setAutomaticBandwidthControl(enabled: Boolean) {
+        preferences.edit().putBoolean("automatic-bandwidth-control", enabled).apply()
+        runCatching { core.setBandwidthLimit(effectiveBandwidthLimit()) }
+    }
+
+    fun setBandwidthHeadroomPercent(value: Int) {
+        preferences.edit().putInt("bandwidth-headroom-percent", value.coerceIn(0, 80)).apply()
+        runCatching { core.setBandwidthLimit(effectiveBandwidthLimit()) }
     }
 
     fun setShowNetworkUsage(enabled: Boolean) {

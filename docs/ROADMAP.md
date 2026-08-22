@@ -7,7 +7,16 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.20
+## Current baseline: 0.26.21
+
+### Completed in 0.26.21: automatic aggregate bandwidth protection
+
+Application-level bandwidth ceilings now reserve configurable link headroom
+and are divided across every possible simultaneous rclone process, including
+streaming mounts. The responsive update lane remains separate from scheduled
+work but is included in that aggregate budget. Desktop, server and Android
+enable the protection by default, and the server agent and relay share one
+controller.
 
 ### Completed in 0.26.20: 2026-08-22 audit remediation
 
@@ -170,6 +179,12 @@ Proton, and Android. It applies the stricter global/job directional limit,
 serializes native network work when required, jitters scans, and atomically
 reserves incremental jobs before network waits. The device traffic panel
 remains available behind a Settings feature flag.
+
+The unreleased aggregate-protection revision closes the remaining process-local
+limit gap: it reserves configurable headroom, budgets sync and responsive
+update lanes plus all enabled streaming mounts, and makes server agent/relay
+traffic share one controller. This prevents parallel rclone processes from
+each receiving the complete global ceiling.
 
 Versions 0.26.1–0.26.4 established signed, durable Windows, macOS, and Android
 release channels; a visible encrypted profile path suitable for Android file

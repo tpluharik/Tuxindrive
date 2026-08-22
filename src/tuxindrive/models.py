@@ -427,6 +427,8 @@ class AppSettings:
     visual_theme: str = "nordic_glass"
     network_policy: str = "maximum"
     global_bandwidth_limit: str = "10M"
+    automatic_bandwidth_control: bool = True
+    bandwidth_headroom_percent: int = 20
     allow_metered_networks: bool = True
     pause_below_battery_percent: int = 0
     schedule_start: str = ""
@@ -457,6 +459,15 @@ class AppSettings:
             )
         except ValueError:
             data["global_bandwidth_limit"] = "10M"
+        data["automatic_bandwidth_control"] = bool(
+            data.get("automatic_bandwidth_control", True)
+        )
+        try:
+            data["bandwidth_headroom_percent"] = min(
+                80, max(0, int(data.get("bandwidth_headroom_percent", 20)))
+            )
+        except (TypeError, ValueError):
+            data["bandwidth_headroom_percent"] = 20
         for key, default in (
             ("streaming_cache_max_gib", 20),
             ("streaming_cache_min_free_gib", 5),

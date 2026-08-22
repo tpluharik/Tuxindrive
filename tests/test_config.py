@@ -134,8 +134,12 @@ class ConfigStoreTests(unittest.TestCase):
 
     def test_global_bandwidth_limit_defaults_safely_and_is_validated(self):
         self.assertEqual(AppConfig.from_dict({}).settings.global_bandwidth_limit, "10M")
+        self.assertTrue(AppConfig.from_dict({}).settings.automatic_bandwidth_control)
+        self.assertEqual(AppConfig.from_dict({}).settings.bandwidth_headroom_percent, 20)
         configured = AppConfig.from_dict({"settings": {"global_bandwidth_limit": "2M:8M"}})
         self.assertEqual(configured.settings.global_bandwidth_limit, "2M:8M")
+        protected = AppConfig.from_dict({"settings": {"bandwidth_headroom_percent": 999}})
+        self.assertEqual(protected.settings.bandwidth_headroom_percent, 80)
         invalid = AppConfig.from_dict({"settings": {"global_bandwidth_limit": "fast"}})
         self.assertEqual(invalid.settings.global_bandwidth_limit, "10M")
 

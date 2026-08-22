@@ -1,6 +1,6 @@
 # TuxInDrive architecture
 
-This document describes how TuxInDrive 0.26.20 is implemented. It complements
+This document describes how TuxInDrive 0.26.21 is implemented. It complements
 the task-oriented [user guide](USER_GUIDE.md), persisted-field
 [configuration reference](CONFIGURATION.md), and threat-focused
 [security guide](SECURITY_HARDENING.md).
@@ -122,17 +122,24 @@ installed through confined filesystem operations.
 
 - validates a global rate such as `10M` or directional `2M:10M`;
 - chooses the stricter global/per-job rate independently for upload/download;
+- by default reserves configurable headroom and divides the remainder by one
+  ordinary lane, one responsive update lane, and every enabled persistent
+  streaming drive, because
+  rclone's limit is otherwise process-local rather than application-global;
 - adds rclone `--bwlimit` arguments to synchronization, mounts, scans,
   verification, repair and delta work;
 - admits metadata, updates, native Git and Proton operations through a shared
   semaphore; native operations that cannot accept a byte-rate flag run
   exclusively while limiting is enabled;
-- rate-limits application-managed update downloads with a shared byte clock;
+- rate-limits application-managed update downloads with a shared byte clock
+  and a separately budgeted responsive admission lane;
 - produces bounded scan jitter.
 
 The controller is a portable application-level safety mechanism, not an OS
-traffic shaper. A long-lived streaming mount is rate-capped by rclone but owns
-its own provider connection.
+traffic shaper. A long-lived streaming mount owns its own provider connection,
+so automatic mode gives every configured mount a conservative stable share;
+unused shares are deliberately not borrowed because doing so could recreate a
+burst when another mount becomes active.
 
 ## Streaming and offline availability
 

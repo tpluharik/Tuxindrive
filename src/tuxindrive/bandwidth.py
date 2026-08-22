@@ -76,10 +76,45 @@ def effective_rclone_limit(global_limit: str, job_limit: str = "") -> str:
     return selected[0] if selected[0].lower() == selected[1].lower() else ":".join(selected)
 
 
+def protected_bandwidth_limit(
+    limit: str, *, headroom_percent: int = 20, parallel_budget: int = 1
+) -> str:
+    """Reserve link headroom and divide a process limit across consumers.
+
+    rclone's ``--bwlimit`` is process-local. Without this division, several
+    mounts plus a synchronization can each consume the complete configured
+    ceiling and overwhelm the connection in aggregate.
+    """
+    normalized = normalize_bandwidth_limit(limit)
+    if not normalized:
+        return ""
+    headroom = min(80, max(0, int(headroom_percent)))
+    consumers = max(1, int(parallel_budget))
+    factor = (100 - headroom) / 100 / consumers
+    selected: list[str] = []
+    for part in normalized.split(":"):
+        if part.lower() == "off":
+            selected.append("off")
+            continue
+        rate = _rate_bytes(part, download=False)
+        assert rate is not None
+        selected.append("0B" if rate <= 0 else f"{max(1, int(rate * factor))}B")
+    if len(selected) == 1:
+        return selected[0]
+    return ":".join(selected)
+
+
 class GlobalBandwidthController:
     """One shared gate plus a byte-rate clock for in-process downloads."""
 
-    def __init__(self, limit: str = "", max_active: int = 1) -> None:
+    def __init__(
+        self,
+        limit: str = "",
+        max_active: int = 1,
+        *,
+        automatic: bool = False,
+        headroom_percent: int = 20,
+    ) -> None:
         self.max_active = max(1, int(max_active))
         self._slots = threading.BoundedSemaphore(self.max_active)
         self._admission = threading.Lock()
@@ -88,6 +123,9 @@ class GlobalBandwidthController:
         self._lock = threading.RLock()
         self._next_download = 0.0
         self._next_upload = 0.0
+        self.automatic = bool(automatic)
+        self.headroom_percent = min(80, max(0, int(headroom_percent)))
+        self.parallel_budget = 1
         self.limit = ""
         self.configure(limit)
 
@@ -98,6 +136,37 @@ class GlobalBandwidthController:
             self._next_download = 0.0
             self._next_upload = 0.0
 
+    def configure_automatic(self, enabled: bool, headroom_percent: int = 20) -> None:
+        automatic = bool(enabled)
+        headroom = min(80, max(0, int(headroom_percent)))
+        with self._lock:
+            if self.automatic == automatic and self.headroom_percent == headroom:
+                return
+            self.automatic = automatic
+            self.headroom_percent = headroom
+            self._next_download = 0.0
+            self._next_upload = 0.0
+
+    def configure_parallel_budget(self, consumers: int) -> None:
+        """Set the maximum simultaneous process-local traffic consumers."""
+        budget = max(1, int(consumers))
+        with self._lock:
+            if self.parallel_budget == budget:
+                return
+            self.parallel_budget = budget
+            self._next_download = 0.0
+            self._next_upload = 0.0
+
+    def _controller_limit(self) -> str:
+        with self._lock:
+            if not self.automatic:
+                return self.limit
+            return protected_bandwidth_limit(
+                self.limit,
+                headroom_percent=self.headroom_percent,
+                parallel_budget=self.parallel_budget,
+            )
+
     @property
     def enabled(self) -> bool:
         return any(
@@ -106,7 +175,7 @@ class GlobalBandwidthController:
         )
 
     def rclone_args(self, job_limit: str = "") -> list[str]:
-        limit = effective_rclone_limit(self.limit, job_limit)
+        limit = effective_rclone_limit(self._controller_limit(), job_limit)
         return ["--bwlimit", limit] if limit else []
 
     @contextlib.contextmanager
@@ -137,14 +206,7 @@ class GlobalBandwidthController:
 
     @contextlib.contextmanager
     def interactive_transfer_guard(self) -> Iterator[None]:
-        """Serialize user-requested transfers without sync-queue starvation.
-
-        Scheduled synchronizations can occupy the regular transfer gate for a
-        long time (and the default gate has one slot). Interactive operations
-        such as a signed application update must not wait indefinitely behind
-        them. They still use the shared byte-rate clock, while this separate
-        lane ensures that only one interactive package transfer runs at once.
-        """
+        """Keep one responsive update lane within the divided traffic budget."""
         with self._interactive_transfer:
             yield
 
@@ -155,7 +217,7 @@ class GlobalBandwidthController:
         self._throttle(byte_count, download=False)
 
     def _throttle(self, byte_count: int, *, download: bool) -> None:
-        rate = _rate_bytes(self.limit, download=download)
+        rate = _rate_bytes(self._controller_limit(), download=download)
         if rate is None or rate <= 0 or byte_count <= 0:
             return
         with self._lock:

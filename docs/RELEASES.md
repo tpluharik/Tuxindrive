@@ -1,7 +1,7 @@
 # TuxInDrive release process
 
 This document defines the release and signed update-channel workflow for
-TuxInDrive 0.26.20. It is intended for maintainers. Users should use
+TuxInDrive 0.26.21. It is intended for maintainers. Users should use
 the installation and update instructions in the [user guide](USER_GUIDE.md).
 
 ## Release outputs

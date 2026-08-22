@@ -112,9 +112,12 @@ class AndroidUpdater(private val context: Context) {
     }
 
     private fun throttle(byteCount: Int) {
-        val rate = MobileValidation.downloadRateBytes(
+        val protected = MobileValidation.protectedBandwidth(
             preferences.getString("global-bandwidth-limit", "10M").orEmpty(),
-        )
+            preferences.getBoolean("automatic-bandwidth-control", true),
+            preferences.getInt("bandwidth-headroom-percent", 20),
+        ).orEmpty()
+        val rate = MobileValidation.downloadRateBytes(protected)
         if (rate <= 0.0 || byteCount <= 0) return
         val now = System.nanoTime()
         val scheduled = synchronized(this) {

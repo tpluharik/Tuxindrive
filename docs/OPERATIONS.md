@@ -1,7 +1,7 @@
 # TuxInDrive operations guide
 
 This guide covers normal administration, health checks, traffic policy,
-backup, recovery, and incident response for TuxInDrive 0.26.20. User-facing
+backup, recovery, and incident response for TuxInDrive 0.26.21. User-facing
 procedures are in the [user guide](USER_GUIDE.md); persisted fields and exact
 paths are in [Configuration](CONFIGURATION.md).
 
@@ -37,6 +37,15 @@ scans, verification, repair, update downloads, GitHub, Proton, and Android.
 It also limits concurrent native network work and adds scan jitter. Per-job
 limits remain useful for lower-priority folders but cannot override the global
 ceiling upward.
+
+Keep **Automatically reserve bandwidth for other applications** enabled. Its
+default 20% reserve prevents TuxInDrive from deliberately filling the configured
+ceiling, while the remaining budget is divided across all enabled streaming
+drives, the ordinary transfer lane, and the responsive update lane. This fixes the process-local
+multiplier that could previously let each mount consume the full limit. Raise
+the reserve for video calls or an unstable router; lower it only on a dedicated
+connection. The server uses the same default and shares one clock between its
+agent and relay roles.
 
 For constrained links:
 
