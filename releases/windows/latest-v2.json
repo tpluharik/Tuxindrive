@@ -1,8 +1,8 @@
 {
-  "version": "0.26.20",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.20/TuxInDrive-0.26.20-windows-x64-setup.exe",
-  "sha256": "e2bbebab3cde9c51c16a67d9723cf40918180da4229b790894873b7780edfc17",
-  "notes": "Security hardening, bounded network workloads, and safer platform updates",
-  "expires_at": "2026-11-20T16:47:41.558351+00:00",
-  "signature": "7//UZu5Y8XzMjyRaCIvvoUWlUTcg69u9ow3Ff6ObrGWBgXrLSijG0KuQF+WYXLZ/D4Qs1SZ1VlXICVmOMyk9BA=="
+  "version": "0.26.21",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.21/TuxInDrive-0.26.21-windows-x64-setup.exe",
+  "sha256": "9f53b23143b13552f6a94e4aa1cd00f8c957259ffb3cf1b07a1b811b7bdfee8c",
+  "notes": "Automatic aggregate bandwidth protection with configurable network headroom",
+  "expires_at": "2026-11-20T19:40:18.461881+00:00",
+  "signature": "LrH3kC0kdQ4PwDtiZGgxzGBzxPa+ueA2aAJb6z/Im75CI1Xw6oTeo9+q9utLeDbLVlFfNfT0QoGMHXvq1exRAg=="
 }

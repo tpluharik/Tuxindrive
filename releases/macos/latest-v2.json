@@ -1,8 +1,8 @@
 {
-  "version": "0.26.20",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.20/TuxInDrive-0.26.20-macos-arm64.dmg",
-  "sha256": "baf3f40214b2ff8492acd5e4e5c035159a35e11c19d67dfd2b147bfd4973abda",
-  "notes": "Security hardening, bounded network workloads, and safer platform updates",
-  "expires_at": "2026-11-20T16:47:41.640478+00:00",
-  "signature": "laOAj235mhg9MP7p/uNxCOWcJs1xsIl/hpZ7MN4pvIfRuctnOVlTPGR+Qhg3WgwSMx8zpvSnHefdP0xbd7NEBQ=="
+  "version": "0.26.21",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.21/TuxInDrive-0.26.21-macos-arm64.dmg",
+  "sha256": "00dbb2530aa58149e0fcf1249fdd7f8f500f100895fb0b2b05a301a0bfeb25e4",
+  "notes": "Automatic aggregate bandwidth protection with configurable network headroom",
+  "expires_at": "2026-11-20T19:40:18.548175+00:00",
+  "signature": "hZ1mBmQIynxXrsXSOEWXoUDn2FKSTRXaZ6qXpbkhOzE9wgGXfUlugKS8AObhz6WkfFNTlezG6sitPz3O3xK1BQ=="
 }

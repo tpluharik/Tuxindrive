@@ -1,8 +1,8 @@
 {
-  "version": "0.26.20",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.20/TuxInDrive-0.26.20-android.apk",
-  "sha256": "46abfb374e981044957a24d8406a0f5bfb956a2b5ea9acbd586d36476c0252df",
-  "notes": "Security hardening, bounded network workloads, and safer platform updates",
-  "expires_at": "2026-11-20T16:47:41.904334+00:00",
-  "signature": "4ctOcSRGMlW1fpwhrJDk6VLQ8kEt2d3xystMMhudTQ/grIGW05Xg0tqLXD49r62WLVpXNvyew47ZR0ZbUvPUDw=="
+  "version": "0.26.21",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.21/TuxInDrive-0.26.21-android.apk",
+  "sha256": "cac0c56c56f74e0bd5de221c51a9b5534b06549d65119ef4ae420d6b96a77c13",
+  "notes": "Automatic aggregate bandwidth protection with configurable network headroom",
+  "expires_at": "2026-11-20T19:40:18.817765+00:00",
+  "signature": "27hFoYO1+bk4aeKVVEbZakJLqMjpGYZLwwLynL8IykgVYnmBj2i47jDiczGy49Kv7eWqPNJVqEvivo0zueSTAA=="
 }

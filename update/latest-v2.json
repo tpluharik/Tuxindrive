@@ -1,8 +1,8 @@
 {
-  "version": "0.26.20",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.20/tuxindrive_0.26.20_all.deb",
-  "sha256": "0fb022e66454e0a18aab4999827b3ca09470312ee0494ff1a09127cd2c1fe94e",
-  "notes": "Security hardening, bounded network workloads, and safer platform updates",
-  "expires_at": "2026-11-20T16:47:41.486033+00:00",
-  "signature": "QYroYijmUt+4tI+i4qO5AYyRAYtZWOwb3bzo5bjiNhB4P+HNBQD9pA7JbKvbg8qilera8Sn/gHIPBBXz82J8Dg=="
+  "version": "0.26.21",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.21/tuxindrive_0.26.21_all.deb",
+  "sha256": "f8989a28aca189e4c0e90f6444627da3c4ba90fa29a880b4b8961f2f700a59ef",
+  "notes": "Automatic aggregate bandwidth protection with configurable network headroom",
+  "expires_at": "2026-11-20T19:40:18.376485+00:00",
+  "signature": "J5flM4bDMMHV4RP/opIP9IWkuVBCcy/eJuE/jbt3+a8HH+Q/Uiuxj/pIBu2IVbel7S3dK7uQn96oLlGPmA96Dg=="
 }
