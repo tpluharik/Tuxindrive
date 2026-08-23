@@ -13,6 +13,11 @@ This release establishes a bounded, self-hostable foundation. It is not a
 public multi-tenant cloud service and does not weaken direct peer operation.
 Direct LAN/SFTP synchronization continues to work without this server.
 
+The 0.26.23 cross-folder filename index remains entirely on each desktop
+client. It is not uploaded to the server preview, and no server endpoint accepts
+filenames or search queries. Server-backed search would require a separate
+privacy and authorization design and is not part of the current preview.
+
 ## Implemented roles
 
 Every role is independently named in `enabled_roles`. Removing a role makes

@@ -42,6 +42,19 @@ rclone operations receive the effective directional rate, native Git/Proton
 work is admitted through the same controller, and Android passes the rate to
 its embedded rclone core while serializing browse/sync/update work.
 
+## Search availability
+
+Linux, Windows, and macOS provide the 0.26.23 private cross-folder filename
+search. It indexes metadata from ordinary local synchronization roots and does
+not enumerate streaming/FUSE mounts. Search therefore remains usable offline
+and cannot hydrate files-on-demand content merely by opening the search window.
+
+Android 0.26.23 can browse connected cloud roots through its native Files page,
+but it does not yet build the desktop SQLite index or provide one query across
+all Storage Access Framework trees. Android document-provider search remains a
+separate roadmap item; documentation must not imply desktop search parity until
+that native implementation ships.
+
 ## Checks performed
 
 `postinst` writes a machine-level snapshot to `/var/lib/tuxindrive/install-capabilities.json`. Because package installation runs as root outside the graphical login, run the user-session check after installation:

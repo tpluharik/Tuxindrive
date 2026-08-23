@@ -126,6 +126,10 @@ Validate on a clean supported device for every platform:
   searchable/importable, and the branded launcher icon is present;
 - Windows/macOS: verify installer/DMG, launch-at-login, keyring, mount helper,
   uninstall, and portable behavior where applicable.
+- Desktop search: verify ordinary and paused roots are found without reading
+  contents, excluded paths and symlinks remain absent, stale results are
+  pruned after a complete refresh, streaming mounts are not traversed, and an
+  item moved outside its configured root cannot be opened from an old result.
 
 Record Git commit, tag, workflow run, Release URL, package hashes, signing-key
 public fingerprint, and validation results in the release notes.

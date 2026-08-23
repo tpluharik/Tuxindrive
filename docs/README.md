@@ -23,6 +23,7 @@ facts are identified by version; planned work is never described as shipped.
 | Server operators | [Server preview](SERVER.md) | Headless roles, `.deb` installation, API, client feature flag, quotas, TLS and limitations. |
 | Contributors | [Contributing](../CONTRIBUTING.md) | Development workflow and pull-request expectations. |
 | Release users | [Platform channels](../releases/README.md) | Stable updater manifests and durable installer locations. |
+| Community maintainers | [0.26.23 announcement notes](ANNOUNCEMENT_0.26.23.md) | Verified release facts, short social drafts and answers to common questions. |
 
 ## Feature and history references
 
@@ -30,6 +31,7 @@ facts are identified by version; planned work is never described as shipped.
 - [Changelog](../CHANGELOG.md) — release-by-release history.
 - [Security policy](../SECURITY.md) — supported releases and private vulnerability reporting.
 - [Release channel layout](../releases/README.md) — durable package and manifest locations.
+- [0.26.23 announcement notes](ANNOUNCEMENT_0.26.23.md) — factual, reusable community-release text.
 
 ## Documentation conventions
 

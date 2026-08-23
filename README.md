@@ -12,6 +12,8 @@ TuxInDrive is a native Linux, Windows, macOS and Android client for **Google Dri
 
 📚 **[Complete documentation index](docs/README.md)** · 📘 **[Illustrated user guide](docs/USER_GUIDE.md)** · 🏗️ **[Technical architecture](docs/ARCHITECTURE.md)**
 
+Release maintainers can reuse the factual [0.26.23 community announcement notes](docs/ANNOUNCEMENT_0.26.23.md) when inviting testers and contributors.
+
 ⚙️ **[Configuration](docs/CONFIGURATION.md)** · 🩺 **[Operations](docs/OPERATIONS.md)** · 📦 **[Release process](docs/RELEASES.md)** · 🧪 **[Testing](docs/TESTING.md)** · 🛡️ **[Security](docs/SECURITY_HARDENING.md)** · 💡 **[Roadmap](docs/ROADMAP.md)** · 📝 **[History](CHANGELOG.md)**
 
 🔐 **[Security policy, trust boundaries, and vulnerability reporting](SECURITY.md)**
