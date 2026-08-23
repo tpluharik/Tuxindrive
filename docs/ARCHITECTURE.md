@@ -1,6 +1,6 @@
 # TuxInDrive architecture
 
-This document describes how TuxInDrive 0.26.23 is implemented. It complements
+This document describes how TuxInDrive 0.26.24 is implemented. It complements
 the task-oriented [user guide](USER_GUIDE.md), persisted-field
 [configuration reference](CONFIGURATION.md), and threat-focused
 [security guide](SECURITY_HARDENING.md).
@@ -66,6 +66,21 @@ window query the last committed snapshot while a background refresh runs.
 Streaming/FUSE jobs are excluded so index construction cannot enumerate a
 remote directory or hydrate content. Opening a result re-resolves it, rejects a
 new symbolic link, and confirms confinement to the indexed root.
+
+`file_preview.py` is an opt-in selected-result path and is not called by index
+construction or ordinary search. The search dialog gates it behind a
+non-persistent, default-off feature switch, reuses the live root-confinement
+check, and performs parsing on a worker thread. A monotonically increasing
+request serial prevents a slow prior selection from replacing a newer preview
+or repopulating a disabled/closed panel.
+
+The preview service opens regular files with no-follow semantics and bounded
+reads. Text and image inputs have fixed limits. ZIP-based office documents
+have entry-count, member-size, expanded-size and compression-ratio limits and
+use `defusedxml`; archive paths and duplicates are rejected. Optional PDF text
+extraction receives a private temporary copy, a fixed three-page argument
+list, an eight-second timeout and no shell. GTK decodes image bytes only after
+the 32 MiB boundary and scales dimensions for the panel.
 
 ## Persisted model
 

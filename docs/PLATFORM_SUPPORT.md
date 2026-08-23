@@ -1,6 +1,6 @@
 # Platform support and adaptive installation
 
-TuxInDrive 0.26.23 publishes packages for Debian-family Linux, Windows x64, macOS and Android. Linux, Windows and macOS use the same GTK desktop UI; Android uses a Material mobile UI backed by rclone's in-process gomobile library. The main desktop window remains freely resizable; dialogs open at 92% of the active monitor work area and keep oversized content reachable through local scrolling. Android Settings is vertically scrollable. Credentials remain in GNOME Secret Service, Windows Credential Manager, macOS Keychain, or Android's private application sandbox. A missing optional integration disables only that feature. Package locations and updater behavior are documented in [Release process](RELEASES.md).
+TuxInDrive 0.26.24 publishes packages for Debian-family Linux, Windows x64, macOS and Android. Linux, Windows and macOS use the same GTK desktop UI; Android uses a Material mobile UI backed by rclone's in-process gomobile library. The main desktop window remains freely resizable; dialogs open at 92% of the active monitor work area and keep oversized content reachable through local scrolling. Android Settings is vertically scrollable. Credentials remain in GNOME Secret Service, Windows Credential Manager, macOS Keychain, or Android's private application sandbox. A missing optional integration disables only that feature. Package locations and updater behavior are documented in [Release process](RELEASES.md).
 
 ## Compatibility matrix
 
@@ -44,16 +44,23 @@ its embedded rclone core while serializing browse/sync/update work.
 
 ## Search availability
 
-Linux, Windows, and macOS provide the 0.26.23 private cross-folder filename
+Linux, Windows, and macOS provide the 0.26.24 private cross-folder filename
 search. It indexes metadata from ordinary local synchronization roots and does
 not enumerate streaming/FUSE mounts. Search therefore remains usable offline
 and cannot hydrate files-on-demand content merely by opening the search window.
 
-Android 0.26.23 can browse connected cloud roots through its native Files page,
+Android 0.26.24 can browse connected cloud roots through its native Files page,
 but it does not yet build the desktop SQLite index or provide one query across
 all Storage Access Framework trees. Android document-provider search remains a
 separate roadmap item; documentation must not imply desktop search parity until
 that native implementation ships.
+
+The Linux, Windows and macOS search window also has a default-off
+selected-result preview. Text, images and ZIP-based office formats are handled
+by the desktop runtime with bounded local reads. PDF text additionally needs
+`pdftotext` (recommended as `poppler-utils` by the Debian package); absence of
+that optional tool disables only PDF text preview. Android preview parity is
+not part of this change.
 
 ## Checks performed
 

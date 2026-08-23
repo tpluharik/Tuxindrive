@@ -2,6 +2,18 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.24 — opt-in search-result previews
+
+- Added an **Enable preview** feature flag inside the desktop search window;
+  it is off for every new window and reads only the result the user selects.
+- Added bounded local previews for UTF-8/UTF-16 text and common source files,
+  images, PDF text, ODT/ODS, DOCX/XLSX and PPTX while keeping the metadata
+  search index content-free.
+- Confined preview paths to their synchronized root, rejected symbolic links,
+  bounded input/archive/output sizes and compression ratios, parsed XML with
+  `defusedxml`, and limited optional PDF extraction to three pages and eight
+  seconds without invoking a shell.
+
 ## 0.26.23 — private synchronized-folder search
 
 - Added one desktop search window for file and folder names across every

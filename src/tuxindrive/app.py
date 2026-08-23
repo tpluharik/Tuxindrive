@@ -93,6 +93,7 @@ from .bandwidth import GlobalBandwidthController, normalize_bandwidth_limit
 from .server_client import ServerClient, ServerClientError, normalize_server_url
 from .server_credentials import store_server_token
 from .search_index import FolderSearchIndex, IndexStats, SearchResult
+from .file_preview import PreviewData, PreviewError, preview_path
 
 try:  # Ubuntu's AppIndicator extension provides Windows-like tray controls.
     gi.require_version("AyatanaAppIndicator3", "0.1")
@@ -2960,6 +2961,7 @@ class FolderSearchDialog(ResponsiveDialog):
         self.controller = controller
         self._results: list[SearchResult] = []
         self._query_source = 0
+        self._preview_serial = 0
         self._closed = False
         self.add_button("Close", Gtk.ResponseType.CLOSE)
         self.connect("response", lambda dialog, _response: dialog.destroy())
@@ -2989,6 +2991,12 @@ class FolderSearchDialog(ResponsiveDialog):
         refresh.set_tooltip_text("Refresh the local index")
         refresh.connect("clicked", self._refresh_index)
         search_row.pack_start(refresh, False, False, 0)
+        self.preview_enabled = Gtk.CheckButton(label="Enable preview")
+        self.preview_enabled.set_tooltip_text(
+            "Off by default. When enabled, only the selected local file is read within strict limits."
+        )
+        self.preview_enabled.connect("toggled", self._preview_toggled)
+        search_row.pack_start(self.preview_enabled, False, False, 0)
         content.pack_start(search_row, False, False, 0)
 
         self.store = Gtk.ListStore(str, str, str, str)
@@ -3002,11 +3010,44 @@ class FolderSearchDialog(ResponsiveDialog):
             column.set_expand(index == 2)
             self.view.append_column(column)
         self.view.connect("row-activated", lambda *_args: self._open_selected())
+        self.view.get_selection().connect("changed", self._selection_changed)
         result_scroll = Gtk.ScrolledWindow()
         result_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         result_scroll.set_min_content_height(260)
         result_scroll.add(self.view)
-        content.pack_start(result_scroll, True, True, 0)
+
+        self.preview_frame = Gtk.Frame(label="Selected-file preview")
+        preview_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        preview_box.set_border_width(10)
+        self.preview_meta = Gtk.Label(xalign=0)
+        self.preview_meta.set_line_wrap(True)
+        preview_box.pack_start(self.preview_meta, False, False, 0)
+        self.preview_stack = Gtk.Stack()
+        self.preview_text = Gtk.TextView()
+        self.preview_text.set_editable(False)
+        self.preview_text.set_cursor_visible(False)
+        self.preview_text.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        self.preview_text.set_left_margin(10)
+        self.preview_text.set_right_margin(10)
+        self.preview_text.set_top_margin(10)
+        self.preview_text.set_bottom_margin(10)
+        preview_text_scroll = Gtk.ScrolledWindow()
+        preview_text_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        preview_text_scroll.add(self.preview_text)
+        self.preview_stack.add_named(preview_text_scroll, "text")
+        self.preview_image = Gtk.Image()
+        preview_image_scroll = Gtk.ScrolledWindow()
+        preview_image_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        preview_image_scroll.add_with_viewport(self.preview_image)
+        self.preview_stack.add_named(preview_image_scroll, "image")
+        preview_box.pack_start(self.preview_stack, True, True, 0)
+        self.preview_frame.add(preview_box)
+
+        result_split = Gtk.Paned.new(Gtk.Orientation.HORIZONTAL)
+        result_split.set_position(530)
+        result_split.pack1(result_scroll, True, False)
+        result_split.pack2(self.preview_frame, True, False)
+        content.pack_start(result_split, True, True, 0)
 
         footer = Gtk.Box(spacing=8)
         self.status = Gtk.Label(xalign=0)
@@ -3018,6 +3059,7 @@ class FolderSearchDialog(ResponsiveDialog):
         content.pack_start(footer, False, False, 0)
         self.status.set_text(f"{self.controller.search_index.count()} indexed items. Type to search.")
         self.show_all()
+        self.preview_frame.hide()
         self.search_entry.grab_focus()
 
     def _search_changed(self, _entry: Gtk.SearchEntry) -> None:
@@ -3027,6 +3069,7 @@ class FolderSearchDialog(ResponsiveDialog):
 
     def _destroyed(self, _dialog: Gtk.Widget) -> None:
         self._closed = True
+        self._preview_serial += 1
         if self._query_source:
             GLib.source_remove(self._query_source)
             self._query_source = 0
@@ -3080,22 +3123,118 @@ class FolderSearchDialog(ResponsiveDialog):
         self._run_search()
         return False
 
-    def _open_selected(self) -> None:
+    def _selection_changed(self, _selection: Gtk.TreeSelection) -> None:
+        if self.preview_enabled.get_active():
+            self._preview_selected()
+
+    def _preview_toggled(self, button: Gtk.CheckButton) -> None:
+        self._preview_serial += 1
+        if not button.get_active():
+            self.preview_frame.hide()
+            self.preview_meta.set_text("")
+            self.preview_text.get_buffer().set_text("")
+            self.preview_image.clear()
+            return
+        self.preview_frame.show_all()
+        self._preview_selected()
+
+    def _selected_result(self) -> SearchResult | None:
         model, selected = self.view.get_selection().get_selected()
         if selected is None:
+            return None
+        index = model.get_path(selected).get_indices()[0]
+        return self._results[index] if index < len(self._results) else None
+
+    @staticmethod
+    def _resolved_result(result: SearchResult) -> Path:
+        if result.local_path.is_symlink():
+            raise ValueError("The indexed item was replaced by a symbolic link")
+        root = result.root.resolve(strict=True)
+        target = result.local_path.resolve(strict=True)
+        if target != root and root not in target.parents:
+            raise ValueError("The indexed path is outside its synchronized folder")
+        return target
+
+    def _preview_selected(self) -> None:
+        self._preview_serial += 1
+        serial = self._preview_serial
+        result = self._selected_result()
+        self.preview_image.clear()
+        self.preview_stack.set_visible_child_name("text")
+        if result is None:
+            self.preview_meta.set_text("Select a result to preview it.")
+            self.preview_text.get_buffer().set_text(
+                "Preview is opt-in and reads only the selected local item. Search indexing remains metadata-only."
+            )
+            return
+        try:
+            target = self._resolved_result(result)
+        except (OSError, ValueError) as exc:
+            self.preview_meta.set_text("Preview unavailable")
+            self.preview_text.get_buffer().set_text(f"This item is no longer available locally: {exc}")
+            return
+        self.preview_meta.set_text(f"Loading a bounded local preview of {result.name}…")
+        self.preview_text.get_buffer().set_text("")
+
+        def ready(data: PreviewData | None, error: Exception | None) -> bool:
+            if self._closed or serial != self._preview_serial or not self.preview_enabled.get_active():
+                return False
+            if error:
+                self.preview_meta.set_text("Preview unavailable")
+                self.preview_text.get_buffer().set_text(str(error))
+                self.preview_stack.set_visible_child_name("text")
+                return False
+            assert data is not None
+            note = " · truncated to the preview limit" if data.truncated else ""
+            self.preview_meta.set_text(f"{data.format_label}{note} · local read only")
+            if data.kind == "image":
+                try:
+                    pixbuf = self._preview_pixbuf(data.image_bytes)
+                except (GLib.Error, PreviewError, ValueError) as exc:
+                    self.preview_text.get_buffer().set_text(f"Image preview could not be rendered safely: {exc}")
+                    self.preview_stack.set_visible_child_name("text")
+                else:
+                    self.preview_image.set_from_pixbuf(pixbuf)
+                    self.preview_stack.set_visible_child_name("image")
+            else:
+                self.preview_text.get_buffer().set_text(data.text)
+                self.preview_stack.set_visible_child_name("text")
+            return False
+
+        _run_thread(preview_path, ready, target)
+
+    @staticmethod
+    def _preview_pixbuf(content: bytes):
+        if not content:
+            raise PreviewError("The image is empty")
+        loader = GdkPixbuf.PixbufLoader()
+        invalid: list[str] = []
+
+        def prepared(current, width: int, height: int) -> None:
+            if width <= 0 or height <= 0 or width > 100_000 or height > 100_000:
+                invalid.append("invalid image dimensions")
+                current.set_size(1, 1)
+                return
+            scale = min(1.0, 720 / width, 720 / height)
+            current.set_size(max(1, int(width * scale)), max(1, int(height * scale)))
+
+        loader.connect("size-prepared", prepared)
+        loader.write(content)
+        loader.close()
+        if invalid:
+            raise PreviewError(invalid[0])
+        pixbuf = loader.get_pixbuf()
+        if pixbuf is None:
+            raise PreviewError("The image decoder produced no preview")
+        return pixbuf
+
+    def _open_selected(self) -> None:
+        result = self._selected_result()
+        if result is None:
             self.status.set_text("Select a result first.")
             return
-        index = model.get_path(selected).get_indices()[0]
-        if index >= len(self._results):
-            return
-        result = self._results[index]
         try:
-            if result.local_path.is_symlink():
-                raise ValueError("The indexed item was replaced by a symbolic link")
-            root = result.root.resolve(strict=True)
-            target = result.local_path.resolve(strict=True)
-            if target != root and root not in target.parents:
-                raise ValueError("The indexed path is outside its synchronized folder")
+            target = self._resolved_result(result)
         except (OSError, ValueError) as exc:
             self.status.set_text(f"This item is no longer available locally: {exc}")
             return

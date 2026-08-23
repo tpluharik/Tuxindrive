@@ -1,7 +1,7 @@
 # TuxInDrive operations guide
 
 This guide covers normal administration, health checks, traffic policy,
-backup, recovery, and incident response for TuxInDrive 0.26.23. User-facing
+backup, recovery, and incident response for TuxInDrive 0.26.24. User-facing
 procedures are in the [user guide](USER_GUIDE.md); persisted fields and exact
 paths are in [Configuration](CONFIGURATION.md).
 
@@ -87,6 +87,15 @@ platform Cache root, and restart. Do not remove `config.json`, provider state,
 bisync listings, history, or streaming cache as part of search repair. A root
 larger than 250,000 entries reports a safety-limit note and keeps the previous
 complete unseen rows; split that mapping if complete local discovery is needed.
+
+Search previews are not cached and cannot be repaired by deleting the search
+index. If a preview is unavailable, confirm that the result is an ordinary
+local synchronized file, not a symbolic link or files-on-demand path, and is
+below the displayed limit. PDF text needs `pdftotext` (`poppler-utils` on
+Debian/Ubuntu); other supported document previews use the packaged Python
+runtime. Turning **Enable preview** off cancels display of outstanding work and
+clears the panel. Never relax the archive, size, page or timeout limits to make
+an untrusted document render.
 
 Record these facts with an incident: application/platform version, provider,
 job mode and direction, first failure time, account status, current network

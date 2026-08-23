@@ -1,7 +1,7 @@
 # TuxInDrive configuration reference
 
 This reference describes the persisted desktop configuration in TuxInDrive
-0.26.23. Normal changes should be made in **Settings**, **Connect account**, or
+0.26.24. Normal changes should be made in **Settings**, **Connect account**, or
 **Add/Edit folder**. Stop TuxInDrive and make a backup before manually editing
 JSON; a syntactically valid but inconsistent mapping can still synchronize the
 wrong location.
@@ -34,6 +34,12 @@ credential helper/SSH agent; Proton sessions remain in Secret Service.
 contains local names, relative paths, file type, size and timestamps—never file
 content or credentials. Deleting it while TuxInDrive is stopped is safe; the
 next start reconstructs it from fully synchronized local roots.
+
+The search-window **Enable preview** feature flag is intentionally
+session-local and default-off. It is not written to `config.json`: opening a
+new search window always requires an explicit opt-in before any selected file
+content is read. Preview output is not stored in the SQLite index or another
+cache.
 
 ## Top-level document
 

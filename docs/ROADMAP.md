@@ -7,7 +7,15 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.23
+## Current baseline: 0.26.24
+
+### Completed in 0.26.24: bounded search previews
+
+The desktop search window has a default-off **Enable preview** switch for one
+selected fully synchronized local result. Major text, image, PDF and office
+formats use fixed read/output/archive/page/time bounds; this does not turn the
+metadata-only index into content indexing. Android preview parity remains
+future platform work.
 
 ### Completed in 0.26.23: private synchronized-folder search
 
@@ -196,7 +204,7 @@ serializes native network work when required, jitters scans, and atomically
 reserves incremental jobs before network waits. The device traffic panel
 remains available behind a Settings feature flag.
 
-The unreleased aggregate-protection revision closes the remaining process-local
+The aggregate-protection revision closes the remaining process-local
 limit gap: it reserves configurable headroom, budgets sync and responsive
 update lanes plus all enabled streaming mounts, and makes server agent/relay
 traffic share one controller. This prevents parallel rclone processes from

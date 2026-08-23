@@ -58,6 +58,7 @@ class PackagingTests(unittest.TestCase):
         self.assertIn("openssh-client", control)
         self.assertIn("qrencode", control)
         self.assertIn("zbar-tools", control)
+        self.assertIn("poppler-utils", control)
         self.assertIn('find_spec("tuxindrive.peer")', build_script)
         self.assertIn('docs/TESTING.md', build_script)
         self.assertIn('docs/ROADMAP.md', build_script)
