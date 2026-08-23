@@ -1,8 +1,8 @@
 {
-  "version": "0.26.24",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.24/TuxInDrive-0.26.24-windows-x64-setup.exe",
-  "sha256": "f71a8e02f687b2035152da276da323277c1679a3ddc0aa8e9b649948cfd1771b",
-  "notes": "Bounded search previews for major supported formats",
-  "expires_at": "2026-11-21T07:33:47.342288+00:00",
-  "signature": "anOjnXURCgz9j9WNrspEIF/1vYnolSq0RfNb9fz21v9X55v+hIh60zCbU21ntT7q2CscYPeIJLtqcBxy3wnXBw=="
+  "version": "0.26.25",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.25/TuxInDrive-0.26.25-windows-x64-setup.exe",
+  "sha256": "22dc1b1f8e0b4a92dd7a77ce7893ba9fc6f41d0a24b2038681bffc65fe5282a2",
+  "notes": "Secure automatic Android updates",
+  "expires_at": "2026-11-21T16:29:48.822800+00:00",
+  "signature": "Qt/fzXTn5UtY+2yuYeDphibaLL468agrT3tOHzGULX0+F3XvsCmO3IgrMF7D/QFZeFzwx4JmOI35bCJsCPe3CQ=="
 }
