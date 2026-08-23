@@ -7,7 +7,15 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.24
+## Current baseline: 0.26.25
+
+### Completed in 0.26.25: secure automatic Android updates
+
+The official sideload APK now schedules bounded signed-channel checks, securely
+downloads and atomically caches a newer verified APK, and notifies the user when
+Android can install it. The setting is user-controllable and defaults on for
+the sideload distribution. Android's installer approval and per-source install
+permission remain mandatory; store builds keep self-update disabled.
 
 ### Completed in 0.26.24: bounded search previews
 

@@ -216,6 +216,7 @@ class MobileRepository(context: Context) {
     fun downloadUpdate(update: AndroidUpdate) =
         MobileNetworkController.exclusive { updater.download(update) }
     fun installUpdate(packageFile: File) = updater.openInstaller(packageFile)
+    fun updateInstallerIntent(packageFile: File) = updater.installerIntent(packageFile)
     fun importConfiguration(uri: Uri) = core.importConfiguration(uri)
     fun importProfile(uri: Uri, password: String) = core.importProfile(uri, password)
     fun importProfile(bytes: ByteArray, password: String) = core.importProfile(bytes, password)
@@ -247,6 +248,17 @@ class MobileRepository(context: Context) {
     fun wifiOnly(): Boolean = preferences.getBoolean("wifi-only", true)
     fun chargingOnly(): Boolean = preferences.getBoolean("charging-only", false)
     fun automaticSync(): Boolean = preferences.getBoolean("automatic-sync", false)
+    fun automaticUpdates(): Boolean = BuildConfig.SELF_UPDATE_ENABLED &&
+        preferences.getBoolean("automatic-updates", true)
+    fun automaticUpdateStatus(): String =
+        preferences.getString("automatic-update-status", "").orEmpty()
+    fun pendingUpdatePackage(): Pair<String, File>? {
+        val version = preferences.getString("pending-update-version", "").orEmpty()
+        val sha256 = preferences.getString("pending-update-sha256", "").orEmpty()
+        val path = preferences.getString("pending-update-path", "").orEmpty()
+        val packageFile = updater.verifiedCachedPackage(version, sha256, path) ?: return null
+        return version to packageFile
+    }
     fun showNetworkUsage(): Boolean = preferences.getBoolean("show-network-usage", true)
     fun showActivityLog(): Boolean = preferences.getBoolean("show-activity-log", true)
     fun bandwidthLimit(): String = preferences.getString("global-bandwidth-limit", "10M").orEmpty()
@@ -281,6 +293,16 @@ class MobileRepository(context: Context) {
 
     fun setShowActivityLog(enabled: Boolean) {
         preferences.edit().putBoolean("show-activity-log", enabled).apply()
+    }
+
+    fun configureAutomaticUpdates(enabled: Boolean, wifiOnly: Boolean) {
+        val allowed = BuildConfig.SELF_UPDATE_ENABLED && enabled
+        preferences.edit().putBoolean("automatic-updates", allowed).apply()
+        AndroidUpdateWorker.schedule(appContext, allowed, wifiOnly)
+    }
+
+    fun scheduleAutomaticUpdates() {
+        AndroidUpdateWorker.schedule(appContext, automaticUpdates(), wifiOnly())
     }
 
     fun enqueueSync(wifiOnly: Boolean, chargingOnly: Boolean) {

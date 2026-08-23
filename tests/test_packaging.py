@@ -233,6 +233,19 @@ class PackagingTests(unittest.TestCase):
         self.assertIn('android:usesCleartextTraffic="false"', manifest)
         self.assertTrue(Path("android/app/src/main/res/xml/network_security_config.xml").is_file())
         self.assertTrue(Path("android/app/src/main/java/io/github/tuxindrive/mobile/NetworkUsageMeter.kt").is_file())
+        update_worker = Path(
+            "android/app/src/main/java/io/github/tuxindrive/mobile/AndroidUpdateWorker.kt"
+        ).read_text(encoding="utf-8")
+        self.assertIn("PeriodicWorkRequestBuilder<AndroidUpdateWorker>", update_worker)
+        self.assertIn("repository.checkUpdate()", update_worker)
+        self.assertIn("repository.downloadUpdate(update)", update_worker)
+        self.assertIn("repository.updateInstallerIntent(packageFile)", update_worker)
+        self.assertIn("setRequiresBatteryNotLow(true)", update_worker)
+        android_updater = Path(
+            "android/app/src/main/java/io/github/tuxindrive/mobile/AndroidUpdater.kt"
+        ).read_text(encoding="utf-8")
+        self.assertIn("sha256(target) == update.sha256", android_updater)
+        self.assertIn("verified update cache", android_updater)
         self.assertTrue(Path("android/app/src/test/java/io/github/tuxindrive/mobile/MobileValidationTest.kt").is_file())
 
     def test_platform_release_channels_are_durable_and_version_bound(self):

@@ -2,6 +2,20 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.25 — secure automatic Android updates
+
+- Added default-on, user-configurable periodic update checks to the official
+  Android sideload build, constrained to an available network and a battery
+  that is not low.
+- Reused the existing expiring Ed25519-signed Android manifest and verified the
+  exact APK digest before atomically retaining a ready-to-install package.
+- Added an update notification that opens Android's package installer. Android
+  continues to require the user's installation approval and unknown-source
+  permission; TuxInDrive never attempts a silent or privileged installation.
+- Reused an already downloaded APK only after checking its SHA-256 again and
+  confined installer intents to the application's private verified-update
+  cache.
+
 ## 0.26.24 — opt-in search-result previews
 
 - Added an **Enable preview** feature flag inside the desktop search window;

@@ -1,6 +1,6 @@
 # Platform support and adaptive installation
 
-TuxInDrive 0.26.24 publishes packages for Debian-family Linux, Windows x64, macOS and Android. Linux, Windows and macOS use the same GTK desktop UI; Android uses a Material mobile UI backed by rclone's in-process gomobile library. The main desktop window remains freely resizable; dialogs open at 92% of the active monitor work area and keep oversized content reachable through local scrolling. Android Settings is vertically scrollable. Credentials remain in GNOME Secret Service, Windows Credential Manager, macOS Keychain, or Android's private application sandbox. A missing optional integration disables only that feature. Package locations and updater behavior are documented in [Release process](RELEASES.md).
+TuxInDrive 0.26.25 publishes packages for Debian-family Linux, Windows x64, macOS and Android. Linux, Windows and macOS use the same GTK desktop UI; Android uses a Material mobile UI backed by rclone's in-process gomobile library. The main desktop window remains freely resizable; dialogs open at 92% of the active monitor work area and keep oversized content reachable through local scrolling. Android Settings is vertically scrollable. Credentials remain in GNOME Secret Service, Windows Credential Manager, macOS Keychain, or Android's private application sandbox. A missing optional integration disables only that feature. Package locations and updater behavior are documented in [Release process](RELEASES.md).
 
 ## Compatibility matrix
 
@@ -35,6 +35,11 @@ The desktop baseline is Ubuntu 24.04/26.04, Debian 12/13, Windows 10/11 x64 and 
 - Windows CI produces a per-user Inno Setup executable and portable ZIP. Production releases need an Authenticode certificate.
 - macOS CI produces an ad-hoc signed application DMG. Public distribution needs an Apple Developer ID, hardened-runtime signing and notarization.
 - Android branch CI produces an installable debug APK; version tags require the encrypted release keystore and produce an upgrade-compatible signed APK. Store distribution may require a separate upload-key policy.
+- The official sideload APK checks the signed Android channel automatically,
+  downloads only on an eligible network while the battery is not low, and
+  notifies the user when a verified package is ready. Android still presents
+  its system installer and requires user approval. The feature can be disabled
+  in mobile Settings and remains absent from store builds.
 - No private signing key is stored in the repository. A missing signing identity must never be silently replaced for a production release.
 
 The shared global bandwidth controller applies on every platform. Desktop
@@ -44,12 +49,12 @@ its embedded rclone core while serializing browse/sync/update work.
 
 ## Search availability
 
-Linux, Windows, and macOS provide the 0.26.24 private cross-folder filename
+Linux, Windows, and macOS provide the 0.26.25 private cross-folder filename
 search. It indexes metadata from ordinary local synchronization roots and does
 not enumerate streaming/FUSE mounts. Search therefore remains usable offline
 and cannot hydrate files-on-demand content merely by opening the search window.
 
-Android 0.26.24 can browse connected cloud roots through its native Files page,
+Android 0.26.25 can browse connected cloud roots through its native Files page,
 but it does not yet build the desktop SQLite index or provide one query across
 all Storage Access Framework trees. Android document-provider search remains a
 separate roadmap item; documentation must not imply desktop search parity until

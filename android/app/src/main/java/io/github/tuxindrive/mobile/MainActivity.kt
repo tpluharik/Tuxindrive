@@ -1,5 +1,8 @@
 package io.github.tuxindrive.mobile
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -21,6 +24,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.Dispatchers
@@ -66,6 +70,19 @@ private fun TuxInDriveMobile(repository: MobileRepository) {
     var networkUsage by remember { mutableStateOf(networkMeter.current()) }
     var showNetworkUsage by remember { mutableStateOf(repository.showNetworkUsage()) }
     var showActivityLog by remember { mutableStateOf(repository.showActivityLog()) }
+    val notificationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { }
+    LaunchedEffect(Unit) {
+        if (
+            BuildConfig.SELF_UPDATE_ENABLED && repository.automaticUpdates() &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
     LaunchedEffect(networkMeter, showNetworkUsage) {
         if (showNetworkUsage) {
             while (true) {
@@ -463,6 +480,14 @@ private fun SettingsScreen(
     onShowNetworkUsageChange: (Boolean) -> Unit,
     onShowActivityLogChange: (Boolean) -> Unit,
 ) {
+    val repositoryContext = LocalContext.current
+    val updateNotificationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (!granted) {
+            // The verified package remains available through the manual update action.
+        }
+    }
     var wifiOnly by remember { mutableStateOf(repository.wifiOnly()) }
     var chargingOnly by remember { mutableStateOf(repository.chargingOnly()) }
     var bandwidthLimit by remember { mutableStateOf(repository.bandwidthLimit()) }
@@ -473,8 +498,14 @@ private fun SettingsScreen(
         mutableStateOf(repository.bandwidthHeadroomPercent().toString())
     }
     var engine by remember { mutableStateOf("Checking…") }
-    var updateStatus by remember { mutableStateOf("TuxInDrive ${BuildConfig.VERSION_NAME}") }
+    var pendingUpdate by remember { mutableStateOf(repository.pendingUpdatePackage()) }
+    var updateStatus by remember {
+        mutableStateOf(
+            repository.automaticUpdateStatus().ifBlank { "TuxInDrive ${BuildConfig.VERSION_NAME}" },
+        )
+    }
     var updateBusy by remember { mutableStateOf(false) }
+    var automaticUpdates by remember { mutableStateOf(repository.automaticUpdates()) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         engine = runCatching { withContext(Dispatchers.IO) { repository.engineVersion() } }.getOrElse { "Unavailable" }
@@ -551,29 +582,66 @@ private fun SettingsScreen(
             }
         }
         item {
+            if (BuildConfig.SELF_UPDATE_ENABLED) {
+                SettingSwitch(
+                    "Automatic app updates",
+                    "Securely check and download signed releases; Android asks before installation",
+                    automaticUpdates,
+                ) { enabled ->
+                    automaticUpdates = enabled
+                    repository.configureAutomaticUpdates(enabled, wifiOnly)
+                    if (
+                        enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                        ContextCompat.checkSelfPermission(
+                            repositoryContext,
+                            Manifest.permission.POST_NOTIFICATIONS,
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        updateStatus = "Allow notifications to be told when an update is ready"
+                        updateNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+            }
+        }
+        item {
             OutlinedButton(
                 enabled = !updateBusy,
                 onClick = {
-                    scope.launch {
-                        updateBusy = true
-                        runCatching {
-                            withContext(Dispatchers.IO) {
-                                val update = repository.checkUpdate() ?: return@withContext null
-                                update to repository.downloadUpdate(update)
-                            }
-                        }.onSuccess { result ->
-                            if (result == null) {
-                                updateStatus = "TuxInDrive ${BuildConfig.VERSION_NAME} is up to date"
-                            } else {
-                                updateStatus = "TuxInDrive ${result.first.version} verified; opening installer"
-                                repository.installUpdate(result.second)
-                            }
-                        }.onFailure { updateStatus = it.message ?: "Update check failed" }
-                        updateBusy = false
+                    val ready = pendingUpdate
+                    if (ready != null) {
+                        updateStatus = "Opening Android installer for TuxInDrive ${ready.first}"
+                        repository.installUpdate(ready.second)
+                    } else {
+                        scope.launch {
+                            updateBusy = true
+                            runCatching {
+                                withContext(Dispatchers.IO) {
+                                    val update = repository.checkUpdate() ?: return@withContext null
+                                    update to repository.downloadUpdate(update)
+                                }
+                            }.onSuccess { result ->
+                                if (result == null) {
+                                    updateStatus = "TuxInDrive ${BuildConfig.VERSION_NAME} is up to date"
+                                } else {
+                                    updateStatus = "TuxInDrive ${result.first.version} verified; opening installer"
+                                    pendingUpdate = result.first.version to result.second
+                                    repository.installUpdate(result.second)
+                                }
+                            }.onFailure { updateStatus = it.message ?: "Update check failed" }
+                            updateBusy = false
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text(if (updateBusy) "Checking and verifying…" else "Check for updates") }
+            ) {
+                Text(
+                    when {
+                        updateBusy -> "Checking and verifying…"
+                        pendingUpdate != null -> "Install verified update"
+                        else -> "Check for updates"
+                    },
+                )
+            }
         }
         item { Text(updateStatus, style = MaterialTheme.typography.bodySmall) }
         item {

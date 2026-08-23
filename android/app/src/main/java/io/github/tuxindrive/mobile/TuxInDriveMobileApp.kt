@@ -8,5 +8,6 @@ class TuxInDriveMobileApp : Application() {
     override fun onCreate() {
         super.onCreate()
         repository.initialize()
+        repository.scheduleAutomaticUpdates()
     }
 }

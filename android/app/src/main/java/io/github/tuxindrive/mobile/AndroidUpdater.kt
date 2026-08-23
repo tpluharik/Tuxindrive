@@ -68,6 +68,7 @@ class AndroidUpdater(private val context: Context) {
         val directory = File(context.cacheDir, "updates").apply { mkdirs() }
         val target = File(directory, "TuxInDrive-${update.version}-android.apk")
         val part = File(directory, "${target.name}.part")
+        if (target.isFile && sha256(target) == update.sha256) return target
         val connection = openTrustedConnection(update.url, manifest = false, readTimeout = 60_000)
         val advertisedLength = connection.contentLengthLong
         require(advertisedLength < 0 || advertisedLength <= maxPackageSize) {
@@ -134,12 +135,49 @@ class AndroidUpdater(private val context: Context) {
     }
 
     fun openInstaller(packageFile: File) {
+        context.startActivity(installerIntent(packageFile))
+    }
+
+    fun installerIntent(packageFile: File): Intent {
         require(BuildConfig.SELF_UPDATE_ENABLED) { "Self-update is disabled for this distribution" }
-        val uri = FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.files", packageFile)
-        context.startActivity(Intent(Intent.ACTION_VIEW).apply {
+        val updateDirectory = File(context.cacheDir, "updates").canonicalFile
+        val verifiedPackage = packageFile.canonicalFile
+        require(verifiedPackage.isFile && verifiedPackage.parentFile == updateDirectory) {
+            "The Android update package is not in the verified update cache"
+        }
+        val uri = FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.files", verifiedPackage)
+        return Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/vnd.android.package-archive")
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        })
+        }
+    }
+
+    fun verifiedCachedPackage(version: String, expectedSha256: String, path: String): File? {
+        if (!BuildConfig.SELF_UPDATE_ENABLED || !MobileValidation.isNewer(version, BuildConfig.VERSION_NAME)) {
+            return null
+        }
+        val updateDirectory = File(context.cacheDir, "updates").canonicalFile
+        val candidate = runCatching { File(path).canonicalFile }.getOrNull() ?: return null
+        if (
+            candidate.parentFile != updateDirectory ||
+            candidate.name != "TuxInDrive-$version-android.apk" ||
+            !candidate.isFile ||
+            !expectedSha256.matches(Regex("[0-9a-f]{64}"))
+        ) return null
+        return candidate.takeIf { sha256(it) == expectedSha256 }
+    }
+
+    private fun sha256(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input ->
+            val buffer = ByteArray(1024 * 1024)
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) break
+                digest.update(buffer, 0, count)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it.toInt() and 0xff) }
     }
 
     private fun readUrl(url: String, limit: Int): String {

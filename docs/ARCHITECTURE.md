@@ -1,6 +1,6 @@
 # TuxInDrive architecture
 
-This document describes how TuxInDrive 0.26.24 is implemented. It complements
+This document describes how TuxInDrive 0.26.25 is implemented. It complements
 the task-oriented [user guide](USER_GUIDE.md), persisted-field
 [configuration reference](CONFIGURATION.md), and threat-focused
 [security guide](SECURITY_HARDENING.md).
@@ -242,6 +242,10 @@ fixed PolicyKit helper. The helper copies into a root-only staging directory,
 rechecks digest and Debian identity, and invokes APT. Windows opens the verified
 installer; macOS opens the verified DMG. Android implements the same signature,
 origin, filename, size and digest checks in `AndroidUpdater.kt`.
+`AndroidUpdateWorker.kt` schedules default-on checks for the sideload flavor,
+applies network and battery constraints, reuses only a digest-matching cached
+APK, and posts an installer notification. The system package installer retains
+the final approval boundary. Store builds compile with self-update disabled.
 
 ## Android implementation
 
@@ -253,6 +257,8 @@ Android is a native Compose application rather than a GTK port:
 - `RcloneCore.kt` wraps the embedded gomobile RPC API, private rclone config,
   browsing, bisync and the runtime bandwidth limit.
 - `MobileSyncWorker.kt` uses WorkManager constraints and a foreground service.
+- `AndroidUpdateWorker.kt` performs rate-limited signed-channel checks and
+  verified atomic downloads without granting silent-install privileges.
   It mirrors a Storage Access Framework tree into app-private storage, checks
   deletion thresholds, runs bisync, then reconciles back to the selected tree.
 - `MobileNetworkController` serializes browsing, sync and update downloads.
