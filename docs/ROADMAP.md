@@ -7,7 +7,15 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.22
+## Current baseline: 0.26.23
+
+### Completed in 0.26.23: private synchronized-folder search
+
+The desktop now maintains a bounded, rebuildable, metadata-only local index
+across configured ordinary synchronization roots and exposes one search window
+with safe result opening. It never indexes contents or traverses streaming
+mounts, preserving the idle-network and files-on-demand boundaries. Native
+Android document-provider search remains separate future platform work.
 
 ### Completed in 0.26.22: monitor-safe responsive dialogs
 

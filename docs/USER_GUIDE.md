@@ -2,11 +2,11 @@
 
 <p align="center"><img src="../branding/tuxindrive-logo.png" width="150" alt="TuxInDrive circular black-and-white penguin logo with a red bow tie"></p>
 
-This guide covers TuxInDrive 0.26.22 on Linux, Windows, macOS and Android. Windows and macOS retain the Linux GTK desktop layout, while Android reorganizes accounts, synchronized folders, cloud files, activity and settings for touch displays. Platform-specific installation and signing details are in [Platform support](PLATFORM_SUPPORT.md). Administrators and developers can continue with the [documentation index](README.md), [operations guide](OPERATIONS.md), and [architecture reference](ARCHITECTURE.md).
+This guide covers TuxInDrive 0.26.23 on Linux, Windows, macOS and Android. Windows and macOS retain the Linux GTK desktop layout, while Android reorganizes accounts, synchronized folders, cloud files, activity and settings for touch displays. Platform-specific installation and signing details are in [Platform support](PLATFORM_SUPPORT.md). Administrators and developers can continue with the [documentation index](README.md), [operations guide](OPERATIONS.md), and [architecture reference](ARCHITECTURE.md).
 
 Credentials for rclone-backed providers are kept in rclone's authenticated encrypted configuration. TuxInDrive generates its configuration key locally and stores it in GNOME Secret Service; existing rclone configurations already encrypted by an advanced user are left under that user's password-command setup. Proton's official CLI separately stores its browser session in Secret Service under `ch.proton.drive/drive-sdk-cli`; TuxInDrive never reads or exports it. Do not delete either secret until the related accounts have been disconnected.
 
-Version 0.26.22 is the supported security baseline. Upgrade older installations before reconnecting cloud or peer accounts. See [Security hardening and secure operation](SECURITY_HARDENING.md) for the complete control inventory and post-upgrade checklist.
+Version 0.26.23 is the supported security baseline. Upgrade older installations before reconnecting cloud or peer accounts. See [Security hardening and secure operation](SECURITY_HARDENING.md) for the complete control inventory and post-upgrade checklist.
 
 ### Upgrading from TuxDrive
 
@@ -19,14 +19,14 @@ The 0.25.0 upgrade changes all visible product names to TuxInDrive. Existing pri
 Download the package for your platform. On Ubuntu or Debian, install it with one command:
 
 ```bash
-sudo apt install ./tuxindrive_0.26.22_all.deb
+sudo apt install ./tuxindrive_0.26.23_all.deb
 ```
 
 Launch **TuxInDrive** from Ubuntu's application menu. TuxInDrive remains active in the system tray when its window is closed. On first start it verifies or installs its private cloud transfer engine.
 
 ### Windows and macOS
 
-Run the Windows setup executable or drag TuxInDrive from the macOS DMG to Applications. Both packages open the same account sidebar, synchronized-folder cards, settings and dialogs as Linux. Windows stores secrets in Credential Manager and needs WinFsp for streaming drives; macOS uses Keychain and needs macFUSE. File-manager badges remain Linux/Nautilus-only in 0.26.22.
+Run the Windows setup executable or drag TuxInDrive from the macOS DMG to Applications. Both packages open the same account sidebar, synchronized-folder cards, settings and dialogs as Linux. Windows stores secrets in Credential Manager and needs WinFsp for streaming drives; macOS uses Keychain and needs macFUSE. File-manager badges remain Linux/Nautilus-only in 0.26.23.
 
 ### Android
 
@@ -56,6 +56,29 @@ The main window contains:
 9. **Settings** — visual design, startup, notification, and minimized-start preferences.
 10. **Language flag** — switch English, German, French, Spanish, Arabic or Hebrew immediately; the choice is retained for future starts.
 11. **Help (`?`)** — open searchable offline documentation with function descriptions and practical how-to guides.
+12. **Search (magnifying glass)** — find a local file or folder by name across every configured synchronized folder.
+
+### Search all synchronized folders
+
+Select the magnifying glass in the top bar and type one or more words from a
+file name or relative path. Matching folders appear first, followed by files;
+the result identifies its TuxInDrive job, relative location and size. Select a
+row and choose **Open selected**, or double-click it, to open the current local
+item. A stale result is rejected safely rather than opening another path.
+
+The search is private and local. TuxInDrive records only normalized names,
+relative paths, type, size and modification time; it never reads or indexes
+file contents. The index refreshes in the background at startup and after a
+successful synchronization. Use the refresh button in the search window after
+a local bulk rename if an immediate result is needed. Paused jobs remain
+searchable. Exclusion rules and symbolic links are honored.
+
+Files-on-demand drives are intentionally not traversed: walking their FUSE
+directory tree could contact the provider while the application otherwise
+appears idle. Fully synchronized local folders inside the same account are
+indexed normally. A single configured root is capped at 250,000 entries; if it
+reaches that bound, TuxInDrive retains the previous complete results rather
+than deleting unseen entries from a partial refresh.
 
 ### Choose a visual design
 
@@ -79,7 +102,7 @@ The black-and-white penguin inside a white circle, with its red bow tie, identif
 
 Open **Settings** and select **Check for updates**. A progress window shows repository checking, the available-version result, download percentage, package verification, system installation, and the final success or failure. If a newer version is available, choose **Download and install**. After the desktop check, Ubuntu authorizes a fixed TuxInDrive helper—not arbitrary APT arguments. The helper independently retrieves the signed manifest, copies the package into root-only staging and rechecks the digest and Debian identity before installation. When installation completes, restart TuxInDrive. A failure leaves the existing installation unchanged.
 
-When moving from 0.18.1, the legacy channel signed by its already trusted key first installs the fixed 0.19.1 bridge. Restart TuxInDrive, then use **Settings → Check for updates** again: 0.19.1 reads the separately signed v2 channel and installs the current 0.26.22 release. Never bypass a signature warning. If the error persists, close and reopen the update dialog to refetch the manifest; manual package installation remains the recovery path when a proxy or cache serves stale metadata.
+When moving from 0.18.1, the legacy channel signed by its already trusted key first installs the fixed 0.19.1 bridge. Restart TuxInDrive, then use **Settings → Check for updates** again: 0.19.1 reads the separately signed v2 channel and installs the current 0.26.23 release. Never bypass a signature warning. If the error persists, close and reopen the update dialog to refetch the manifest; manual package installation remains the recovery path when a proxy or cache serves stale metadata.
 
 ### Rename an item in TuxInDrive
 
@@ -639,7 +662,7 @@ cat ~/.local/state/tuxindrive/startup.log
 cat ~/.local/state/tuxindrive/crash.log
 ```
 
-Reinstall the current package with `sudo apt install ./tuxindrive_0.26.22_all.deb`.
+Reinstall the current package with `sudo apt install ./tuxindrive_0.26.23_all.deb`.
 
 ## 13. Data safety
 
@@ -649,10 +672,10 @@ Reinstall the current package with `sudo apt install ./tuxindrive_0.26.22_all.de
 - Do not point multiple normal jobs at overlapping local folders.
 - Removing a TuxInDrive job does not delete its local or cloud files.
 
-### Security upgrade checklist for 0.26.22
+### Security upgrade checklist for 0.26.23
 
-1. Install `tuxindrive_0.26.22_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
-2. Confirm **Settings → Check for updates** reports 0.26.22 and no signature or expiry error.
+1. Install `tuxindrive_0.26.23_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
+2. Confirm **Settings → Check for updates** reports 0.26.23 and no signature or expiry error.
 3. Reconnect each provider once and verify that `~/.config/rclone/rclone.conf` is encrypted and mode `0600`; do not print or upload it.
 4. Confirm the `TuxInDrive rclone configuration` entry exists in GNOME Passwords and Keys/Secret Service. Do not delete it without an export/recovery plan.
 5. Review peer invitations, revoke unused device and Onion credentials, and exchange replacements through an authenticated channel when compromise is suspected.

@@ -92,6 +92,7 @@ from .network_usage import NetworkUsageMeter, format_bytes
 from .bandwidth import GlobalBandwidthController, normalize_bandwidth_limit
 from .server_client import ServerClient, ServerClientError, normalize_server_url
 from .server_credentials import store_server_token
+from .search_index import FolderSearchIndex, IndexStats, SearchResult
 
 try:  # Ubuntu's AppIndicator extension provides Windows-like tray controls.
     gi.require_version("AyatanaAppIndicator3", "0.1")
@@ -2950,6 +2951,161 @@ class HelpCenterDialog(ResponsiveDialog):
         self.body.get_buffer().set_text(f"{topic.title}\n\n{topic.body}")
 
 
+class FolderSearchDialog(ResponsiveDialog):
+    """Search the private filename index without contacting cloud providers."""
+
+    def __init__(self, parent: Gtk.Window, controller: "TuxInDriveApplication") -> None:
+        super().__init__(title="Search synchronized folders", transient_for=parent, modal=False)
+        self.set_default_size(900, 620)
+        self.controller = controller
+        self._results: list[SearchResult] = []
+        self._query_source = 0
+        self._closed = False
+        self.add_button("Close", Gtk.ResponseType.CLOSE)
+        self.connect("response", lambda dialog, _response: dialog.destroy())
+        self.connect("destroy", self._destroyed)
+
+        content = self.get_content_area()
+        content.set_border_width(18)
+        content.set_spacing(10)
+        intro = Gtk.Label(
+            label=(
+                "Searches file and folder names stored in the private local index. "
+                "File contents are not read, and files-on-demand drives are excluded "
+                "so a search cannot download cloud data."
+            ),
+            xalign=0,
+        )
+        intro.set_line_wrap(True)
+        content.pack_start(intro, False, False, 0)
+
+        search_row = Gtk.Box(spacing=8)
+        self.search_entry = Gtk.SearchEntry()
+        self.search_entry.set_placeholder_text("File or folder name")
+        self.search_entry.connect("search-changed", self._search_changed)
+        self.search_entry.connect("activate", lambda _entry: self._run_search())
+        search_row.pack_start(self.search_entry, True, True, 0)
+        refresh = Gtk.Button.new_from_icon_name("view-refresh-symbolic", Gtk.IconSize.BUTTON)
+        refresh.set_tooltip_text("Refresh the local index")
+        refresh.connect("clicked", self._refresh_index)
+        search_row.pack_start(refresh, False, False, 0)
+        content.pack_start(search_row, False, False, 0)
+
+        self.store = Gtk.ListStore(str, str, str, str)
+        self.view = Gtk.TreeView(model=self.store)
+        self.view.set_headers_visible(True)
+        for index, title in enumerate(("Name", "Synchronized folder", "Location", "Size")):
+            renderer = Gtk.CellRendererText()
+            renderer.set_property("ellipsize", 3)
+            column = Gtk.TreeViewColumn(title, renderer, text=index)
+            column.set_resizable(True)
+            column.set_expand(index == 2)
+            self.view.append_column(column)
+        self.view.connect("row-activated", lambda *_args: self._open_selected())
+        result_scroll = Gtk.ScrolledWindow()
+        result_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        result_scroll.set_min_content_height(260)
+        result_scroll.add(self.view)
+        content.pack_start(result_scroll, True, True, 0)
+
+        footer = Gtk.Box(spacing=8)
+        self.status = Gtk.Label(xalign=0)
+        self.status.set_line_wrap(True)
+        footer.pack_start(self.status, True, True, 0)
+        open_button = Gtk.Button(label="Open selected")
+        open_button.connect("clicked", lambda _button: self._open_selected())
+        footer.pack_end(open_button, False, False, 0)
+        content.pack_start(footer, False, False, 0)
+        self.status.set_text(f"{self.controller.search_index.count()} indexed items. Type to search.")
+        self.show_all()
+        self.search_entry.grab_focus()
+
+    def _search_changed(self, _entry: Gtk.SearchEntry) -> None:
+        if self._query_source:
+            GLib.source_remove(self._query_source)
+        self._query_source = GLib.timeout_add(180, self._run_search)
+
+    def _destroyed(self, _dialog: Gtk.Widget) -> None:
+        self._closed = True
+        if self._query_source:
+            GLib.source_remove(self._query_source)
+            self._query_source = 0
+
+    def _run_search(self) -> bool:
+        self._query_source = 0
+        if self._closed:
+            return False
+        query = self.search_entry.get_text().strip()
+        self.store.clear()
+        if not query:
+            self._results = []
+            self.status.set_text(f"{self.controller.search_index.count()} indexed items. Type to search.")
+            return False
+        self.status.set_text("Searching the private local index…")
+
+        def ready(results: list[SearchResult] | None, error: Exception | None) -> bool:
+            if self._closed or query != self.search_entry.get_text().strip():
+                return False
+            if error:
+                self.status.set_text(f"Search failed: {error}")
+                return False
+            self._results = results or []
+            self._render_results(query)
+            return False
+
+        _run_thread(self.controller.search_index.search, ready, query)
+        return False
+
+    def _render_results(self, query: str) -> None:
+        self.store.clear()
+        for result in self._results:
+            size = "Folder" if result.is_directory else format_bytes(result.size)
+            self.store.append((result.name, result.job_name, result.relative_path, size))
+        suffix = " (first 200 shown)" if len(self._results) == 200 else ""
+        self.status.set_text(f"{len(self._results)} matches for “{query}”{suffix}")
+
+    def _refresh_index(self, _button: Gtk.Widget) -> None:
+        self.status.set_text("Refreshing the private local index…")
+        self.controller.refresh_search_index(self._refresh_ready)
+
+    def _refresh_ready(self, result: IndexStats | None, error: Exception | None) -> bool:
+        if self._closed:
+            return False
+        if error:
+            self.status.set_text(f"Index refresh failed: {error}")
+            return False
+        assert result is not None
+        note = f"; {result.limited_jobs} very large folder(s) kept at the safety limit" if result.limited_jobs else ""
+        self.status.set_text(f"Indexed {result.indexed} items; removed {result.removed} stale items{note}.")
+        self._run_search()
+        return False
+
+    def _open_selected(self) -> None:
+        model, selected = self.view.get_selection().get_selected()
+        if selected is None:
+            self.status.set_text("Select a result first.")
+            return
+        index = model.get_path(selected).get_indices()[0]
+        if index >= len(self._results):
+            return
+        result = self._results[index]
+        try:
+            if result.local_path.is_symlink():
+                raise ValueError("The indexed item was replaced by a symbolic link")
+            root = result.root.resolve(strict=True)
+            target = result.local_path.resolve(strict=True)
+            if target != root and root not in target.parents:
+                raise ValueError("The indexed path is outside its synchronized folder")
+        except (OSError, ValueError) as exc:
+            self.status.set_text(f"This item is no longer available locally: {exc}")
+            return
+        subprocess.Popen(
+            _desktop_open_command(str(target)),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, application: "TuxInDriveApplication") -> None:
         super().__init__(application=application, title="TuxInDrive")
@@ -2979,6 +3135,10 @@ class MainWindow(Gtk.ApplicationWindow):
         health.set_tooltip_text(tr("health"))
         health.connect("clicked", lambda _button: OperationsDashboard(self, self.controller))
         header.pack_start(health)
+        search = Gtk.Button.new_from_icon_name("edit-find-symbolic", Gtk.IconSize.BUTTON)
+        search.set_tooltip_text("Search synchronized folders")
+        search.connect("clicked", lambda _button: FolderSearchDialog(self, self.controller))
+        header.pack_start(search)
         settings = Gtk.Button.new_from_icon_name("emblem-system-symbolic", Gtk.IconSize.BUTTON)
         settings.set_tooltip_text(tr("settings"))
         settings.connect("clicked", self._show_settings)
@@ -4668,6 +4828,9 @@ class TuxInDriveApplication(Gtk.Application):
         self.peers = PeerManager(self.config.settings.rclone_path, audit=self.audit)
         self.profiles = ProfileManager(self.store, self.rclone)
         self.network_meter = NetworkUsageMeter()
+        self.search_index = FolderSearchIndex(cache_root() / "folder-search.sqlite3")
+        self._search_index_lock = threading.Lock()
+        self._search_index_started = False
         self.server_client = (
             ServerClient(
                 self.config.settings.server_url,
@@ -4751,6 +4914,9 @@ class TuxInDriveApplication(Gtk.Application):
             self.window = MainWindow(self)
             self.window.message(tr("preparing"))
             _run_thread(self._load_runtime, self._runtime_loaded)
+        if not self._search_index_started:
+            self._search_index_started = True
+            self.refresh_search_index()
         tray_available = self.indicator is not None
         if not (tray_available and (self.background or self.config.settings.start_minimized)):
             self.window.show_all()
@@ -5251,6 +5417,32 @@ class TuxInDriveApplication(Gtk.Application):
     def _job_finished(self, result: JobResult) -> None:
         GLib.idle_add(self._apply_job_result, result)
 
+    def refresh_search_index(
+        self,
+        callback: Callable[[IndexStats | None, Exception | None], bool] | None = None,
+        job: SyncJob | None = None,
+    ) -> None:
+        """Refresh filename metadata in a background thread."""
+
+        jobs = list(self.config.jobs)
+
+        def refresh() -> IndexStats:
+            with self._search_index_lock:
+                return (
+                    self.search_index.refresh_job(job)
+                    if job is not None
+                    else self.search_index.refresh(jobs)
+                )
+
+        def ready(result: IndexStats | None, error: Exception | None) -> bool:
+            if error:
+                LOGGER.warning("Synchronized-folder index refresh failed: %s", error)
+            if callback is not None:
+                return callback(result, error)
+            return False
+
+        _run_thread(refresh, ready)
+
     def _apply_job_result(self, result: JobResult) -> bool:
         job = next((item for item in self.config.jobs if item.id == result.job_id), None)
         if not job:
@@ -5302,6 +5494,8 @@ class TuxInDriveApplication(Gtk.Application):
         self.save()
         if result.success and not result.incremental:
             self.start_callbacks(job)
+        if result.success and job.mode is not SyncMode.VIRTUAL_DRIVE:
+            self.refresh_search_index(job=job)
         if result.success and job.mode is SyncMode.VIRTUAL_DRIVE:
             # Reconnects must never trigger an implicit download.  Verify only
             # TuxInDrive's local cache markers; a missing/old 0.20.2 marker stays

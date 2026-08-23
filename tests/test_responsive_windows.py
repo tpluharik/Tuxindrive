@@ -44,6 +44,15 @@ class ResponsiveWindowTests(unittest.TestCase):
         self.assertIn("self.set_resizable(True)", source)
         self.assertNotIn("self.maximize()", source)
 
+    def test_synchronized_folder_search_uses_a_responsive_local_dialog(self) -> None:
+        source = (REPOSITORY / "src/tuxindrive/app.py").read_text(encoding="utf-8")
+
+        dialog = source[source.index("class FolderSearchDialog"):source.index("class MainWindow")]
+        self.assertIn("class FolderSearchDialog(ResponsiveDialog)", dialog)
+        self.assertIn("_run_thread(self.controller.search_index.search, ready, query)", dialog)
+        self.assertIn("result.local_path.resolve(strict=True)", dialog)
+        self.assertIn('"edit-find-symbolic"', source)
+
 
 if __name__ == "__main__":
     unittest.main()

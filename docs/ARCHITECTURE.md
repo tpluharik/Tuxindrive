@@ -1,6 +1,6 @@
 # TuxInDrive architecture
 
-This document describes how TuxInDrive 0.26.22 is implemented. It complements
+This document describes how TuxInDrive 0.26.23 is implemented. It complements
 the task-oriented [user guide](USER_GUIDE.md), persisted-field
 [configuration reference](CONFIGURATION.md), and threat-focused
 [security guide](SECURITY_HARDENING.md).
@@ -49,6 +49,23 @@ recovery, audit, desktop integration, and release verification.
 Long operations run outside the GTK main loop. Completion is returned to GTK
 through idle callbacks. UI refreshes are coalesced so logs and status updates
 do not force unnecessary full-window reconstruction.
+
+### Local synchronized-folder search
+
+`search_index.py` maintains a rebuildable SQLite cache under the platform cache
+root. Each refresh walks configured local synchronization roots with no-follow
+filesystem operations, applies the job's exclusion patterns, and upserts only
+name/path metadata under a scan generation. A complete refresh deletes older
+generations; cancellation or the per-root 250,000-entry bound retains the last
+complete unseen rows. Removed jobs are pruned.
+
+Unicode NFKC/casefolded search text supports case-insensitive multi-token
+matching without storing file bodies. The database and parent directory use
+private permissions on POSIX systems, and SQLite WAL mode lets the GTK search
+window query the last committed snapshot while a background refresh runs.
+Streaming/FUSE jobs are excluded so index construction cannot enumerate a
+remote directory or hydrate content. Opening a result re-resolves it, rejects a
+new symbolic link, and confirms confinement to the indexed root.
 
 ## Persisted model
 

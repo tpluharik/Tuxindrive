@@ -2,6 +2,18 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.23 — private synchronized-folder search
+
+- Added one desktop search window for file and folder names across every
+  configured local synchronization root, including paused jobs.
+- Added a private incremental SQLite metadata index that refreshes at startup,
+  after successful synchronization, or on demand and removes stale results.
+- Kept searches local and content-free: file bodies are never opened, symlinks
+  and excluded paths are ignored, and files-on-demand mounts are not walked so
+  indexing cannot hydrate cloud data or create an idle provider scan.
+- Bounded each very large root to 250,000 indexed entries and preserved the
+  last complete index if a later refresh reaches that safety limit.
+
 ## 0.26.22 — monitor-safe responsive dialogs
 
 - Opened desktop settings and other dialogs at 92% of the active monitor's

@@ -1,7 +1,7 @@
 # TuxInDrive operations guide
 
 This guide covers normal administration, health checks, traffic policy,
-backup, recovery, and incident response for TuxInDrive 0.26.22. User-facing
+backup, recovery, and incident response for TuxInDrive 0.26.23. User-facing
 procedures are in the [user guide](USER_GUIDE.md); persisted fields and exact
 paths are in [Configuration](CONFIGURATION.md).
 
@@ -72,6 +72,21 @@ Legacy `tuxdrive` directories remain authoritative if they predate the branded
 directory. Individual job logs are linked from **View log**. Logs are designed
 to redact credentials, but review them for filenames, account names, hostnames,
 and local paths before sharing.
+
+## Local search-index maintenance
+
+The magnifying-glass window reports the current local item count and provides
+an explicit refresh control. Refreshing reads directory entries and metadata,
+not file contents. It does not traverse streaming drives and therefore does not
+download cloud data. Paused ordinary jobs remain indexed; removed jobs and
+stale paths are pruned after a complete refresh.
+
+If results appear damaged, close TuxInDrive, remove only
+`folder-search.sqlite3` plus its optional `-wal`/`-shm` companions from the
+platform Cache root, and restart. Do not remove `config.json`, provider state,
+bisync listings, history, or streaming cache as part of search repair. A root
+larger than 250,000 entries reports a safety-limit note and keeps the previous
+complete unseen rows; split that mapping if complete local discovery is needed.
 
 Record these facts with an incident: application/platform version, provider,
 job mode and direction, first failure time, account status, current network

@@ -65,6 +65,7 @@ Android JVM coverage is kept beside the mobile source: `MobileValidationTest` co
 - Later synchronizations do not silently repeat the initial resynchronization.
 - Upload-only and download-only jobs preserve their configured direction.
 - Streaming folders may be protected children of synchronized folders, but unsafe overlaps are rejected.
+- Filename-index tests cover Unicode multi-token lookup, literal SQL wildcard characters, stale pruning, exclusion/symlink handling, paused jobs, virtual-drive avoidance, private permissions, and incomplete safety-limited refreshes.
 - Office lock files, editor temporary files and partial downloads are not synchronized.
 - Google malware/spam acknowledgement is opt-in and scoped to one job.
 - Peer invitations contain public SSH connection material only. A protocol-v5 Tor invitation may intentionally contain the receiving device's scoped Onion client secret and must be handled like a password; neither the host SSH identity nor the general TuxInDrive identity private key enters it.
@@ -99,9 +100,9 @@ Android JVM coverage is kept beside the mobile source: `MobileValidationTest` co
 
 ```bash
 sh scripts/build-deb.sh
-dpkg-deb --info dist/tuxindrive_0.26.22_all.deb
-dpkg-deb --contents dist/tuxindrive_0.26.22_all.deb
-sha256sum dist/tuxindrive_0.26.22_all.deb
+dpkg-deb --info dist/tuxindrive_0.26.23_all.deb
+dpkg-deb --contents dist/tuxindrive_0.26.23_all.deb
+sha256sum dist/tuxindrive_0.26.23_all.deb
 ```
 
 The CI **Static security analysis** step must run before tests and packaging:
@@ -116,8 +117,8 @@ The release is blocked on any high-severity Bandit result or unresolved dependen
 Release manifests must be signed outside Git with the Ed25519 release key:
 
 ```bash
-python3 scripts/sign-update.py --version 0.26.22 \
-  --package dist/tuxindrive_0.26.22_all.deb \
+python3 scripts/sign-update.py --version 0.26.23 \
+  --package dist/tuxindrive_0.26.23_all.deb \
   --output update/latest-v2.json \
   --private-key /secure/offline/TuxInDrive-update-signing-private.pem
 ```
@@ -133,8 +134,8 @@ private bootstrap and installed module layout:
 
 ```bash
 sh scripts/build-server-deb.sh
-dpkg-deb --info dist/tuxindrive-server_0.26.22_all.deb
-dpkg-deb --contents dist/tuxindrive-server_0.26.22_all.deb
+dpkg-deb --info dist/tuxindrive-server_0.26.23_all.deb
+dpkg-deb --contents dist/tuxindrive-server_0.26.23_all.deb
 PYTHONPATH=src python3 -m unittest -v tests.test_server
 ```
 

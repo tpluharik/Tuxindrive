@@ -22,8 +22,9 @@ TuxInDrive is a native Linux, Windows, macOS and Android client for **Google Dri
 
 The primary TuxInDrive identity is the penguin inside a white circle with a red bow tie. The artwork outside the source circle and its former wording are not part of the application brand. The same mark is embedded in the GTK header and dialogs, Linux icon theme, Windows executable and installer, macOS application bundle, Android adaptive/themed launcher icon, repository overview, and user documentation.
 
-Version 0.26.22 opens settings and other desktop dialogs at 92% of the active
-monitor's usable work area, without crossing desktop panels or screen edges.
+Version 0.26.23 adds private local filename search across configured
+synchronized folders and retains monitor-safe dialogs that open at 92% of the
+active monitor's usable work area, without crossing desktop panels or screen edges.
 Their inner content no longer creates immediate horizontal clipping and remains
 scrollable after resizing. It retains the automatic aggregate bandwidth
 protection from 0.26.21, optional-server and Android update-channel hardening
@@ -42,7 +43,7 @@ TuxInDrive is publicly readable. Direct repository writes remain restricted to m
 - [Contribution guide](CONTRIBUTING.md)
 - [Code of conduct](CODE_OF_CONDUCT.md)
 
-The current 0.26.22 desktop targets Ubuntu 24.04/26.04, Debian 12/13, Windows 10/11 x64 and macOS 12+; Android 8+ uses its native mobile interface. The main window remains freely resizable; settings and other dialogs open at a monitor-safe maximum and keep oversized controls reachable through local scrolling. **Nordic Glass**, **Bento Cloud**, and **Midnight Sync** are persistent visual designs. Folder grouping/reordering changes only interface metadata, while explicit offline/online-only controls, streaming mounts, GitHub synchronization, searchable offline help, six-language localization and functional Nautilus badges preserve their established behavior.
+The current 0.26.23 desktop targets Ubuntu 24.04/26.04, Debian 12/13, Windows 10/11 x64 and macOS 12+; Android 8+ uses its native mobile interface. The main window remains freely resizable; settings and other dialogs open at a monitor-safe maximum and keep oversized controls reachable through local scrolling. **Nordic Glass**, **Bento Cloud**, and **Midnight Sync** are persistent visual designs. Folder grouping/reordering changes only interface metadata, while explicit offline/online-only controls, streaming mounts, GitHub synchronization, searchable offline help, private cross-folder filename search, six-language localization and functional Nautilus badges preserve their established behavior.
 
 Idle and active traffic share one global controller. Event-driven local monitoring, adaptive remote backoff, bounded jitter, atomic incremental admission, unchanged-state write suppression, visibility-aware network/log rendering and conservative pin-aware cache limits reduce background work without weakening reconciliation, signed updates, mass-change protection, conflict handling or path confinement. A local collaboration host selects a folder and advertises it on the LAN; no file endpoint starts until the owner approves the requesting device fingerprint.
 
@@ -56,7 +57,7 @@ Proton Drive uses Proton's official browser-authenticated CLI on supported Linux
 - Android update downloads remain signature/digest bound, accept only explicit HTTPS GitHub release redirect origins, are installed from a durable atomic cache file, and request sideload permission only in the sideload build.
 - The complete control inventory, upgrade procedure, credential migration behavior, residual risks, and operator checklist are in the [security-hardening guide](docs/SECURITY_HARDENING.md).
 
-The following controls are enforced in 0.26.22:
+The following controls are enforced in 0.26.23:
 
 - Signed and expiring update manifests are verified in both the desktop process and a fixed privileged helper. The helper stages the package in a root-only directory and rechecks its digest and Debian identity before APT executes it.
 - Tor-only/no-public-IP shares bind SFTP to loopback, and protocol-v5 invitations carry an explicit transport allowlist so direct-only and no-relay policies cannot silently fall back.
@@ -156,6 +157,7 @@ TuxInDrive Profile links the application to an existing Google Drive, OneDrive, 
 - rename and folder-move tracking to avoid unnecessary duplicate transfers
 - download-only and upload-only mirror modes
 - visual, lazy-loading cloud folder tree with multi-folder selective synchronization
+- one private local filename/path index and desktop search window spanning all configured synchronized folders; content, symlinks and files-on-demand mounts are never scanned
 - separate Google location browsing for My Drive, Shared with me, and every Shared Drive
 - a FUSE virtual-drive mode with full VFS caching for files-on-demand behavior
 - streaming drives expose the complete cloud tree without downloading file contents; opening a file fetches it in chunks and keeps a bounded local cache
@@ -193,18 +195,18 @@ TuxInDrive Profile links the application to an existing Google Drive, OneDrive, 
 
 | Platform | Package | Notes |
 | --- | --- | --- |
-| Ubuntu/Debian | `tuxindrive_0.26.22_all.deb` | Signed in-app Debian updates remain supported. |
-| Ubuntu/Debian Server | `tuxindrive-server_0.26.22_all.deb` | Separate preview service; explicit enablement, bearer token, and TLS for remote access. |
-| Windows 10/11 x64 | `TuxInDrive-0.26.22-windows-x64-setup.exe` | Same GTK desktop UI; install WinFsp for streaming drives. |
-| macOS 12+ | `TuxInDrive-0.26.22-macos-*.dmg` | Same GTK desktop UI; install macFUSE for streaming drives. |
-| Android 8+ | `TuxInDrive-0.26.22-android.apk` | Native phone/tablet UI, SAF folder access and OS-managed background sync. |
+| Ubuntu/Debian | `tuxindrive_0.26.23_all.deb` | Signed in-app Debian updates remain supported. |
+| Ubuntu/Debian Server | `tuxindrive-server_0.26.23_all.deb` | Separate preview service; explicit enablement, bearer token, and TLS for remote access. |
+| Windows 10/11 x64 | `TuxInDrive-0.26.23-windows-x64-setup.exe` | Same GTK desktop UI; install WinFsp for streaming drives. |
+| macOS 12+ | `TuxInDrive-0.26.23-macos-*.dmg` | Same GTK desktop UI; install macFUSE for streaming drives. |
+| Android 8+ | `TuxInDrive-0.26.23-android.apk` | Native phone/tablet UI, SAF folder access and OS-managed background sync. |
 
 ### Ubuntu and Debian
 
 Download the `.deb`, then run:
 
 ```bash
-sudo apt install ./tuxindrive_0.26.22_all.deb
+sudo apt install ./tuxindrive_0.26.23_all.deb
 ```
 
 Open **TuxInDrive** from the application menu. Choose **Connect account**, select a provider, and complete its guided authorization. Then add a local synchronized folder or virtual drive. The same visual cloud tree and multi-folder selection are used for all eight cloud providers; GitHub uses a dedicated repository/branch/local-folder dialog.
@@ -214,7 +216,7 @@ and keep the required `./` local-file prefix:
 
 ```bash
 cd ~/Downloads
-sudo apt install ./tuxindrive-server_0.26.22_all.deb
+sudo apt install ./tuxindrive-server_0.26.23_all.deb
 ```
 
 Continue with the bootstrap token, service start, local health check, TLS rules,
@@ -234,7 +236,7 @@ sh scripts/build-deb.sh
 sh scripts/build-server-deb.sh
 ```
 
-The Debian installers are written to `dist/tuxindrive_0.26.22_all.deb` and `dist/tuxindrive-server_0.26.22_all.deb`. Windows, macOS and Android artifacts are built by `.github/workflows/platform-packages.yml` on their native build hosts. Durable packages are attached to the matching GitHub Release; dedicated signed client channel manifests and package-location pointers live under [`releases/`](releases/README.md).
+The Debian installers are written to `dist/tuxindrive_0.26.23_all.deb` and `dist/tuxindrive-server_0.26.23_all.deb`. Windows, macOS and Android artifacts are built by `.github/workflows/platform-packages.yml` on their native build hosts. Durable packages are attached to the matching GitHub Release; dedicated signed client channel manifests and package-location pointers live under [`releases/`](releases/README.md).
 
 ### Local-first collaborative documents
 
@@ -258,7 +260,7 @@ The [feature status and top-40 roadmap](docs/ROADMAP.md) records shipped safety 
 
 Open **Settings → Check for updates**. TuxInDrive verifies the signed manifest and download before asking for authorization. A fixed root-side helper then obtains the signed manifest independently, copies the untrusted package into a root-only staging directory through a no-follow descriptor, and rechecks its digest and Debian identity before APT runs. No user-supplied digest or cloud credential is trusted by the helper. Restart TuxInDrive after a successful update.
 
-**0.18.1 → 0.19.1 → current trust-root transition:** 0.18.1 verifies an original-key-signed legacy manifest and first installs the fixed 0.19.1 bridge. Version 0.19.1 switches to the separately signed v2 channel and can then install 0.26.22 and later releases. On 0.18.1, run the in-app update check a second time after restarting 0.19.1. Never bypass a signature error; a continuing failure means the manifest is stale, intercepted, or the installed package predates this bridge.
+**0.18.1 → 0.19.1 → current trust-root transition:** 0.18.1 verifies an original-key-signed legacy manifest and first installs the fixed 0.19.1 bridge. Version 0.19.1 switches to the separately signed v2 channel and can then install 0.26.23 and later releases. On 0.18.1, run the in-app update check a second time after restarting 0.19.1. Never bypass a signature error; a continuing failure means the manifest is stale, intercepted, or the installed package predates this bridge.
 
 ## Crash and startup diagnostics
 
