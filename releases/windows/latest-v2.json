@@ -1,8 +1,8 @@
 {
-  "version": "0.26.23",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.23/TuxInDrive-0.26.23-windows-x64-setup.exe",
-  "sha256": "4b3b0d8c8b0d515a8bb12c57029298fc4291ebb77214fa48e399d2f3a1e8f8f2",
-  "notes": "Private local search across synchronized folders",
-  "expires_at": "2026-11-21T06:37:52.927208+00:00",
-  "signature": "Q7HNaYGdCdm1yb19ciR3T4mIa8XBOmvr/DmOUJPHoxWehsUVrWn1/0tUahlBBlZXV0uhrt499nNOirO5hVqnBQ=="
+  "version": "0.26.24",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.24/TuxInDrive-0.26.24-windows-x64-setup.exe",
+  "sha256": "f71a8e02f687b2035152da276da323277c1679a3ddc0aa8e9b649948cfd1771b",
+  "notes": "Bounded search previews for major supported formats",
+  "expires_at": "2026-11-21T07:33:47.342288+00:00",
+  "signature": "anOjnXURCgz9j9WNrspEIF/1vYnolSq0RfNb9fz21v9X55v+hIh60zCbU21ntT7q2CscYPeIJLtqcBxy3wnXBw=="
 }

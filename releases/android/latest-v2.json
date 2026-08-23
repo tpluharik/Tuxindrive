@@ -1,8 +1,8 @@
 {
-  "version": "0.26.23",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.23/TuxInDrive-0.26.23-android.apk",
-  "sha256": "3ea0e37cfbc803f6dacf502395878766cc20bcd6c67a1ebe5bc8b154688d7eea",
-  "notes": "Private local search across synchronized folders",
-  "expires_at": "2026-11-21T06:37:53.264168+00:00",
-  "signature": "/Lwvx88BE6n/9Rnfq4OOouHM23G+OkAMiFMCay4td3evSeC4Xw/kbP3F87TgUcfOPQyGfTjy2p9rjr+UTfnaCg=="
+  "version": "0.26.24",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.24/TuxInDrive-0.26.24-android.apk",
+  "sha256": "ab9f6d0a269099d723c8b1a7ab387927d2d93c70bdcb433f535e7640d9d47a4c",
+  "notes": "Bounded search previews for major supported formats",
+  "expires_at": "2026-11-21T07:33:47.705971+00:00",
+  "signature": "kVPhAw8CXJewK5HXmyKPY+vGrP7oCnTag2j7cMVLWmlkDdJPhimWOz1XplNUNMXKxn+cuvqXVaXvzRgdmGvkAQ=="
 }

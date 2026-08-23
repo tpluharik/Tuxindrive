@@ -1,8 +1,8 @@
 {
-  "version": "0.26.23",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.23/tuxindrive_0.26.23_all.deb",
-  "sha256": "eaa2d4cd678ec6ca56187178d000caf9dbb3b7b1d09cc1fba919d4247094917f",
-  "notes": "Private local search across synchronized folders",
-  "expires_at": "2026-11-21T06:37:52.859040+00:00",
-  "signature": "5yPt61K9TUnQEUqJO6s+BglN5pJ5XU+4TVWC13Ph8Xfq+11tjEgXnUdUzLJHvTn96VeSgwglBVEPlkJv6lq8CQ=="
+  "version": "0.26.24",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.24/tuxindrive_0.26.24_all.deb",
+  "sha256": "dc26745708d8f16910673a793097316df5d4327c8a77e65ab9f78c63adbc249a",
+  "notes": "Bounded search previews for major supported formats",
+  "expires_at": "2026-11-21T07:33:47.260440+00:00",
+  "signature": "3cW6vbkpqrY7t9zaNgdZYA0B0i0SnVD3qddZqsGfNddUqafexLpknHykKXxNqUj/T3bf3osloQvYY0jEqOZCAQ=="
 }
