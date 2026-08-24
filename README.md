@@ -213,7 +213,19 @@ TuxInDrive Profile links the application to an existing Google Drive, OneDrive, 
 
 ### Ubuntu and Debian
 
-Download the `.deb`, then run:
+Ubuntu 22.04 LTS and 24.04 LTS can install the Launchpad build from the
+official TuxInDrive PPA:
+
+```bash
+sudo add-apt-repository ppa:tpluharik77/tuxindrive
+sudo apt update
+sudo apt install tuxdrive
+```
+
+The archive keeps the historical binary package name `tuxdrive` so existing
+signed-updater installations upgrade cleanly; the installed application and
+commands are named TuxInDrive. Alternatively, download the release `.deb` and
+run:
 
 ```bash
 sudo apt install ./tuxindrive_0.26.26_all.deb
@@ -245,6 +257,11 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 sh scripts/build-deb.sh
 sh scripts/build-server-deb.sh
 ```
+
+Maintainers can produce a signed Launchpad source upload with
+`scripts/build-ppa-source.sh jammy` or `scripts/build-ppa-source.sh noble`.
+Launchpad receives source packages and builds the final binaries inside the
+matching Ubuntu series.
 
 The Debian installers are written to `dist/tuxindrive_0.26.26_all.deb` and `dist/tuxindrive-server_0.26.26_all.deb`. Windows, macOS and Android artifacts are built by `.github/workflows/platform-packages.yml` on their native build hosts. Durable packages are attached to the matching GitHub Release; dedicated signed client channel manifests and package-location pointers live under [`releases/`](releases/README.md).
 

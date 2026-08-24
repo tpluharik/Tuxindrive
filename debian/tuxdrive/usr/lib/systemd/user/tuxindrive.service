@@ -1,0 +1,15 @@
+[Unit]
+Description=TuxInDrive cloud synchronization client
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/tuxindrive --background
+Restart=on-failure
+RestartSec=10
+UMask=0077
+PrivateTmp=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=default.target

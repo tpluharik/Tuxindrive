@@ -97,11 +97,19 @@ Snap packaging must not weaken TuxInDrive path checks merely to avoid review.
 
 ### Ubuntu PPA and Debian
 
-- Create or confirm the Launchpad account and PPA name.
-- Register the maintainer OpenPGP public key and send its fingerprint only.
-- Choose the supported Ubuntu series and architectures.
+- Launchpad owner: `tpluharik77`.
+- Public archive: `ppa:tpluharik77/tuxindrive`.
+- Source-build targets: Ubuntu 22.04 LTS (Jammy) and Ubuntu 24.04 LTS
+  (Noble), using distinct version suffixes so both uploads remain immutable.
+- Maintainer OpenPGP fingerprint:
+  `876E A832 9116 387E 9FAF 7880 C3FD EBCE A697 D211`.
 
 Launchpad accepts signed source uploads, not the existing prebuilt `.deb`.
+The committed `debian/` metadata and `scripts/build-ppa-source.sh` reproduce
+the established installation layout, run the packaging tests, sign the source
+metadata, and place upload files under `dist/ppa/<series>/`. Upload the emitted
+`*_source.changes` file with
+`dput ppa:tpluharik77/tuxindrive <changes-file>`.
 Debian archive inclusion additionally needs a policy-compliant source package,
 an ITP/RFS process, and a Debian Developer sponsor. Until those builds reproduce
 the installer behavior, the signed GitHub `.deb` remains canonical.

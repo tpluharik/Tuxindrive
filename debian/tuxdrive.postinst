@@ -1,0 +1,47 @@
+#!/bin/sh
+set -e
+
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+  gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor || true
+fi
+if command -v update-desktop-database >/dev/null 2>&1; then
+  update-desktop-database -q /usr/share/applications || true
+fi
+
+if [ "${1:-}" = "configure" ] && [ -n "${2:-}" ]; then
+  tuxindrive_pids=""
+  for tuxindrive_proc in /proc/[0-9]*; do
+    [ -r "$tuxindrive_proc/cmdline" ] || continue
+    tuxindrive_cmd=$(tr '\000' ' ' < "$tuxindrive_proc/cmdline" 2>/dev/null || true)
+    case "$tuxindrive_cmd" in
+      *'runpy.run_module("tuxindrive.app",run_name="__main__")'*|*'runpy.run_module("tuxdrive.app",run_name="__main__")'*)
+        tuxindrive_pid=${tuxindrive_proc##*/}
+        kill -INT "$tuxindrive_pid" 2>/dev/null || true
+        tuxindrive_pids="$tuxindrive_pids $tuxindrive_pid"
+        ;;
+    esac
+  done
+  for tuxindrive_wait in 1 2 3 4 5; do
+    tuxindrive_alive=""
+    for tuxindrive_pid in $tuxindrive_pids; do
+      if kill -0 "$tuxindrive_pid" 2>/dev/null; then
+        tuxindrive_alive="$tuxindrive_alive $tuxindrive_pid"
+      fi
+    done
+    [ -z "$tuxindrive_alive" ] && break
+    sleep 1
+  done
+  for tuxindrive_pid in $tuxindrive_alive; do
+    kill -TERM "$tuxindrive_pid" 2>/dev/null || true
+  done
+fi
+
+mkdir -p /var/lib/tuxindrive
+if [ -x /usr/bin/tuxindrive ]; then
+  /usr/bin/tuxindrive --system-check --json > /var/lib/tuxindrive/install-capabilities.json 2>/dev/null || true
+  chmod 0644 /var/lib/tuxindrive/install-capabilities.json 2>/dev/null || true
+fi
+
+#DEBHELPER#
+
+exit 0

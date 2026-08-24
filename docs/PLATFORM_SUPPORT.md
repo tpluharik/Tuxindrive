@@ -16,7 +16,7 @@ The desktop baseline is Ubuntu 24.04/26.04, Debian 12/13, Windows 10/11 x64 and 
 | Ubuntu 24.04 LTS GNOME | CI-installed | Expected with FUSE 3 | Nautilus 4.x | Supported; verify AppIndicator extension and unlocked GNOME Keyring in the user session. |
 | Debian 13 GNOME | CI-installed | Expected with FUSE 3 | Nautilus 4.x | Supported core; integration package versions come from Debian repositories. |
 | Debian 12 GNOME | CI-installed | Expected with FUSE 3 | Nautilus 4.x | Supported core; use Debian security updates/backports and complete the manual Secret Service/FUSE gate. |
-| Ubuntu 22.04 GNOME | Best effort | Best effort | Older python-nautilus generation | Not a supported security baseline; older Python/cryptography and Nautilus bindings require separate validation. |
+| Ubuntu 22.04 GNOME | PPA source-build target | Best effort | Older python-nautilus generation | Launchpad builds Jammy packages, but full graphical/Secret Service/FUSE VM acceptance remains required before treating Jammy as the security baseline. |
 | Linux Mint with Cinnamon/Nemo | Expected core only | Expected with FUSE 3 | Not available in Nemo | TuxInDrive runs as a GTK application, but the packaged extension is Nautilus-only. A Nemo adapter is not yet shipped. |
 | Pop!_OS GNOME-based releases | Expected core only | Expected with FUSE 3 | Best effort when Nautilus is used | Tray/shell behavior depends on the installed GNOME extensions; COSMIC sessions are not a GNOME integration target. |
 | Zorin OS | Expected core only on a compatible Ubuntu base | Expected with FUSE 3 | Best effort | Run the system check; support follows the base Ubuntu Python, GTK and Nautilus versions rather than the Zorin version label. |

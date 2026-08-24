@@ -31,6 +31,23 @@ class PackagingTests(unittest.TestCase):
         self.assertIn('usr/bin/tuxdrive', build_script)
         self.assertIn('tuxdrive.service', build_script)
         self.assertIn('LEGACY_OUTPUT=', build_script)
+        self.assertIn('name __pycache__', build_script)
+
+    def test_launchpad_source_packaging_targets_supported_lts_releases(self):
+        control = Path("debian/control").read_text(encoding="utf-8")
+        rules = Path("debian/rules").read_text(encoding="utf-8")
+        source_builder = Path("scripts/build-ppa-source.sh").read_text(encoding="utf-8")
+        self.assertIn("Source: tuxindrive", control)
+        self.assertIn("Package: tuxdrive", control)
+        self.assertIn("debhelper-compat (= 13)", control)
+        self.assertIn("dpkg-deb -x", rules)
+        self.assertIn("jammy|noble", source_builder)
+        self.assertIn("dpkg-buildpackage -S -sa", source_builder)
+        self.assertIn("TUXINDRIVE_PPA_GPG_FINGERPRINT", source_builder)
+        self.assertNotIn("BEGIN PGP PRIVATE KEY", source_builder)
+        readme = Path("README.md").read_text(encoding="utf-8")
+        self.assertIn("ppa:tpluharik77/tuxindrive", readme)
+        self.assertIn("sudo apt install tuxdrive", readme)
 
     def test_debian_identity_is_an_explicit_signed_updater_compatibility_abi(self):
         control = Path("packaging/DEBIAN/control").read_text(encoding="utf-8")

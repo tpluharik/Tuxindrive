@@ -1,0 +1,20 @@
+Package: tuxdrive
+Source: tuxindrive
+Version: 0.26.26-1
+Architecture: all
+Maintainer: Tomas Pluharik <tpluharik@gmail.com>
+Installed-Size: 1697
+Depends: python3 (>= 3.10), python3-gi, python3-cryptography, python3-defusedxml, gir1.2-gtk-3.0, libsecret-tools, xdg-utils, ca-certificates, git
+Recommends: python3-nautilus, nautilus, gir1.2-ayatanaappindicator3-0.1, gnome-shell-extension-appindicator, fuse3, openssh-client, tor, torsocks, obfs4proxy, miniupnpc, natpmpc, network-manager, qrencode, zbar-tools, poppler-utils, libnotify-bin, pkexec | policykit-1
+Suggests: snowflake-client
+Breaks: tuxindrive
+Replaces: tuxindrive
+Provides: tuxindrive (= 0.26.26-1)
+Section: net
+Priority: optional
+Homepage: https://github.com/tpluharik/Tuxindrive
+Description: private peer and multi-provider cloud storage client
+ TuxInDrive is a native desktop client for synchronizing, streaming and
+ searching data across multiple cloud providers. It also supports encrypted
+ peer collaboration, provider-linked profile migration, verified updates,
+ policy-aware transfers and optional Nautilus integration.

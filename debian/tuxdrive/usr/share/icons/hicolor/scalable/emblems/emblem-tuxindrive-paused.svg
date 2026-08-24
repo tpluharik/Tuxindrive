@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" data-state="paused">
+  <title>Paused</title>
+  <desc>Purple square status badge with two white pause bars</desc>
+  <rect x="5" y="5" width="54" height="54" rx="7" fill="#6D28D9" stroke="#FFFFFF" stroke-width="4"/>
+  <rect x="20" y="17" width="8" height="30" rx="2" fill="#FFFFFF"/>
+  <rect x="36" y="17" width="8" height="30" rx="2" fill="#FFFFFF"/>
+</svg>

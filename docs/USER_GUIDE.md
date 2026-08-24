@@ -16,7 +16,16 @@ The 0.25.0 upgrade changes all visible product names to TuxInDrive. Existing pri
 
 ## 1. Install and start
 
-Download the package for your platform. On Ubuntu or Debian, install it with one command:
+On Ubuntu 22.04 LTS or 24.04 LTS, enable the official PPA and install the
+compatibility package (the application itself is still named TuxInDrive):
+
+```bash
+sudo add-apt-repository ppa:tpluharik77/tuxindrive
+sudo apt update
+sudo apt install tuxdrive
+```
+
+On another Debian-family system, download the package and install it directly:
 
 ```bash
 sudo apt install ./tuxindrive_0.26.26_all.deb

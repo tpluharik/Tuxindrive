@@ -86,6 +86,10 @@ chmod 0644 "$PACKAGE_ROOT/usr/share/nautilus-python/extensions/tuxindrive.py"
 # PYTHONPATH/package-placement regressions before a .deb can be published.
 TUXINDRIVE_BUILD_VERSION="$VERSION" PYTHONPATH="$PACKAGE_ROOT/usr/lib" /usr/bin/python3 -c \
   'import importlib.util, os, tuxindrive; assert tuxindrive.__version__ == os.environ["TUXINDRIVE_BUILD_VERSION"]; assert importlib.util.find_spec("tuxindrive.app"); assert importlib.util.find_spec("tuxindrive.proton"); assert importlib.util.find_spec("tuxindrive.cache_manager"); assert importlib.util.find_spec("tuxindrive.network_usage"); assert importlib.util.find_spec("tuxindrive.i18n"); assert importlib.util.find_spec("tuxindrive.help_content"); assert importlib.util.find_spec("tuxindrive.themes"); assert importlib.util.find_spec("tuxindrive.folder_layout"); assert importlib.util.find_spec("tuxindrive.collaboration"); assert importlib.util.find_spec("tuxindrive.platform_support"); assert importlib.util.find_spec("tuxindrive.updater"); assert importlib.util.find_spec("tuxindrive.update_helper"); assert importlib.util.find_spec("tuxindrive.peer"); assert importlib.util.find_spec("tuxindrive.tor"); assert importlib.util.find_spec("tuxindrive.recovery"); assert importlib.util.find_spec("tuxindrive.delta"); assert importlib.util.find_spec("tuxindrive.policies"); assert importlib.util.find_spec("tuxindrive.audit"); assert importlib.util.find_spec("tuxindrive.capabilities"); assert importlib.util.find_spec("tuxindrive.migration"); assert importlib.util.find_spec("tuxindrive.security"); assert importlib.util.find_spec("tuxindrive.github_sync"); assert importlib.util.find_spec("tuxindrive.nautilus_support")'
+# Importing for the smoke test creates bytecode with the build host's Python
+# version.  Distribution packages must let the target host generate its own
+# cache rather than shipping that build-only directory.
+find "$PACKAGE_ROOT/usr/lib/tuxindrive" -type d -name __pycache__ -prune -exec rm -rf -- {} +
 
 dpkg-deb --root-owner-group --build "$PACKAGE_ROOT" "$OUTPUT"
 cp "$OUTPUT" "$LEGACY_OUTPUT"

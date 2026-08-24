@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+  <style>
+    .bg{fill:#f6f7f8}.panel{fill:#fff;stroke:#c8cdd2;stroke-width:2}.bar{fill:#eceff1}.title{font:700 24px sans-serif;fill:#202326}.text{font:16px sans-serif;fill:#34383c}.small{font:14px sans-serif;fill:#626970}.field{fill:#fff;stroke:#aeb5bc;stroke-width:1.5}.button{fill:#3584e4}.buttonText{font:700 15px sans-serif;fill:#fff}.key{font:13px monospace;fill:#34383c}.green{fill:#26a269}
+  </style>
+  <rect width="1200" height="700" class="bg"/>
+  <rect x="90" y="35" width="1020" height="630" rx="14" class="panel"/>
+  <rect x="90" y="35" width="1020" height="58" rx="14" class="bar"/>
+  <text x="600" y="72" text-anchor="middle" class="title">Peer-to-peer shared folders</text>
+  <text x="125" y="125" class="text">Direct encrypted SFTP between two TuxInDrive computers · no intermediary file server</text>
+  <rect x="125" y="145" width="950" height="72" rx="8" class="field"/>
+  <text x="145" y="170" class="small">This computer’s public identity key</text>
+  <text x="145" y="197" class="key">ssh-ed25519 AAAAC3… TuxInDrive peer</text>
+  <rect x="875" y="164" width="175" height="36" rx="7" class="button"/>
+  <text x="962" y="187" text-anchor="middle" class="buttonText">Copy public key</text>
+  <text x="145" y="260" class="title">Share a folder</text>
+  <text x="650" y="260" class="title">Connect to a peer</text>
+  <text x="145" y="305" class="text">Local folder</text><rect x="300" y="282" width="290" height="36" rx="6" class="field"/><text x="315" y="306" class="small">/home/user/Project</text>
+  <text x="145" y="355" class="text">Address peers use</text><rect x="300" y="332" width="290" height="36" rx="6" class="field"/><text x="315" y="356" class="small">203.0.113.20</text>
+  <text x="145" y="405" class="text">TCP port</text><rect x="300" y="382" width="290" height="36" rx="6" class="field"/><text x="315" y="406" class="small">22022</text>
+  <text x="145" y="455" class="text">Allowed peer key</text><rect x="300" y="432" width="290" height="36" rx="6" class="field"/><text x="315" y="456" class="small">ssh-ed25519 AAAAC3…</text>
+  <rect x="300" y="490" width="145" height="40" rx="7" class="button"/><text x="372" y="516" text-anchor="middle" class="buttonText">Save and start</text>
+  <rect x="455" y="490" width="135" height="40" rx="7" class="green"/><text x="522" y="516" text-anchor="middle" class="buttonText">Copy invitation</text>
+  <text x="650" y="305" class="text">Peer IP / DNS</text><rect x="795" y="282" width="260" height="36" rx="6" class="field"/><text x="810" y="306" class="small">203.0.113.20</text>
+  <text x="650" y="355" class="text">Peer TCP port</text><rect x="795" y="332" width="260" height="36" rx="6" class="field"/><text x="810" y="356" class="small">22022</text>
+  <text x="650" y="405" class="text">Pinned host key</text><rect x="795" y="382" width="260" height="36" rx="6" class="field"/><text x="810" y="406" class="small">ssh-ed25519 AAAAC3…</text>
+  <text x="650" y="455" class="text">My local folder</text><rect x="795" y="432" width="260" height="36" rx="6" class="field"/><text x="810" y="456" class="small">/home/peer/Project</text>
+  <rect x="795" y="490" width="180" height="40" rx="7" class="button"/><text x="885" y="516" text-anchor="middle" class="buttonText">Save and connect</text>
+  <rect x="125" y="575" width="950" height="54" rx="8" fill="#e7f6ed" stroke="#26a269"/>
+  <text x="150" y="608" class="text">✓ Host key verified · direct peer synchronization started</text>
+</svg>
