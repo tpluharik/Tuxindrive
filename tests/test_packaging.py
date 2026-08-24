@@ -260,6 +260,21 @@ class PackagingTests(unittest.TestCase):
         self.assertIn("https://push.chocolatey.org/", workflow)
         self.assertNotIn("tpluharik@gmail.com", workflow)
 
+    def test_public_code_signing_policy_is_complete_and_linked(self):
+        policy = Path("docs/CODE_SIGNING_POLICY.md").read_text(encoding="utf-8")
+        downloads = Path("docs/DOWNLOADS.md").read_text(encoding="utf-8")
+        readme = Path("README.md").read_text(encoding="utf-8")
+        self.assertIn("# Code signing policy", policy)
+        self.assertIn("Free code signing is provided by SignPath.io", policy)
+        self.assertIn("certificate is provided by\nSignPath Foundation", policy)
+        self.assertIn("Signing approver", policy)
+        self.assertIn("multi-factor authentication", policy)
+        self.assertIn("GitHub-hosted runners", policy)
+        self.assertIn("does not transfer information", policy)
+        self.assertIn("SignPath.io", downloads)
+        self.assertIn("docs/DOWNLOADS.md", readme)
+        self.assertIn("docs/CODE_SIGNING_POLICY.md", readme)
+
     def test_platform_release_channels_are_durable_and_version_bound(self):
         from tuxindrive import __version__
 

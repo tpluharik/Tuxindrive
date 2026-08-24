@@ -125,6 +125,9 @@ rule remains in force.
 
 ## Release safety
 
+- Windows publication follows the public [code signing
+  policy](CODE_SIGNING_POLICY.md); SignPath production signing accepts only
+  verified GitHub-hosted release builds and requires manual approval.
 - Marketplace credentials live only in an approval-protected environment.
 - Pull-request automation receives repository-scoped, short-lived access.
 - Store builds never invoke the TuxInDrive self-updater.

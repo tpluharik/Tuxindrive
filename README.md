@@ -10,13 +10,17 @@
 
 TuxInDrive is a native Linux, Windows, macOS and Android client for **Google Drive, Microsoft OneDrive, Dropbox, Box, pCloud, MEGA, Proton Drive, Nextcloud, and GitHub repositories**. Linux, Windows and macOS share the GTK desktop interface; Android uses a native mobile layout over the same rclone synchronization engine and platform-safe storage controls.
 
-📚 **[Complete documentation index](docs/README.md)** · 📘 **[Illustrated user guide](docs/USER_GUIDE.md)** · 🏗️ **[Technical architecture](docs/ARCHITECTURE.md)** · 📦 **[Marketplace distribution](docs/MARKETPLACE_DISTRIBUTION.md)**
+📥 **[Official downloads](docs/DOWNLOADS.md)** · 📚 **[Complete documentation index](docs/README.md)** · 📘 **[Illustrated user guide](docs/USER_GUIDE.md)** · 🏗️ **[Technical architecture](docs/ARCHITECTURE.md)** · 📦 **[Marketplace distribution](docs/MARKETPLACE_DISTRIBUTION.md)**
 
 Release maintainers can reuse the factual [0.26.23 community announcement notes](docs/ANNOUNCEMENT_0.26.23.md) when inviting testers and contributors.
 
 ⚙️ **[Configuration](docs/CONFIGURATION.md)** · 🩺 **[Operations](docs/OPERATIONS.md)** · 📦 **[Release process](docs/RELEASES.md)** · 🧪 **[Testing](docs/TESTING.md)** · 🛡️ **[Security](docs/SECURITY_HARDENING.md)** · 💡 **[Roadmap](docs/ROADMAP.md)** · 📝 **[History](CHANGELOG.md)**
 
 🔐 **[Security policy, trust boundaries, and vulnerability reporting](SECURITY.md)**
+
+🖊️ **[Code signing policy](docs/CODE_SIGNING_POLICY.md)** — free code signing
+provided by SignPath.io, certificate by SignPath Foundation; official release
+signing is restricted to verified GitHub-hosted builds and manual approval.
 
 🖥️ **[Self-hosted TuxInDrive Server preview](docs/SERVER.md)** — separate Linux `.deb` with its own graphical administration application, headless synchronization/peer agent, encrypted mailbox/rendezvous/object/collaboration roles, allowlisted relay, attestation and read-only MCP. Client integration is disabled by default behind a Settings feature flag.
 
