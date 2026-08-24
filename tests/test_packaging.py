@@ -65,6 +65,8 @@ class PackagingTests(unittest.TestCase):
         self.assertIn("confinement: classic", snapcraft)
         self.assertIn("      - python3\n", snapcraft)
         self.assertIn("      - python3-venv\n", snapcraft)
+        self.assertIn("      - python3.12-minimal\n", snapcraft)
+        self.assertIn("      - libpython3.12-stdlib\n", snapcraft)
         self.assertIn("      - enable-patchelf\n", snapcraft)
         self.assertIn("SNAPCRAFT_STORE_CREDENTIALS", workflow)
         self.assertNotIn("BEGIN PRIVATE", snapcraft + workflow)

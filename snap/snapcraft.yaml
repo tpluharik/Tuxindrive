@@ -29,6 +29,8 @@ parts:
     source: .
     build-attributes:
       - enable-patchelf
+    build-packages:
+      - python3-dev
     python-packages:
       - cryptography==50.0.0
       - defusedxml==0.7.1
@@ -41,9 +43,14 @@ parts:
       - libnotify-bin
       - libsecret-tools
       - openssh-client
+      - libpython3.12-minimal
+      - libpython3.12-stdlib
       - python3
       - python3-gi
+      - python3-minimal
       - python3-venv
+      - python3.12-minimal
+      - python3.12-venv
       - rclone
       - xdg-utils
     override-build: |
