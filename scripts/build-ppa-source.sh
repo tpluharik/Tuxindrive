@@ -43,6 +43,7 @@ EOF
 
 (cd "$source_dir" && dpkg-buildpackage -S -sa -k"$fingerprint")
 cp "$work_root"/tuxindrive_"$package_version"_source.changes "$output_dir/"
+cp "$work_root"/tuxindrive_"$package_version"_source.buildinfo "$output_dir/"
 cp "$work_root"/tuxindrive_"$package_version".dsc "$output_dir/"
 cp "$work_root"/tuxindrive_"$package_version".debian.tar.* "$output_dir/"
 cp "$work_root"/tuxindrive_"$upstream_version".orig.tar.gz "$output_dir/"
