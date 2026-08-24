@@ -1,8 +1,8 @@
 {
-  "version": "0.26.25",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.25/TuxInDrive-0.26.25-windows-x64-setup.exe",
-  "sha256": "22dc1b1f8e0b4a92dd7a77ce7893ba9fc6f41d0a24b2038681bffc65fe5282a2",
-  "notes": "Secure automatic Android updates",
-  "expires_at": "2026-11-21T16:29:48.822800+00:00",
-  "signature": "Qt/fzXTn5UtY+2yuYeDphibaLL468agrT3tOHzGULX0+F3XvsCmO3IgrMF7D/QFZeFzwx4JmOI35bCJsCPe3CQ=="
+  "version": "0.26.26",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.26/TuxInDrive-0.26.26-windows-x64-setup.exe",
+  "sha256": "d376abdfc9bc54791e82dc861b2f8d673d8de44d4f314b2160d113ce2edac436",
+  "notes": "Automated marketplace distribution metadata and store-ready Android bundle",
+  "expires_at": "2026-11-22T11:33:37.983771+00:00",
+  "signature": "FRlTz9QcpHBGdCoM1mcjwmdYrHhG9vBg+n18nW22q+WIfYh3fKrx11cEctf6JGUpvgYiGX6DstnTSQqF29nsBw=="
 }

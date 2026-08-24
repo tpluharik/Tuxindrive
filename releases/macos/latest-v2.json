@@ -1,8 +1,8 @@
 {
-  "version": "0.26.25",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.25/TuxInDrive-0.26.25-macos-arm64.dmg",
-  "sha256": "817b60645cae670330ba923ec6cd9c5904a855a92306d420760fd21f7a4b296d",
-  "notes": "Secure automatic Android updates",
-  "expires_at": "2026-11-21T16:29:54.782038+00:00",
-  "signature": "cccvR4rdNUQ8kxxbLD+PeDTfSvXFEoBQMRY3lV/Cu3SMauM5K+1GBWuoeB7+T42oaEZ649zRL07ftxFP6EPFDA=="
+  "version": "0.26.26",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.26/TuxInDrive-0.26.26-macos-arm64.dmg",
+  "sha256": "31d922c3f793f0859b3db3692f9a4040eae40b74c0f046e7e14ce54efe9f8aec",
+  "notes": "Automated marketplace distribution metadata and store-ready Android bundle",
+  "expires_at": "2026-11-22T11:33:38.070071+00:00",
+  "signature": "1KzrGs7x+4DbjmNoGiKShYQ0xTcj2a8xoSGU9QwXfg2HTtvymcJqGpGTsMUxFDB5eay3s5XQVMshl3d6QY13Ag=="
 }
