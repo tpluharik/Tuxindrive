@@ -99,8 +99,9 @@ Snap packaging must not weaken TuxInDrive path checks merely to avoid review.
 
 - Launchpad owner: `tpluharik77`.
 - Public archive: `ppa:tpluharik77/tuxindrive`.
-- Source-build targets: Ubuntu 22.04 LTS (Jammy) and Ubuntu 24.04 LTS
-  (Noble), using distinct version suffixes so both uploads remain immutable.
+- Source-build targets: Ubuntu 22.04 LTS (Jammy), Ubuntu 24.04 LTS
+  (Noble), and Ubuntu 26.04 LTS (Resolute), using distinct version suffixes so
+  all uploads remain immutable.
 - Maintainer OpenPGP fingerprint:
   `876E A832 9116 387E 9FAF 7880 C3FD EBCE A697 D211`.
 

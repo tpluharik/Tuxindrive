@@ -41,7 +41,7 @@ class PackagingTests(unittest.TestCase):
         self.assertIn("Package: tuxdrive", control)
         self.assertIn("debhelper-compat (= 13)", control)
         self.assertIn("dpkg-deb -x", rules)
-        self.assertIn("jammy|noble", source_builder)
+        self.assertIn("jammy|noble|resolute", source_builder)
         self.assertIn("dpkg-buildpackage -S -sa", source_builder)
         self.assertIn("_source.buildinfo", source_builder)
         self.assertIn("TUXINDRIVE_PPA_GPG_FINGERPRINT", source_builder)

@@ -14,6 +14,7 @@ The desktop baseline is Ubuntu 24.04/26.04, Debian 12/13, Windows 10/11 x64 and 
 | Ubuntu/Debian Server amd64/arm64 | Separate headless `.deb` | Not scheduled by default | CLI/systemd/API | GTK-free sync/peer agent plus independently enabled encrypted coordination roles; remote API requires TLS. |
 | Ubuntu 26.04 GNOME | Expected | Expected with FUSE 3 | Nautilus 4.1 design target | Primary target; complete GNOME/Wayland VM release test required. |
 | Ubuntu 24.04 LTS GNOME | CI-installed | Expected with FUSE 3 | Nautilus 4.x | Supported; verify AppIndicator extension and unlocked GNOME Keyring in the user session. |
+| Ubuntu 26.04 LTS GNOME | PPA source-build target | Expected with FUSE 3 | Nautilus 4.x | Supported through the Resolute PPA build; complete graphical/Secret Service/FUSE acceptance on the final release image. |
 | Debian 13 GNOME | CI-installed | Expected with FUSE 3 | Nautilus 4.x | Supported core; integration package versions come from Debian repositories. |
 | Debian 12 GNOME | CI-installed | Expected with FUSE 3 | Nautilus 4.x | Supported core; use Debian security updates/backports and complete the manual Secret Service/FUSE gate. |
 | Ubuntu 22.04 GNOME | PPA source-build target | Best effort | Older python-nautilus generation | Launchpad builds Jammy packages, but full graphical/Secret Service/FUSE VM acceptance remains required before treating Jammy as the security baseline. |

@@ -16,7 +16,7 @@ The 0.25.0 upgrade changes all visible product names to TuxInDrive. Existing pri
 
 ## 1. Install and start
 
-On Ubuntu 22.04 LTS or 24.04 LTS, enable the official PPA and install the
+On Ubuntu 22.04 LTS, 24.04 LTS, or 26.04 LTS, enable the official PPA and install the
 compatibility package (the application itself is still named TuxInDrive):
 
 ```bash

@@ -2,13 +2,13 @@
 set -eu
 
 if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 jammy|noble" >&2
+  echo "Usage: $0 jammy|noble|resolute" >&2
   exit 2
 fi
 
 suite=$1
 case "$suite" in
-  jammy|noble) ;;
+  jammy|noble|resolute) ;;
   *) echo "Unsupported Ubuntu suite: $suite" >&2; exit 2 ;;
 esac
 
@@ -35,7 +35,7 @@ else
   mkdir -p "$source_dir"
   git -C "$project_root" archive --format=tar HEAD | tar -xf - -C "$source_dir"
   # git archive fixes file order and timestamps; gzip -n removes its timestamp
-  # and original-filename header.  Jammy and Noble therefore use identical
+  # and original-filename header. All Ubuntu suites therefore use identical
   # bytes for the shared upstream tarball.
   git -C "$project_root" archive --format=tar --prefix="tuxindrive-$upstream_version/" HEAD \
     | gzip -n > "$work_root/tuxindrive_${upstream_version}.orig.tar.gz"

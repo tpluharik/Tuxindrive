@@ -213,7 +213,7 @@ TuxInDrive Profile links the application to an existing Google Drive, OneDrive, 
 
 ### Ubuntu and Debian
 
-Ubuntu 22.04 LTS and 24.04 LTS can install the Launchpad build from the
+Ubuntu 22.04 LTS, 24.04 LTS, and 26.04 LTS can install the Launchpad build from the
 official TuxInDrive PPA:
 
 ```bash
