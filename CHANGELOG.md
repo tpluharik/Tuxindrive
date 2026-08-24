@@ -2,6 +2,15 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.26 — marketplace-ready release automation
+
+- Produces a signed, self-update-disabled Android App Bundle for Google Play
+  alongside the existing signed sideload APK.
+- Derives checksum-bound WinGet, Chocolatey, Homebrew, AUR client/server, and
+  Google Play submission inputs from the exact immutable release artifacts.
+- Publishes those definitions as a versioned marketplace metadata archive and
+  documents the protected account, signing, and review hand-off.
+
 ## 0.26.25 — secure automatic Android updates
 
 - Added default-on, user-configurable periodic update checks to the official

@@ -7,7 +7,15 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.25
+## Current baseline: 0.26.26
+
+### Completed in 0.26.26: marketplace-ready release automation
+
+Tagged releases now produce a signed Play Store AAB with application self-update
+disabled and derive checksum-bound WinGet, Chocolatey, Homebrew, AUR client and
+server, and Google Play submission inputs from the final immutable artifacts.
+Actual marketplace publication remains approval-gated behind maintainer-owned
+accounts, platform certificates, legal declarations, and store review.
 
 ### Completed in 0.26.25: secure automatic Android updates
 
