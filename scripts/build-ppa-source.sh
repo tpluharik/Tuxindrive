@@ -24,23 +24,26 @@ trap 'rm -rf -- "$work_root"' EXIT HUP INT TERM
 source_dir="$work_root/tuxindrive-$upstream_version"
 packaging_dir="$work_root/debian"
 
-mkdir -p "$source_dir" "$output_dir"
-git -C "$project_root" archive --format=tar HEAD | tar -xf - -C "$source_dir"
-cp -a "$source_dir/debian" "$packaging_dir"
-# Debian source uploads must not embed the repository's historical binary
-# artifacts.  The build recreates only the current binary in its temporary
-# workspace.
-rm -rf "$source_dir/debian" "$source_dir/dist"
+mkdir -p "$output_dir"
+cp -a "$project_root/debian" "$packaging_dir"
 if [ -n "$existing_orig" ]; then
   test -f "$existing_orig"
   cp "$existing_orig" "$work_root/tuxindrive_${upstream_version}.orig.tar.gz"
+  tar -xzf "$work_root/tuxindrive_${upstream_version}.orig.tar.gz" -C "$work_root"
+  test -d "$source_dir"
 else
+  mkdir -p "$source_dir"
+  git -C "$project_root" archive --format=tar HEAD | tar -xf - -C "$source_dir"
   # git archive fixes file order and timestamps; gzip -n removes its timestamp
   # and original-filename header.  Jammy and Noble therefore use identical
   # bytes for the shared upstream tarball.
   git -C "$project_root" archive --format=tar --prefix="tuxindrive-$upstream_version/" HEAD \
     | gzip -n > "$work_root/tuxindrive_${upstream_version}.orig.tar.gz"
 fi
+# Debian source uploads must not embed the repository's historical binary
+# artifacts. The build recreates only the current binary in its temporary
+# workspace.
+rm -rf "$source_dir/debian" "$source_dir/dist"
 cp -a "$packaging_dir" "$source_dir/debian"
 
 cat > "$source_dir/debian/changelog" <<EOF

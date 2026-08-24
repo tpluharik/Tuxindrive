@@ -47,6 +47,8 @@ class PackagingTests(unittest.TestCase):
         self.assertIn("TUXINDRIVE_PPA_GPG_FINGERPRINT", source_builder)
         self.assertIn('"$source_dir/dist"', source_builder)
         self.assertIn("TUXINDRIVE_PPA_ORIG", source_builder)
+        self.assertIn('cp -a "$project_root/debian" "$packaging_dir"', source_builder)
+        self.assertIn('tar -xzf "$work_root/tuxindrive_${upstream_version}.orig.tar.gz"', source_builder)
         self.assertIn("gzip -n", source_builder)
         self.assertNotIn("BEGIN PGP PRIVATE KEY", source_builder)
         readme = Path("README.md").read_text(encoding="utf-8")
