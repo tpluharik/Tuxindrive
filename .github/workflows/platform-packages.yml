@@ -15,6 +15,8 @@ on:
       - "scripts/build-windows.ps1"
       - "scripts/build-windows-msys2.sh"
       - "scripts/build-macos.sh"
+      - "scripts/generate-marketplace-metadata.py"
+      - "packaging/marketplaces/**"
       - "pyproject.toml"
       - "requirements*.txt"
       - ".github/workflows/platform-packages.yml"
@@ -156,7 +158,7 @@ jobs:
             -o "${GITHUB_WORKSPACE}/android/app/libs/rclone.aar" \
             github.com/rclone/rclone/librclone/gomobile
           test -s "${GITHUB_WORKSPACE}/android/app/libs/rclone.aar"
-      - name: Build Android APK
+      - name: Build Android sideload APK and Play Store bundle
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           TUXINDRIVE_ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
@@ -171,22 +173,33 @@ jobs:
             test -n "$TUXINDRIVE_ANDROID_KEY_PASSWORD"
             export TUXINDRIVE_ANDROID_KEYSTORE="$RUNNER_TEMP/tuxindrive-release.jks"
             printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$TUXINDRIVE_ANDROID_KEYSTORE"
-            gradle -p android --no-daemon :app:testSideloadReleaseUnitTest :app:lintSideloadRelease :app:assembleSideloadRelease
+            gradle -p android --no-daemon \
+              :app:testSideloadReleaseUnitTest :app:lintSideloadRelease :app:assembleSideloadRelease \
+              :app:testStoreReleaseUnitTest :app:lintStoreRelease :app:bundleStoreRelease
             package=android/app/build/outputs/apk/sideload/release/app-sideload-release.apk
+            store_bundle=android/app/build/outputs/bundle/storeRelease/app-store-release.aab
           else
             gradle -p android --no-daemon :app:testSideloadDebugUnitTest :app:lintSideloadDebug :app:assembleSideloadDebug
             package=android/app/build/outputs/apk/sideload/debug/app-sideload-debug.apk
+            store_bundle=
           fi
           test -s "$package"
           mkdir -p dist
           cp "$package" "dist/TuxInDrive-${version}-android.apk"
           mkdir -p releases/android/packages
           cp "dist/TuxInDrive-${version}-android.apk" releases/android/packages/
+          if [[ -n "$store_bundle" ]]; then
+            test -s "$store_bundle"
+            cp "$store_bundle" "dist/TuxInDrive-${version}-android-store.aab"
+            cp "dist/TuxInDrive-${version}-android-store.aab" releases/android/packages/
+          fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: tuxindrive-android
           retention-days: 7
-          path: releases/android/packages/TuxInDrive-*-android.apk
+          path: |
+            releases/android/packages/TuxInDrive-*-android.apk
+            releases/android/packages/TuxInDrive-*-android-store.aab
 
   publish-release:
     if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
@@ -221,6 +234,11 @@ jobs:
           test "$(find release-assets -type f -name "TuxInDrive-$version-windows-x64-portable.zip" | wc -l)" -eq 1
           test "$(find release-assets -type f -name "TuxInDrive-$version-macos-*.dmg" | wc -l)" -eq 1
           test "$(find release-assets -type f -name "TuxInDrive-$version-android.apk" | wc -l)" -eq 1
+          test "$(find release-assets -type f -name "TuxInDrive-$version-android-store.aab" | wc -l)" -eq 1
+          python3 scripts/generate-marketplace-metadata.py \
+            --asset-dir release-assets --output marketplace-metadata
+          tar -C marketplace-metadata -czf \
+            "release-assets/TuxInDrive-$version-marketplace-metadata.tar.gz" .
           find release-assets -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
           sed -i 's#release-assets/##g' SHA256SUMS.txt
           mv SHA256SUMS.txt release-assets/SHA256SUMS.txt
@@ -229,7 +247,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mapfile -t packages < <(find release-assets -type f -print)
-          test "${#packages[@]}" -eq 8
+          test "${#packages[@]}" -eq 10
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
               gh release upload "$RELEASE_TAG" "${packages[@]}" --clobber

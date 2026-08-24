@@ -18,6 +18,7 @@ facts are identified by version; planned work is never described as shipped.
 | Developers and administrators | [Configuration reference](CONFIGURATION.md) | Configuration file, every persisted setting/job field, environment integration and compatibility rules. |
 | Maintainers | [Testing](TESTING.md) | Automated suite, safety invariants, manual test matrix and coverage limits. |
 | Maintainers | [Release process](RELEASES.md) | Versioning, native builds, signed update channels, artifacts, validation and rollback. |
+| Distribution maintainers | [Marketplace distribution](MARKETPLACE_DISTRIBUTION.md) | Generated package-manager inputs and the account-owner hand-off. |
 | Security reviewers | [Security hardening](SECURITY_HARDENING.md) | Trust boundaries, credential storage, update verification and residual risk. |
 | Platform users | [Platform support](PLATFORM_SUPPORT.md) | Linux, Windows, macOS and Android differences and requirements. |
 | Server operators | [Server preview](SERVER.md) | Headless roles, `.deb` installation, API, client feature flag, quotas, TLS and limitations. |

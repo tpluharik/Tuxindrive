@@ -10,7 +10,8 @@ the installation and update instructions in the [user guide](USER_GUIDE.md).
 |---|---|---|
 | Windows x64 | `TuxInDrive-VERSION-windows-x64-setup.exe` and portable ZIP | `releases/windows/latest-v2.json` |
 | macOS | `TuxInDrive-VERSION-macos-ARCH.dmg` | `releases/macos/latest-v2.json` |
-| Android | `TuxInDrive-VERSION-android.apk` | `releases/android/latest-v2.json` |
+| Android sideload | `TuxInDrive-VERSION-android.apk` | `releases/android/latest-v2.json` |
+| Android store | `TuxInDrive-VERSION-android-store.aab` | Marketplace-controlled update channel |
 | Linux | `tuxindrive_VERSION_all.deb` | `update/latest-v2.json` |
 | Linux server preview | `tuxindrive-server_VERSION_all.deb` | No automatic-update channel in the first preview |
 
@@ -21,6 +22,13 @@ pointing to the durable Release URL. Linux retains the compatibility channel
 under `update/`. Seven-day Actions artifacts and the workflow's temporary
 `releases/linux/packages` staging directory are build evidence only and are
 never updater sources.
+
+Each complete Release also contains
+`TuxInDrive-VERSION-marketplace-metadata.tar.gz`. It is generated only after
+the final packages exist and contains checksum-bound WinGet, Chocolatey, AUR,
+Homebrew, and Google Play submission inputs. See
+[Marketplace distribution](MARKETPLACE_DISTRIBUTION.md). Marketplace metadata
+does not replace the signed TuxInDrive updater manifests.
 
 The server is intentionally a separate Debian package built with
 `scripts/build-server-deb.sh`. It is not installed by the desktop package. The
@@ -88,8 +96,10 @@ workflow.
 The Linux job builds the Debian package. The Windows job freezes the GTK/Python
 application in MSYS2 and produces an installer plus portable ZIP. The macOS job
 builds the GTK application and DMG. The Android job builds a pinned rclone
-gomobile library, then runs release tests, lint and assembly with the signing
-secrets. Publishing waits for all four jobs; a failed platform blocks the
+gomobile library, then runs release tests and lint and produces both the signed
+sideload APK and the self-update-disabled Play Store AAB. The publication job
+derives package-manager definitions and checksums from those exact files.
+Publishing waits for all four jobs; a failed platform blocks the
 release rather than publishing a partial channel.
 
 ## Manifest publication

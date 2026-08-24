@@ -10,7 +10,7 @@
 
 TuxInDrive is a native Linux, Windows, macOS and Android client for **Google Drive, Microsoft OneDrive, Dropbox, Box, pCloud, MEGA, Proton Drive, Nextcloud, and GitHub repositories**. Linux, Windows and macOS share the GTK desktop interface; Android uses a native mobile layout over the same rclone synchronization engine and platform-safe storage controls.
 
-📚 **[Complete documentation index](docs/README.md)** · 📘 **[Illustrated user guide](docs/USER_GUIDE.md)** · 🏗️ **[Technical architecture](docs/ARCHITECTURE.md)**
+📚 **[Complete documentation index](docs/README.md)** · 📘 **[Illustrated user guide](docs/USER_GUIDE.md)** · 🏗️ **[Technical architecture](docs/ARCHITECTURE.md)** · 📦 **[Marketplace distribution](docs/MARKETPLACE_DISTRIBUTION.md)**
 
 Release maintainers can reuse the factual [0.26.23 community announcement notes](docs/ANNOUNCEMENT_0.26.23.md) when inviting testers and contributors.
 
