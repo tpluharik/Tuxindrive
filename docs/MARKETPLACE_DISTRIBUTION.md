@@ -51,8 +51,15 @@ repository/environment secrets and send only non-secret names or fingerprints.
 
 - Obtain an Authenticode certificate and add its PFX plus password as protected
   release secrets. Send only its subject and SHA-256 fingerprint.
-- Create or verify the Chocolatey maintainer account and add its API key as a
-  protected secret. Send the account name, never the key.
+- The Chocolatey maintainer is `tpluharik`. Its API key is stored as the
+  encrypted GitHub Actions secret `CHOCOLATEY_API_KEY`; never place that value
+  in a command log, issue, pull request, chat, artifact, or commit.
+- After a signed immutable release exists, a maintainer dispatches **Publish
+  Chocolatey package**, enters its exact `vMAJOR.MINOR.PATCH` tag, and approves
+  the protected `release` environment. The workflow independently verifies the
+  trusted Authenticode signature, package identity, version, release URL and
+  installer SHA-256, performs a clean installation/uninstallation on Windows,
+  and only then submits the package to the Chocolatey Community Repository.
 
 Public Windows submission should wait for Authenticode so SmartScreen and the
 installer identity remain stable across upgrades.

@@ -248,6 +248,18 @@ class PackagingTests(unittest.TestCase):
         self.assertIn("verified update cache", android_updater)
         self.assertTrue(Path("android/app/src/test/java/io/github/tuxindrive/mobile/MobileValidationTest.kt").is_file())
 
+    def test_chocolatey_publication_is_secret_backed_and_fail_closed(self):
+        workflow = Path(".github/workflows/chocolatey-publish.yml").read_text(encoding="utf-8")
+        self.assertIn("environment: release", workflow)
+        self.assertIn("secrets.CHOCOLATEY_API_KEY", workflow)
+        self.assertIn("Get-AuthenticodeSignature", workflow)
+        self.assertIn("signature.Status -ne 'Valid'", workflow)
+        self.assertIn("Get-FileHash $installer -Algorithm SHA256", workflow)
+        self.assertIn("Chocolatey clean-install test failed", workflow)
+        self.assertIn("Chocolatey uninstall test failed", workflow)
+        self.assertIn("https://push.chocolatey.org/", workflow)
+        self.assertNotIn("tpluharik@gmail.com", workflow)
+
     def test_platform_release_channels_are_durable_and_version_bound(self):
         from tuxindrive import __version__
 

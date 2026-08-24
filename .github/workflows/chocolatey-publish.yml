@@ -1,0 +1,103 @@
+name: Publish Chocolatey package
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Immutable signed TuxInDrive release tag (for example v0.26.26)
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    environment: release
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ inputs.release_tag }}
+          persist-credentials: false
+
+      - name: Download immutable release inputs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          if ($env:RELEASE_TAG -notmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') {
+            throw "release_tag must have the form vMAJOR.MINOR.PATCH"
+          }
+          $version = $env:RELEASE_TAG.Substring(1)
+          New-Item -ItemType Directory -Force release-assets | Out-Null
+          gh release download $env:RELEASE_TAG `
+            --pattern "TuxInDrive-$version-marketplace-metadata.tar.gz" `
+            --pattern "TuxInDrive-$version-windows-x64-setup.exe" `
+            --dir release-assets
+          if ($LASTEXITCODE -ne 0) { throw "Could not download the release inputs" }
+          tar -xzf "release-assets/TuxInDrive-$version-marketplace-metadata.tar.gz" `
+            -C release-assets
+
+      - name: Verify signature, version, URL and checksum
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          $version = $env:RELEASE_TAG.Substring(1)
+          $installer = Resolve-Path "release-assets/TuxInDrive-$version-windows-x64-setup.exe"
+          $installScript = Get-Content `
+            "release-assets/chocolatey/tuxindrive/tools/chocolateyinstall.ps1" -Raw
+          [xml]$nuspec = Get-Content `
+            "release-assets/chocolatey/tuxindrive/tuxindrive.nuspec" -Raw
+
+          $signature = Get-AuthenticodeSignature $installer
+          if ($signature.Status -ne 'Valid') {
+            throw "The Windows installer does not have a valid trusted Authenticode signature: $($signature.Status)"
+          }
+          if ($nuspec.package.metadata.id -ne 'tuxindrive') {
+            throw "Unexpected Chocolatey package identity"
+          }
+          if ($nuspec.package.metadata.version -ne $version) {
+            throw "Chocolatey metadata does not match release $env:RELEASE_TAG"
+          }
+          $expectedUrl = "https://github.com/tpluharik/Tuxindrive/releases/download/$env:RELEASE_TAG/TuxInDrive-$version-windows-x64-setup.exe"
+          if (-not $installScript.Contains("url64bit       = '$expectedUrl'")) {
+            throw "Chocolatey installer URL is not bound to the requested release"
+          }
+          $checksum = (Get-FileHash $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          if (-not $installScript.Contains("checksum64     = '$checksum'")) {
+            throw "Chocolatey checksum does not match the signed installer"
+          }
+
+      - name: Build and inspect Chocolatey package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force package-output | Out-Null
+          Push-Location release-assets/chocolatey/tuxindrive
+          try {
+            choco pack tuxindrive.nuspec --outputdirectory "$env:GITHUB_WORKSPACE/package-output"
+            if ($LASTEXITCODE -ne 0) { throw "Chocolatey package build failed" }
+          } finally {
+            Pop-Location
+          }
+          $packages = @(Get-ChildItem package-output/tuxindrive.*.nupkg)
+          if ($packages.Count -ne 1) { throw "Expected exactly one Chocolatey package" }
+          choco install $packages[0].FullName --source package-output --yes --no-progress
+          if ($LASTEXITCODE -ne 0) { throw "Chocolatey clean-install test failed" }
+          choco uninstall tuxindrive --yes --no-progress
+          if ($LASTEXITCODE -ne 0) { throw "Chocolatey uninstall test failed" }
+
+      - name: Publish to Chocolatey Community Repository
+        shell: pwsh
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CHOCOLATEY_API_KEY)) {
+            throw "CHOCOLATEY_API_KEY is not configured"
+          }
+          $package = Get-ChildItem package-output/tuxindrive.*.nupkg -File
+          choco push $package.FullName `
+            --source https://push.chocolatey.org/ `
+            --api-key $env:CHOCOLATEY_API_KEY
+          if ($LASTEXITCODE -ne 0) { throw "Chocolatey publication failed" }
