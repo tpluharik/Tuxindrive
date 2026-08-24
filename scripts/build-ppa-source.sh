@@ -17,6 +17,7 @@ upstream_version=$(sed -n 's/^__version__ = "\([^"]*\)"/\1/p' "$project_root/src
 test -n "$upstream_version"
 package_version="${upstream_version}-1~ppa1~${suite}1"
 fingerprint=${TUXINDRIVE_PPA_GPG_FINGERPRINT:-876EA8329116387E9FAF7880C3FDEBCEA697D211}
+existing_orig=${TUXINDRIVE_PPA_ORIG:-}
 output_dir="$project_root/dist/ppa/$suite"
 work_root=$(mktemp -d)
 trap 'rm -rf -- "$work_root"' EXIT HUP INT TERM
@@ -30,7 +31,16 @@ cp -a "$source_dir/debian" "$packaging_dir"
 # artifacts.  The build recreates only the current binary in its temporary
 # workspace.
 rm -rf "$source_dir/debian" "$source_dir/dist"
-tar -C "$work_root" -czf "$work_root/tuxindrive_${upstream_version}.orig.tar.gz" "tuxindrive-$upstream_version"
+if [ -n "$existing_orig" ]; then
+  test -f "$existing_orig"
+  cp "$existing_orig" "$work_root/tuxindrive_${upstream_version}.orig.tar.gz"
+else
+  # git archive fixes file order and timestamps; gzip -n removes its timestamp
+  # and original-filename header.  Jammy and Noble therefore use identical
+  # bytes for the shared upstream tarball.
+  git -C "$project_root" archive --format=tar --prefix="tuxindrive-$upstream_version/" HEAD \
+    | gzip -n > "$work_root/tuxindrive_${upstream_version}.orig.tar.gz"
+fi
 cp -a "$packaging_dir" "$source_dir/debian"
 
 cat > "$source_dir/debian/changelog" <<EOF
