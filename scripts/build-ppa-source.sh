@@ -26,7 +26,10 @@ packaging_dir="$work_root/debian"
 mkdir -p "$source_dir" "$output_dir"
 git -C "$project_root" archive --format=tar HEAD | tar -xf - -C "$source_dir"
 cp -a "$source_dir/debian" "$packaging_dir"
-rm -rf "$source_dir/debian"
+# Debian source uploads must not embed the repository's historical binary
+# artifacts.  The build recreates only the current binary in its temporary
+# workspace.
+rm -rf "$source_dir/debian" "$source_dir/dist"
 tar -C "$work_root" -czf "$work_root/tuxindrive_${upstream_version}.orig.tar.gz" "tuxindrive-$upstream_version"
 cp -a "$packaging_dir" "$source_dir/debian"
 

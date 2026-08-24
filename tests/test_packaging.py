@@ -44,6 +44,7 @@ class PackagingTests(unittest.TestCase):
         self.assertIn("jammy|noble", source_builder)
         self.assertIn("dpkg-buildpackage -S -sa", source_builder)
         self.assertIn("TUXINDRIVE_PPA_GPG_FINGERPRINT", source_builder)
+        self.assertIn('"$source_dir/dist"', source_builder)
         self.assertNotIn("BEGIN PGP PRIVATE KEY", source_builder)
         readme = Path("README.md").read_text(encoding="utf-8")
         self.assertIn("ppa:tpluharik77/tuxindrive", readme)
