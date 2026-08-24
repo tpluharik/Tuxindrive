@@ -87,11 +87,14 @@ current ad-hoc development signature is not production notarization.
 
 ### Snap Store
 
-- Create the Snapcraft publisher account and register `tuxindrive`.
-- Confirm the publisher display name.
+- Publisher username: `tpluharik77`; registered snap name: `tuxindrive`.
 - Request classic confinement, explaining that explicit user-selected cloud
   roots, FUSE mounts, credential services, and file-manager integration need
   host filesystem access. Publication waits for the store assertion.
+- `snap/snapcraft.yaml` is the reviewable classic package definition.
+- `.github/workflows/snapcraft-publish.yml` builds tagged releases and uploads
+  them to `edge` with the protected `SNAPCRAFT_STORE_CREDENTIALS` secret. The
+  credential must never be committed, logged, or pasted into an issue or chat.
 
 Snap packaging must not weaken TuxInDrive path checks merely to avoid review.
 

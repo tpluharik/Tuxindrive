@@ -55,6 +55,17 @@ class PackagingTests(unittest.TestCase):
         self.assertIn("ppa:tpluharik77/tuxindrive", readme)
         self.assertIn("sudo apt install tuxdrive", readme)
 
+    def test_snapcraft_package_is_classic_versioned_and_credential_scoped(self):
+        from tuxindrive import __version__
+
+        snapcraft = Path("snap/snapcraft.yaml").read_text(encoding="utf-8")
+        workflow = Path(".github/workflows/snapcraft-publish.yml").read_text(encoding="utf-8")
+        self.assertIn("name: tuxindrive", snapcraft)
+        self.assertIn(f'version: "{__version__}"', snapcraft)
+        self.assertIn("confinement: classic", snapcraft)
+        self.assertIn("SNAPCRAFT_STORE_CREDENTIALS", workflow)
+        self.assertNotIn("BEGIN PRIVATE", snapcraft + workflow)
+
     def test_debian_identity_is_an_explicit_signed_updater_compatibility_abi(self):
         control = Path("packaging/DEBIAN/control").read_text(encoding="utf-8")
         self.assertIn("Package: tuxdrive", control)

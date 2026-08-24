@@ -1,0 +1,49 @@
+name: tuxindrive
+base: core24
+version: "0.26.26"
+summary: Multi-cloud sync, streaming, and encrypted collaboration
+description: |
+  TuxInDrive is a Linux-first desktop client for synchronizing and streaming
+  user-selected folders across multiple cloud providers. It also supports
+  searchable synchronized folders, encrypted peer collaboration, offline
+  files, recovery, and optional Nautilus integration.
+grade: stable
+confinement: classic
+license: MIT
+icon: branding/tuxindrive-logo.png
+website: https://github.com/tpluharik/Tuxindrive
+source-code: https://github.com/tpluharik/Tuxindrive
+issues: https://github.com/tpluharik/Tuxindrive/issues
+
+apps:
+  tuxindrive:
+    command: bin/tuxindrive
+    common-id: io.github.tuxindrive.TuxInDrive
+    desktop: share/applications/io.github.tuxindrive.TuxInDrive.desktop
+    environment:
+      PYTHONPATH: $SNAP/usr/lib/python3/dist-packages
+
+parts:
+  tuxindrive:
+    plugin: python
+    source: .
+    python-packages:
+      - cryptography==50.0.0
+      - defusedxml==0.7.1
+    stage-packages:
+      - ca-certificates
+      - fuse3
+      - git
+      - gir1.2-ayatanaappindicator3-0.1
+      - gir1.2-gtk-3.0
+      - libnotify-bin
+      - libsecret-tools
+      - openssh-client
+      - python3-gi
+      - rclone
+      - xdg-utils
+    override-build: |
+      craftctl default
+      install -Dm644 packaging/io.github.tuxindrive.TuxInDrive.desktop \
+        "$CRAFT_PART_INSTALL/share/applications/io.github.tuxindrive.TuxInDrive.desktop"
+
