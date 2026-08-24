@@ -39,6 +39,7 @@ parts:
       - libnotify-bin
       - libsecret-tools
       - openssh-client
+      - python3
       - python3-gi
       - rclone
       - xdg-utils
@@ -46,4 +47,3 @@ parts:
       craftctl default
       install -Dm644 packaging/io.github.tuxindrive.TuxInDrive.desktop \
         "$CRAFT_PART_INSTALL/share/applications/io.github.tuxindrive.TuxInDrive.desktop"
-

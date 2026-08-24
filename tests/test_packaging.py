@@ -63,6 +63,7 @@ class PackagingTests(unittest.TestCase):
         self.assertIn("name: tuxindrive", snapcraft)
         self.assertIn(f'version: "{__version__}"', snapcraft)
         self.assertIn("confinement: classic", snapcraft)
+        self.assertIn("      - python3\n", snapcraft)
         self.assertIn("SNAPCRAFT_STORE_CREDENTIALS", workflow)
         self.assertNotIn("BEGIN PRIVATE", snapcraft + workflow)
 
