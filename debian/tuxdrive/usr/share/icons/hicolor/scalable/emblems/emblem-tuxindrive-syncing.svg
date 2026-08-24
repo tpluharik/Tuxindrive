@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" data-state="syncing">
-  <title>Synchronizing</title>
-  <desc>Blue circular status badge with two white rotation arrows</desc>
-  <circle cx="32" cy="32" r="28" fill="#1565C0" stroke="#FFFFFF" stroke-width="4"/>
-  <path d="M17 29a16 16 0 0 1 26-9l4 4M47 15v9h-9M47 35a16 16 0 0 1-26 9l-4-4M17 49v-9h9" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>

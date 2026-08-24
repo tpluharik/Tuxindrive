@@ -4,5 +4,11 @@ __pycache__/
 .pytest_cache/
 .coverage
 build/
+/debian/.debhelper/
+/debian/debhelper-build-stamp
+/debian/files
+/debian/*.debhelper
+/debian/*.substvars
+/debian/tuxdrive/
 .idea/
 .vscode/

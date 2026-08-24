@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" data-state="streaming">
-  <title>Files on demand</title>
-  <desc>Teal rounded-square status badge with a white cloud download symbol</desc>
-  <rect x="4" y="4" width="56" height="56" rx="14" fill="#00838F" stroke="#FFFFFF" stroke-width="4"/>
-  <path d="M19 43h28a9 9 0 0 0 1-17.9A16 16 0 0 0 18.2 22 11 11 0 0 0 19 43Z" fill="none" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M32 21v15m-7-7 7 7 7-7" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
