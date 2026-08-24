@@ -27,6 +27,8 @@ parts:
   tuxindrive:
     plugin: python
     source: .
+    build-attributes:
+      - enable-patchelf
     python-packages:
       - cryptography==50.0.0
       - defusedxml==0.7.1
@@ -41,6 +43,7 @@ parts:
       - openssh-client
       - python3
       - python3-gi
+      - python3-venv
       - rclone
       - xdg-utils
     override-build: |
