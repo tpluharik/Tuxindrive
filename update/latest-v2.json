@@ -1,8 +1,8 @@
 {
-  "version": "0.26.28",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.28/tuxindrive_0.26.28_all.deb",
-  "sha256": "8c89e945ea4c622168706a700364ded2d049bdc8b4f509d34beca55a46631a68",
-  "notes": "Immediate redacted synchronization error details without conflict scans",
-  "expires_at": "2026-11-23T15:16:36.259271+00:00",
-  "signature": "9e0LQr3/lsc62A3+qb3TEbVSiOKVkgTq8p2rQsN+nzejwifooZcIRCivEraW+EN6U0mAspQajC0f0HocVP6WBw=="
+  "version": "0.26.29",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.29/tuxindrive_0.26.29_all.deb",
+  "sha256": "a58ea02cb911f09be85e0c1d706445b72dc5eda95f37de1f8676b969f29e5211",
+  "notes": "Safe automatic recovery from verified orphaned Bisync locks",
+  "expires_at": "2026-11-23T17:24:27.219956+00:00",
+  "signature": "NTS4a6Y1kBWriUhplNLk5wZdByAhOmJoi/g31Mq5/BQ6HqQNbN3x8ryLT+ASHkm5LOfmKvd0jR8EDqhDBUnNBQ=="
 }

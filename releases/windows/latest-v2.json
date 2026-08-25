@@ -1,8 +1,8 @@
 {
-  "version": "0.26.28",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.28/TuxInDrive-0.26.28-windows-x64-setup.exe",
-  "sha256": "005873e02da34d1e4b2a84579fc49d78f554b1b07d930552d52c0b87b7d0ae0b",
-  "notes": "Immediate redacted synchronization error details without conflict scans",
-  "expires_at": "2026-11-23T15:16:34.945514+00:00",
-  "signature": "ZGqpTm/VOBHiiMxjRs5qg9n3BuR1wHgVVaCzKj7DSiTs9SI22QLRD372s0cjqdRZg2jg8o08c72B6wUgt9woDA=="
+  "version": "0.26.29",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.29/TuxInDrive-0.26.29-windows-x64-setup.exe",
+  "sha256": "93a7079a4f8b9131463232ec4accdc94d2b3ad312d3d36cd9ccdb7f8044617f0",
+  "notes": "Safe automatic recovery from verified orphaned Bisync locks",
+  "expires_at": "2026-11-23T17:24:27.286194+00:00",
+  "signature": "SiSUZo3S5RkYkP4Q6O5wCmB8DK5JoeZBsVtHfzrtaOldUMQdbLcb6C0BYh2Vv6Kzx0p9D7WXJEX/rablTf6xAQ=="
 }
