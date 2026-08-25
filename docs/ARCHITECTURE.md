@@ -1,6 +1,6 @@
 # TuxInDrive architecture
 
-This document describes how TuxInDrive 0.26.26 is implemented. It complements
+This document describes how TuxInDrive 0.26.27 is implemented. It complements
 the task-oriented [user guide](USER_GUIDE.md), persisted-field
 [configuration reference](CONFIGURATION.md), and threat-focused
 [security guide](SECURITY_HARDENING.md).
@@ -100,16 +100,19 @@ overwritten. The complete field contract is in [Configuration](CONFIGURATION.md)
 ## Provider abstraction
 
 `Provider` identifies Google Drive, OneDrive, Dropbox, Box, pCloud, MEGA,
-Proton Drive, Nextcloud, GitHub, peer SFTP, and encrypted vault accounts.
+Proton Drive, Nextcloud, S3-compatible storage, generic WebDAV, generic SFTP,
+GitHub, peer SFTP, and encrypted vault accounts.
 `capabilities.py` records whether each provider supports browser OAuth,
 streaming, change polling, hashes, server moves, share links and versions.
 The UI consults this matrix before offering a synchronization mode or action.
 
-OAuth-capable rclone providers are configured through `RcloneClient`. MEGA and
-Nextcloud use explicit credential/app-password fields. Rclone configuration is
-encrypted and its password is retrieved through the platform credential store.
-GitHub and Proton use dedicated native adapters rather than pretending to be
-ordinary rclone remotes.
+OAuth-capable rclone providers are configured through `RcloneClient`. MEGA,
+Nextcloud, S3-compatible storage, WebDAV, and SFTP use explicit protocol fields.
+Rclone configuration is encrypted and its password is retrieved through the
+platform credential store. GitHub and Proton use dedicated native adapters
+rather than pretending to be ordinary rclone remotes. Capability records are
+intentionally conservative: generic WebDAV and SFTP do not expose public-link
+creation, and every generated link must still be HTTPS.
 
 ## Synchronization engine
 
@@ -132,6 +135,13 @@ callbacks, streaming mounts, queue admission and result normalization.
 Before destructive established jobs, the engine can run a dry preview and
 apply mass-change/ransomware limits. Result objects contain success, message,
 log path, incremental/dry-run state and special recovery conditions.
+
+Every rclone-backed full job receives the persisted selective filter arguments
+from `SyncJob.selective_args()`: normalized extension includes, a maximum byte
+size, and a maximum modification age. The native Proton adapter evaluates the
+same model before upload/download, while `search_index.py` omits locally
+unselected files. Empty extension and zero size/age values preserve the prior
+unfiltered behavior.
 
 ### Incremental callbacks
 
@@ -194,8 +204,10 @@ packaged extension expose the same operations in Linux file-manager menus.
   mass changes and runs bandwidth-controlled `rclone check` audits/repairs.
 - `delta.py` plans BLAKE2-identified blocks and final SHA-256 verification for
   peer delta transfers.
-- Conflict policies are translated into rclone/native-provider behavior while
-  explicit conflict copies remain reviewable in the UI.
+- Conflict policies are translated into rclone/native-provider behavior. The
+  integrity UI attaches a resolution to each reviewed row and `recovery.py`
+  confines every write. Keep-both retains the local path and atomically installs
+  the remote bytes under a dated conflict filename.
 - Vault accounts are rclone crypt layers over an existing provider remote.
 
 ## Peer and collaboration implementation

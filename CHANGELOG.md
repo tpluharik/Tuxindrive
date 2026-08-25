@@ -2,6 +2,22 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.27 — protocol backends, selective synchronization, and safer recovery
+
+- Added first-class S3-compatible, generic WebDAV, and SFTP accounts with
+  conservative capability declarations and the existing encrypted rclone
+  credential boundary.
+- Added per-job selective synchronization by file extension, maximum size, and
+  maximum age. The same rules apply to full synchronization, native Proton
+  transfers, and the private local search index.
+- Expanded version history with search, reason filtering, readable sizes,
+  retention details, and direct access to the protected recovery location.
+- Replaced conflict-wide repair actions with a per-file graphical resolution
+  choice. **Keep both** preserves the local file and installs the cloud/peer
+  copy under a dated conflict name.
+- Added explicitly confirmed HTTPS share-link creation only for providers whose
+  capabilities safely advertise it; opening the online folder remains private.
+
 ## 0.26.26 — marketplace-ready release automation
 
 - Produces a signed, self-update-disabled Android App Bundle for Google Play

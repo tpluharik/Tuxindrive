@@ -158,13 +158,16 @@ class RcloneClientTests(unittest.TestCase):
         self.assertIn("shared_with_me=true", google_scoped_remote("work", "shared_with_me"))
 
     def test_cloud_git_vault_and_direct_peer_backends_are_available(self):
-        self.assertEqual(len(Provider), 11)
+        self.assertEqual(len(Provider), 14)
         self.assertEqual(Provider.DROPBOX.rclone_type, "dropbox")
         self.assertEqual(Provider.BOX.rclone_type, "box")
         self.assertEqual(Provider.PCLOUD.rclone_type, "pcloud")
         self.assertEqual(Provider.MEGA.rclone_type, "mega")
         self.assertEqual(Provider.PROTON_DRIVE.rclone_type, "protondrive")
         self.assertEqual(Provider.NEXTCLOUD.rclone_type, "webdav")
+        self.assertEqual(Provider.S3.rclone_type, "s3")
+        self.assertEqual(Provider.WEBDAV.rclone_type, "webdav")
+        self.assertEqual(Provider.SFTP.rclone_type, "sftp")
         self.assertEqual(Provider.GITHUB.rclone_type, "git")
         self.assertEqual(Provider.PEER.rclone_type, "sftp")
 
@@ -194,6 +197,26 @@ class RcloneClientTests(unittest.TestCase):
             )
         self.assertEqual(Provider.PROTON_DRIVE.credential_fields, ())
 
+    def test_generic_webdav_configuration_sets_other_vendor(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(
+            os.environ, {"XDG_CONFIG_HOME": temporary}, clear=False,
+        ):
+            client = RcloneClient()
+            with patch.object(
+                client,
+                "_run_oauth",
+                return_value=subprocess.CompletedProcess([], 0, stdout="", stderr=""),
+            ) as run:
+                result = client.begin_oauth(
+                    "files", Provider.WEBDAV,
+                    credentials={"url": "https://dav.example.test", "user": "me"},
+                )
+        self.assertTrue(result.complete)
+        self.assertEqual(
+            run.call_args.args[0][:6],
+            ["config", "create", "files", "webdav", "vendor", "other"],
+        )
+
     def test_remote_is_listed_before_account_is_accepted(self):
         client = RcloneClient()
         with patch.object(
@@ -222,6 +245,9 @@ class RcloneClientTests(unittest.TestCase):
             "drop": {"type": "dropbox"},
             "mega": {"type": "mega"},
             "next": {"type": "webdav", "vendor": "nextcloud"},
+            "dav": {"type": "webdav", "vendor": "other"},
+            "objects": {"type": "s3"},
+            "server": {"type": "sftp"},
         }
         client = RcloneClient()
         with patch.object(
@@ -232,6 +258,18 @@ class RcloneClientTests(unittest.TestCase):
         self.assertEqual(accounts["drop"], Provider.DROPBOX)
         self.assertEqual(accounts["mega"], Provider.MEGA)
         self.assertEqual(accounts["next"], Provider.NEXTCLOUD)
+        self.assertEqual(accounts["dav"], Provider.WEBDAV)
+        self.assertEqual(accounts["objects"], Provider.S3)
+        self.assertEqual(accounts["server"], Provider.SFTP)
+
+    def test_public_link_rejects_non_https_provider_output(self):
+        client = RcloneClient()
+        with patch.object(
+            client, "_run",
+            return_value=subprocess.CompletedProcess([], 0, stdout="http://unsafe.test/file", stderr=""),
+        ):
+            with self.assertRaisesRegex(RcloneError, "secure HTTPS"):
+                client.public_link("cloud:file")
 
 
 if __name__ == "__main__":

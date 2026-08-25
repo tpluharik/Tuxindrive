@@ -1,3 +1,12 @@
+tuxindrive (0.26.27-1) unstable; urgency=medium
+
+  * Add S3-compatible, WebDAV, and SFTP protocol accounts.
+  * Add selective synchronization by extension, size, and age.
+  * Improve version history and per-file graphical conflict resolution.
+  * Add explicitly confirmed provider share links where supported.
+
+ -- Tomas Pluharik <tpluharik@gmail.com>  Tue, 25 Aug 2026 12:00:00 +0200
+
 tuxindrive (0.26.26-1) unstable; urgency=medium
 
   * Add reproducible Launchpad source packaging for TuxInDrive.

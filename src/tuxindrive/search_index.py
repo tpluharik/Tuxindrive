@@ -248,6 +248,10 @@ class FolderSearchIndex:
                     stat = child.stat(follow_symlinks=False)
                 except (OSError, ValueError):
                     continue
+                if not is_directory and not job.selected_by_rules(
+                    relative, size=stat.st_size, modified_timestamp=stat.st_mtime
+                ):
+                    continue
                 connection.execute(
                     """
                     INSERT INTO entries(

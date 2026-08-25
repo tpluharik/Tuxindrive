@@ -323,6 +323,7 @@ class SyncEngine:
         ]):
             if pattern.strip():
                 common.extend(["--exclude", pattern.strip()])
+        common.extend(job.selective_args())
         common.extend(self.bandwidth.rclone_args(job.bandwidth_limit))
         if dry_run:
             common.append("--dry-run")
@@ -1380,7 +1381,10 @@ class SyncEngine:
             initial_remote_snapshot=self._callback_baselines.pop(job.id, None),
             network_activity=lambda: self._record_network(job.id),
             network_guard=self.bandwidth.guard,
-            rclone_args=lambda: self.bandwidth.rclone_args(job.bandwidth_limit),
+            rclone_args=lambda: [
+                *job.selective_args(),
+                *self.bandwidth.rclone_args(job.bandwidth_limit),
+            ],
             scan_jitter=self.bandwidth.scan_jitter,
         )
         self._monitors[job.id] = monitor
@@ -1396,6 +1400,8 @@ class SyncEngine:
         if not relative or ".." in Path(relative).parts:
             raise RuntimeError(f"unsafe incremental path: {change.path}")
         if is_transient_path(relative):
+            return None
+        if not job.selected_by_rules(relative):
             return None
         if change.side == "local" and job.peer_role in {PeerRole.READ_ONLY, PeerRole.RECEIVE_ONLY}:
             return None
@@ -1581,7 +1587,14 @@ class SyncEngine:
                 if change.deleted:
                     remote_delete.append(relative)
                 elif local_path.exists():
-                    upload.append(relative)
+                    try:
+                        stat = local_path.stat()
+                    except OSError:
+                        continue
+                    if job.selected_by_rules(
+                        relative, size=stat.st_size, modified_timestamp=stat.st_mtime
+                    ):
+                        upload.append(relative)
             elif change.deleted:
                 local_delete.append(relative)
             else:
@@ -1618,6 +1631,7 @@ class SyncEngine:
                         process = subprocess.Popen(
                             command + ["--files-from-raw", manifest_name, "--no-traverse",
                                        "--stats", "1s", "--stats-one-line"]
+                            + job.selective_args()
                             + self.bandwidth.rclone_args(job.bandwidth_limit),
                             stdout=log, stderr=subprocess.STDOUT, text=True,
                             **new_process_group(),

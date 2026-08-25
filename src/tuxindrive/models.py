@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
+import time
 from typing import Any
 from uuid import uuid4
 
@@ -33,6 +34,9 @@ class Provider(str, Enum):
     MEGA = "mega"
     PROTON_DRIVE = "proton_drive"
     NEXTCLOUD = "nextcloud"
+    S3 = "s3"
+    WEBDAV = "webdav"
+    SFTP = "sftp"
     GITHUB = "github"
     PEER = "peer"
     VAULT = "vault"
@@ -48,6 +52,9 @@ class Provider(str, Enum):
             self.MEGA: "MEGA",
             self.PROTON_DRIVE: "Proton Drive",
             self.NEXTCLOUD: "Nextcloud",
+            self.S3: "S3-compatible storage",
+            self.WEBDAV: "WebDAV",
+            self.SFTP: "SFTP server",
             self.GITHUB: "GitHub",
             self.PEER: "Peer-to-peer",
             self.VAULT: "Encrypted vault",
@@ -64,6 +71,9 @@ class Provider(str, Enum):
             self.MEGA: "mega",
             self.PROTON_DRIVE: "protondrive",
             self.NEXTCLOUD: "webdav",
+            self.S3: "s3",
+            self.WEBDAV: "webdav",
+            self.SFTP: "sftp",
             self.GITHUB: "git",
             self.PEER: "sftp",
             self.VAULT: "crypt",
@@ -77,6 +87,10 @@ class Provider(str, Enum):
             return "changes-prevent-symbolic"
         if self is self.GITHUB:
             return "tuxindrive-github"
+        if self is self.S3:
+            return "drive-harddisk-symbolic"
+        if self in {self.WEBDAV, self.SFTP}:
+            return "network-server-symbolic"
         return f"tuxindrive-{self.value.replace('_', '-')}"
 
     @property
@@ -90,6 +104,9 @@ class Provider(str, Enum):
             self.MEGA: "mega",
             self.PROTON_DRIVE: "proton",
             self.NEXTCLOUD: "nextcloud",
+            self.S3: "s3",
+            self.WEBDAV: "webdav",
+            self.SFTP: "sftp",
             self.GITHUB: "github",
             self.PEER: "peer",
             self.VAULT: "vault",
@@ -105,7 +122,16 @@ class Provider(str, Enum):
     def initial_options(self) -> tuple[str, ...]:
         if self is self.NEXTCLOUD:
             return ("vendor", "nextcloud")
+        if self is self.WEBDAV:
+            return ("vendor", "other")
         return ()
+
+    @property
+    def credential_defaults(self) -> dict[str, str]:
+        return {
+            self.S3: {"provider": "AWS", "region": "us-east-1"},
+            self.SFTP: {"port": "22"},
+        }.get(self, {})
 
     @property
     def credential_fields(self) -> tuple[tuple[str, str, bool, bool], ...]:
@@ -120,6 +146,24 @@ class Provider(str, Enum):
                 ("user", "Nextcloud username", False, True),
                 ("pass", "Nextcloud app password", True, True),
             ),
+            self.S3: (
+                ("provider", "S3 provider (AWS, Minio, Ceph, …)", False, True),
+                ("access_key_id", "Access key ID", False, True),
+                ("secret_access_key", "Secret access key", True, True),
+                ("endpoint", "Custom endpoint URL (optional for AWS)", False, False),
+                ("region", "Region", False, False),
+            ),
+            self.WEBDAV: (
+                ("url", "WebDAV URL", False, True),
+                ("user", "Username", False, False),
+                ("pass", "Password / app password", True, False),
+            ),
+            self.SFTP: (
+                ("host", "Server host", False, True),
+                ("user", "Username", False, True),
+                ("port", "Port", False, False),
+                ("pass", "Password (optional when using an SSH agent)", True, False),
+            ),
         }.get(self, ())
 
     @property
@@ -133,6 +177,9 @@ class Provider(str, Enum):
             self.MEGA: "https://mega.nz/fm",
             self.PROTON_DRIVE: "https://drive.proton.me/",
             self.NEXTCLOUD: "",
+            self.S3: "",
+            self.WEBDAV: "",
+            self.SFTP: "",
             self.GITHUB: "https://github.com/",
             self.PEER: "",
             self.VAULT: "",
@@ -355,6 +402,9 @@ class SyncJob:
     interval_minutes: int = 5
     conflict_policy: ConflictPolicy = ConflictPolicy.KEEP_BOTH
     exclude_patterns: list[str] = field(default_factory=lambda: [".Trash-*/**", "*.part", "~$*"])
+    selective_extensions: list[str] = field(default_factory=list)
+    selective_max_size_mb: int = 0
+    selective_max_age_days: int = 0
     max_delete: int = 100
     bandwidth_limit: str = ""
     acknowledge_google_abuse: bool = False
@@ -396,6 +446,45 @@ class SyncJob:
     @property
     def is_git(self) -> bool:
         return bool(self.repository_url)
+
+    def selective_args(self) -> list[str]:
+        """Return deterministic rclone selection flags without shell parsing."""
+        args: list[str] = []
+        extensions = []
+        for raw in self.selective_extensions:
+            value = raw.strip().lower().lstrip("*.")
+            if value and value.replace("-", "").replace("_", "").isalnum():
+                extensions.append(value)
+        for value in dict.fromkeys(extensions):
+            args.extend(["--include", f"*.{value}"])
+        if self.selective_max_size_mb > 0:
+            args.extend(["--max-size", f"{self.selective_max_size_mb}M"])
+        if self.selective_max_age_days > 0:
+            args.extend(["--max-age", f"{self.selective_max_age_days}d"])
+        return args
+
+    def selected_by_rules(
+        self,
+        relative_path: str,
+        *,
+        size: int | None = None,
+        modified_timestamp: float | None = None,
+    ) -> bool:
+        extensions = set()
+        for raw in self.selective_extensions:
+            value = raw.strip().lower().lstrip("*.")
+            if value and value.replace("-", "").replace("_", "").isalnum():
+                extensions.add(value)
+        if extensions and Path(relative_path).suffix.lower().lstrip(".") not in extensions:
+            return False
+        if size is not None and self.selective_max_size_mb > 0:
+            if size > self.selective_max_size_mb * 1024 * 1024:
+                return False
+        if modified_timestamp is not None and self.selective_max_age_days > 0:
+            cutoff = time.time() - self.selective_max_age_days * 86400
+            if modified_timestamp < cutoff:
+                return False
+        return True
 
     @classmethod
     def from_dict(cls, value: dict[str, Any]) -> "SyncJob":

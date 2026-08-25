@@ -1,7 +1,7 @@
 # TuxInDrive configuration reference
 
 This reference describes the persisted desktop configuration in TuxInDrive
-0.26.26. Normal changes should be made in **Settings**, **Connect account**, or
+0.26.27. Normal changes should be made in **Settings**, **Connect account**, or
 **Add/Edit folder**. Stop TuxInDrive and make a backup before manually editing
 JSON; a syntactically valid but inconsistent mapping can still synchronize the
 wrong location.
@@ -124,7 +124,8 @@ schema, role, quota, retention and TLS fields are documented in
 
 Every account has `remote`, `provider`, `display_name`, `created_at`, and
 `backend`. Provider values are `google_drive`, `onedrive`, `dropbox`, `box`,
-`pcloud`, `mega`, `proton_drive`, `nextcloud`, `github`, `peer`, and `vault`.
+`pcloud`, `mega`, `proton_drive`, `nextcloud`, `s3`, `webdav`, `sftp`,
+`github`, `peer`, and `vault`.
 
 Specialized fields are used only by their backend:
 
@@ -134,6 +135,9 @@ Specialized fields are used only by their backend:
 | Vault | `vault_base_remote`, `vault_base_path` |
 | GitHub | `repository_url`, `repository_branch`, `git_author_name`, `git_author_email` |
 | Proton | `backend` is `proton_cli`; unsupported combinations normalize to `rclone` |
+| S3 | `provider`, `access_key_id`, `secret_access_key`, optional `endpoint`, `region` |
+| WebDAV | `url`, `user`, `pass` |
+| SFTP | `host`, `user`, optional `port` and `pass`; an SSH agent may supply the key |
 
 Account names are internal identifiers referenced by jobs. Do not rename them
 directly without updating every `account_remote` reference.
@@ -146,7 +150,7 @@ directly without updating every `account_remote` reference.
 | Mapping | `local_path`, `remote_path`, `remote_scope`, `cloud_location_name` |
 | Mode | `two_way`, `download_only`, `upload_only`, or `virtual_drive` |
 | Scheduling | `interval_minutes`, `realtime_sync` |
-| Selection | `exclude_patterns`, `offline_paths`, `online_only_paths` |
+| Selection | `exclude_patterns`, `selective_extensions`, `selective_max_size_mb`, `selective_max_age_days`, `offline_paths`, `online_only_paths` |
 | Conflicts | `keep_both`, `newer_wins`, `local_wins`, or `cloud_wins` |
 | Transfer | `bandwidth_limit`, `block_delta_transfer`, `peer_delta` |
 | Deletion safety | `max_delete`, `ransomware_protection`, `mass_change_limit`, `mass_change_percent` |
@@ -162,6 +166,13 @@ of 500 changed paths and 80 percent. Both bulk thresholds must be reached;
 deletion ceilings and ransomware-shaped filename suffixes remain independent
 hard stops. Default excludes are `.Trash-*/**`, `*.part`, and
 temporary Office lock files (`~$*`).
+
+Selective extensions are stored without a leading dot and matched
+case-insensitively. An empty extension list means all extensions. Zero for the
+size or age limit means unlimited. Positive values become rclone `--max-size`
+and `--max-age` filters; native Proton transfer and local filename indexing use
+the same decisions. These filters decide what participates in synchronization,
+not what is deleted from either endpoint when a rule is later narrowed.
 
 `remote_scope` is a provider-selected root (for example a Shared Drive), while
 `remote_path` is relative to it. The engine will not run overlapping local

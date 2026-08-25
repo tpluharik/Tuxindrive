@@ -243,6 +243,7 @@ class IntegrityAuditor:
         command = [
             self.rclone_path, "check", str(job.local), job.remote_spec,
             "--combined", "-", "--checkers", "4",
+            *job.selective_args(),
             *self.bandwidth.rclone_args(job.bandwidth_limit),
         ]
         if download:
@@ -258,19 +259,47 @@ class IntegrityAuditor:
         return issues
 
     def repair(self, job: SyncJob, issues: list[AuditIssue], winner: str) -> int:
-        if winner not in {"local", "remote"}:
-            raise SafetyError("Choose local or cloud/peer as the repair source")
+        if winner not in {"local", "remote", "keep_both"}:
+            raise SafetyError("Choose local, cloud/peer, or keep both")
         repaired = 0
         for issue in issues:
             relative = issue.path.strip("/")
             if not relative or ".." in Path(relative).parts or issue.symbol == "!":
                 continue
             try:
-                local = confined_path(job.local, relative, create_parents=winner == "remote")
+                local = confined_path(
+                    job.local,
+                    relative,
+                    create_parents=winner in {"remote", "keep_both"},
+                )
             except ValueError:
                 continue
             remote = f"{job.remote_spec.rstrip('/')}/{relative}"
-            if winner == "remote":
+            if winner == "keep_both":
+                if issue.symbol == "-":
+                    self._run([
+                        self.rclone_path, "copyto", str(local), remote,
+                        *self.bandwidth.rclone_args(job.bandwidth_limit),
+                    ])
+                else:
+                    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+                    original = Path(relative)
+                    conflict_name = (
+                        f"{original.stem}.tuxindrive-cloud-conflict-"
+                        f"{timestamp}{original.suffix}"
+                    )
+                    conflict_relative = (
+                        str(original.with_name(conflict_name))
+                        if issue.symbol == "*" else relative
+                    )
+                    with tempfile.TemporaryDirectory(prefix="tuxindrive-conflict-") as temporary:
+                        staged = Path(temporary) / "incoming"
+                        self._run([
+                            self.rclone_path, "copyto", remote, str(staged),
+                            *self.bandwidth.rclone_args(job.bandwidth_limit),
+                        ])
+                        install_confined(staged, job.local, conflict_relative)
+            elif winner == "remote":
                 if issue.symbol == "-":
                     self.recovery.archive_local(job, relative, "removed by integrity repair")
                     unlink_confined(job.local, relative)

@@ -1,5 +1,5 @@
 Package: tuxdrive
-Version: 0.26.26
+Version: 0.26.27
 Section: net
 Priority: optional
 Architecture: all
@@ -7,13 +7,13 @@ Maintainer: TuxInDrive contributors <tpluharik@users.noreply.github.com>
 Depends: python3 (>= 3.10), python3-gi, python3-cryptography, python3-defusedxml, gir1.2-gtk-3.0, libsecret-tools, xdg-utils, ca-certificates, git
 Recommends: python3-nautilus, nautilus, gir1.2-ayatanaappindicator3-0.1, gnome-shell-extension-appindicator, fuse3, openssh-client, tor, torsocks, obfs4proxy, miniupnpc, natpmpc, network-manager, qrencode, zbar-tools, poppler-utils, libnotify-bin, pkexec | policykit-1
 Suggests: snowflake-client
-Provides: tuxindrive (= 0.26.26)
+Provides: tuxindrive (= 0.26.27)
 Breaks: tuxindrive
 Replaces: tuxindrive
 Homepage: https://github.com/tpluharik/TuxInDrive
 Description: Private peer and multi-provider cloud storage client for Debian desktops
  TuxInDrive provides browser-based OAuth, automatic transfer-engine bootstrap,
- eight cloud providers plus GitHub repositories, searchable multilingual in-app documentation, English/German/French/Spanish/Arabic/Hebrew UI selection with RTL text, encrypted provider-linked profile backup and device migration, adaptive capability controls, sync-health and audit dashboards, optional Nautilus actions/status, block-delta planning, NAT/relay peer connectivity, per-file offline controls, drag-reorderable and collapsible synchronized-folder groups, policy-aware transfers, role-based multi-peer sharing, expiring encrypted file drops, LAN/QR pairing, local-first CRDT editing, encrypted presence, structured ODT/ODS checkpoints, edit leases, multiple accounts, two-way and
+ eleven storage providers plus GitHub repositories, searchable multilingual in-app documentation, English/German/French/Spanish/Arabic/Hebrew UI selection with RTL text, encrypted provider-linked profile backup and device migration, adaptive capability controls, sync-health and audit dashboards, optional Nautilus actions/status, block-delta planning, NAT/relay peer connectivity, per-file offline controls, drag-reorderable and collapsible synchronized-folder groups, policy-aware transfers, role-based multi-peer sharing, expiring encrypted file drops, LAN/QR pairing, local-first CRDT editing, encrypted presence, structured ODT/ODS checkpoints, edit leases, multiple accounts, two-way and
  one-way synchronization, selective folders, conflict handling, tray controls,
  Tor v3 Onion Services with per-device authorization and fail-closed privacy
  policies, notifications, in-app verified updates, and files-on-demand virtual drives

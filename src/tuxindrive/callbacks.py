@@ -318,6 +318,14 @@ class ChangeMonitor:
                 ).replace(os.sep, "/")
                 if self._excluded(relative):
                     continue
+                try:
+                    stat = os.stat(os.path.join(root, filename), follow_symlinks=False)
+                except OSError:
+                    continue
+                if not self.job.selected_by_rules(
+                    relative, size=stat.st_size, modified_timestamp=stat.st_mtime
+                ):
+                    continue
                 state = self._file_state(relative)
                 if state is not None:
                     result[relative] = state
@@ -344,6 +352,9 @@ class ChangeMonitor:
             for item in values
             if isinstance(item, dict) and item.get("Path")
             and not self._excluded(str(item["Path"]))
+            and self.job.selected_by_rules(
+                str(item["Path"]), size=int(item.get("Size", -1))
+            )
         }
 
     def remote_path_state(self, relative: str) -> FileState | None:

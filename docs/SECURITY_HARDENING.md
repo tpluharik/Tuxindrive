@@ -1,6 +1,6 @@
-# TuxInDrive 0.26.26 security hardening and secure operation
+# TuxInDrive 0.26.27 security hardening and secure operation
 
-This document explains the controls retained through TuxInDrive 0.26.26, including critical/high remediation, approval-based peer sharing, explicit online-only/offline retention, GitHub and Proton boundaries, global traffic control, signed platform updates, encrypted desktop-to-mobile migration, what changed for existing users, which data remain sensitive, what the controls do not guarantee, and how maintainers verify a release. It complements the concise vulnerability-reporting policy in [`SECURITY.md`](../SECURITY.md), implementation [architecture](ARCHITECTURE.md), and operational [runbook](OPERATIONS.md).
+This document explains the controls retained through TuxInDrive 0.26.27, including critical/high remediation, approval-based peer sharing, explicit online-only/offline retention, GitHub and Proton boundaries, global traffic control, signed platform updates, encrypted desktop-to-mobile migration, what changed for existing users, which data remain sensitive, what the controls do not guarantee, and how maintainers verify a release. It complements the concise vulnerability-reporting policy in [`SECURITY.md`](../SECURITY.md), implementation [architecture](ARCHITECTURE.md), and operational [runbook](OPERATIONS.md).
 
 > **Audit status (2026-08-22):** version 0.26.20 closed the audited server
 > configuration-boundary, bounded-network, Android updater and sensitive-path
@@ -15,7 +15,7 @@ This document explains the controls retained through TuxInDrive 0.26.26, includi
 
 Version 0.25.0 changes product identifiers without changing cryptographic trust roots or silently relocating sensitive state. Fresh installations use TuxInDrive directories; upgrades use an existing legacy directory when no new directory exists. The credential helper checks the TuxInDrive Secret Service entry first and the pre-rebrand entry second. Existing encrypted profile formats, peer invitations and hidden remote metadata remain readable. The signed update bridge retains the old repository/package alias required by 0.24.x, while accepting only the two exact official GitHub raw prefixes and a filename matching the signed version.
 
-Version **0.26.26** is the supported baseline. It retains root-side update re-verification, per-key peer endpoints, isolated send/drop roots, bounded ODF/CRDT parsing, verified GitHub rename migration, durable bisync baselines, guarded reinitialization, exact offline rules, stable VFS policy, bounded FUSE reads, URI-safe Nautilus integration, signed platform channels, encrypted QR/file profile migration, and the global bandwidth/admission controller. Its default-on aggregate protection reserves configurable headroom and divides process-local rclone limits across every possible concurrent consumer, preventing several mounts and a synchronization from each receiving the complete ceiling. Local peer shares may be advertised before a collaborator is known, but no file endpoint starts until the owner approves a displayed device fingerprint; approved advertisements are recipient-scoped and the listener still enforces the complete SSH key. Pending requests expire, deduplicate, are capped globally, and are rate limited per source. Router mapping is opt-in. Python/PyPI installations require `cryptography>=50.0.0,<51`; Debian installations use the distribution-maintained `python3-cryptography` package so vendor backports remain valid.
+Version **0.26.27** is the supported baseline. It retains root-side update re-verification, per-key peer endpoints, isolated send/drop roots, bounded ODF/CRDT parsing, verified GitHub rename migration, durable bisync baselines, guarded reinitialization, exact offline rules, stable VFS policy, bounded FUSE reads, URI-safe Nautilus integration, signed platform channels, encrypted QR/file profile migration, and the global bandwidth/admission controller. Its default-on aggregate protection reserves configurable headroom and divides process-local rclone limits across every possible concurrent consumer, preventing several mounts and a synchronization from each receiving the complete ceiling. Local peer shares may be advertised before a collaborator is known, but no file endpoint starts until the owner approves a displayed device fingerprint; approved advertisements are recipient-scoped and the listener still enforces the complete SSH key. Pending requests expire, deduplicate, are capped globally, and are rate limited per source. Router mapping is opt-in. Python/PyPI installations require `cryptography>=50.0.0,<51`; Debian installations use the distribution-maintained `python3-cryptography` package so vendor backports remain valid.
 
 Version 0.23.0 preserves those controls while adding event-driven monitoring and cache limits. Inotify queue overflow triggers full reconciliation; executable-validation caches are invalidated by binary identity changes; atomic writes remain mandatory for changed configuration; and cache cleanup refuses to evict pinned, dirty, active, symlinked or ambiguously described objects. Invalid pin metadata disables eviction for that job rather than guessing.
 
@@ -25,10 +25,13 @@ The 0.19.1 release completes a trust-root rotation without disabling verificatio
 
 ## Security control inventory
 
-| Area | 0.26.26 behavior | Security purpose |
+| Area | 0.26.27 behavior | Security purpose |
 |---|---|---|
 | Updates | Desktop verification plus independent privileged manifest retrieval, signature/expiry validation, no-follow copy to root-only staging, SHA-256 and Debian identity verification before APT; Android automatic checks retain the same signed manifest/digest boundary and require system installer approval | Prevent unsigned, replayed, substituted, oversized, wrong-package and verification-to-install race attacks without creating a silent mobile install path |
 | Cloud credentials | rclone authenticated encrypted configuration; random config key in GNOME Secret Service; password-command retrieval; private permissions; sensitive child processes disable same-user dumpability | Keep tokens/passwords out of TuxInDrive JSON, ordinary arguments, and world-readable files |
+| Protocol accounts | S3 secrets, WebDAV passwords and optional SFTP passwords stay inside the same encrypted rclone configuration; SSH-agent use avoids persisting an SFTP key in TuxInDrive | Extend backend compatibility without creating a second plaintext credential store |
+| Share links | Separate per-job action, conservative capability gate, explicit warning/confirmation, HTTPS-only returned URL; opening an online folder never creates a link | Prevent an ordinary navigation action from silently publishing content; the copied URL remains sensitive and must be revoked provider-side |
+| Selective synchronization | Validated extension, size and age values become fixed rclone arguments or native model predicates; no shell interpolation; narrowing a rule is selection, not an instruction to delete excluded files | Bound transfer scope without turning user input into command syntax or unexpected deletion policy |
 | Proton Drive authorization | Official `proton-drive auth login` browser flow; forced `keychain` credential store; session owned by Proton CLI under `ch.proton.drive/drive-sdk-cli`; `/my-files` validation; one native account | TuxInDrive never receives, exports, logs, or passes the Proton password, 2FA code, or session |
 | Filesystem writes | Relative-path validation plus descriptor-based no-follow traversal and atomic replacement for incremental downloads, deltas, recovery, hydration, and repair | Resist traversal and symlink-swap writes outside the configured root |
 | Peer deltas | Canonical signed instructions, authorized Ed25519 signer, bounded block count/size, BLAKE2 block checks, final SHA-256, atomic install, full-file fallback | Reject unauthenticated, tampered, or resource-abusive delta transactions |
@@ -75,6 +78,12 @@ On first secure rclone use, TuxInDrive detects an unencrypted managed configurat
 
 Existing jobs, provider remotes, peer public metadata, recovery data, and version-1 encrypted profile backups remain usable. Create new profile backups after upgrading so they receive the stronger version-2 scrypt parameters. Test restore on non-critical data before deleting an older backup.
 
+Selective-filter fields default to empty/zero, so upgrading does not narrow an
+existing job. Per-row integrity resolution is also opt-in: no repair runs until
+the user selects findings, chooses resolutions, and confirms. Keep-both never
+overwrites the reviewed local file. Public links are not created during upgrade,
+navigation, synchronization, or verification.
+
 ### Official Proton Drive boundary
 
 Version 0.24.1 replaces new and reconnected Proton/rclone credential login with Proton's official CLI and repairs clean-machine bootstrap. TuxInDrive accepts the release manifest only from Proton's exact HTTPS endpoint, selects only the supported amd64/arm64 Linux path, bounds both manifest and binary size, and installs the executable only after constant-time comparison with Proton's published SHA-512 checksum. Partial or mismatched downloads are discarded, replacement is atomic, and the managed tool directory/executable use private permissions. TuxInDrive removes `PROTON_DRIVE_CACHE_DIR` from the child environment and forces `PROTON_DRIVE_CREDENTIALS_STORE=keychain`, preventing inherited `unsafe_file` test configuration from writing a plaintext session. Installation and browser authorization are cancellable; validation and every file operation use bounded subprocess timeouts. Diagnostic reflection removes authorization URLs and token/session/cookie assignments.
@@ -92,7 +101,7 @@ and must remain inside its configured root. Filenames and local paths are still
 sensitive metadata, so the index directory/file use `0700`/`0600` modes where
 POSIX permissions exist and should not be copied into diagnostics casually.
 
-The 0.26.26 search preview path does not change that indexing guarantee.
+The 0.26.27 search preview path does not change that indexing guarantee.
 It is default-off, is activated only inside one search window, and reads only
 the selected local result after repeating the root-confinement and no-symlink
 checks. Reads, output, archive expansion, compression ratio, PDF pages and PDF
@@ -123,7 +132,7 @@ Peer sharing and one-time drops remain enabled with per-key isolation. Read/writ
 ## Operator verification checklist
 
 1. Install only the repository package whose SHA-256 matches the signed manifest.
-2. Confirm the running version is 0.26.26 and the platform update check reports a valid signature, origin, filename, digest, size, architecture and expiry.
+2. Confirm the running version is 0.26.27 and the platform update check reports a valid signature, origin, filename, digest, size, architecture and expiry.
 3. Verify configuration/state directories are owned by the user and not group/world accessible.
 4. Confirm the rclone config is encrypted and the Secret Service entry is recoverable through an approved migration procedure.
 5. Review enabled cloud accounts, jobs, exception rules, peer keys, roles, Tor client credentials, relay settings, and public/NAT exposure.

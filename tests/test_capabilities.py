@@ -18,3 +18,8 @@ class ProviderCapabilityTests(unittest.TestCase):
         self.assertFalse(proton.streaming)
         self.assertFalse(proton.share_links)
         self.assertFalse(proton.hashes)
+
+    def test_protocol_backends_have_conservative_share_capabilities(self):
+        self.assertTrue(capabilities_for(Provider.S3).share_links)
+        self.assertFalse(capabilities_for(Provider.WEBDAV).share_links)
+        self.assertFalse(capabilities_for(Provider.SFTP).share_links)

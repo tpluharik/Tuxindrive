@@ -477,6 +477,10 @@ class ProtonDriveClient:
             except (OSError, ValueError):
                 continue
             kind = "d" if path.is_dir() else "f"
+            if kind == "f" and not job.selected_by_rules(
+                relative, size=stat.st_size, modified_timestamp=stat.st_mtime
+            ):
+                continue
             snapshot[relative] = f"{kind}:{stat.st_size}:{stat.st_mtime_ns}"
         return snapshot
 
@@ -522,6 +526,8 @@ class ProtonDriveClient:
             if node.is_dir:
                 self._safe_local_directory(local, relative)
             else:
+                if not job.selected_by_rules(relative):
+                    continue
                 files_by_parent.setdefault(str(Path(relative).parent), []).append(node)
         transferred = 0
         for parent, nodes in sorted(files_by_parent.items()):
@@ -562,7 +568,14 @@ class ProtonDriveClient:
                 if any(item == relative or item.startswith(relative + "/") for item in relatives):
                     directories.append(relative)
             elif path.is_file() and relative in relatives:
-                files_by_parent.setdefault(str(Path(relative).parent), []).append(path)
+                try:
+                    stat = path.stat()
+                except OSError:
+                    continue
+                if job.selected_by_rules(
+                    relative, size=stat.st_size, modified_timestamp=stat.st_mtime
+                ):
+                    files_by_parent.setdefault(str(Path(relative).parent), []).append(path)
         for relative in sorted(directories, key=lambda value: (value.count("/"), value)):
             if relative in remote_dirs:
                 continue

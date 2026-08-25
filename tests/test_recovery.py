@@ -182,6 +182,43 @@ class RecoveryTests(unittest.TestCase):
         backup = self.manager.root / self.job.id / "remote-repair" / "cloud-only.txt"
         self.assertEqual(backup.read_bytes(), b"remote-backup")
 
+    def test_keep_both_preserves_local_and_installs_named_remote_conflict(self):
+        current = self.local / "report.txt"
+        current.write_bytes(b"local")
+        auditor = IntegrityAuditor("rclone", self.manager)
+
+        def run(command):
+            if command[1] == "copyto":
+                Path(command[3]).write_bytes(b"remote")
+
+        auditor._run = run
+        self.assertEqual(
+            auditor.repair(self.job, [AuditIssue("*", "report.txt")], "keep_both"),
+            1,
+        )
+        self.assertEqual(current.read_bytes(), b"local")
+        conflicts = list(self.local.glob("report.tuxindrive-cloud-conflict-*.txt"))
+        self.assertEqual(len(conflicts), 1)
+        self.assertEqual(conflicts[0].read_bytes(), b"remote")
+
+    def test_keep_both_can_install_nested_remote_only_file(self):
+        auditor = IntegrityAuditor("rclone", self.manager)
+
+        def run(command):
+            if command[1] == "copyto":
+                Path(command[3]).write_bytes(b"remote-only")
+
+        auditor._run = run
+        self.assertEqual(
+            auditor.repair(
+                self.job, [AuditIssue("+", "nested/cloud-only.txt")], "keep_both"
+            ),
+            1,
+        )
+        self.assertEqual(
+            (self.local / "nested" / "cloud-only.txt").read_bytes(), b"remote-only"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -889,6 +889,25 @@ class SyncEngineCommandTests(unittest.TestCase):
         self.assertEqual(download[-1], "/data/Drive/Notes/today.txt")
         self.assertEqual(deletion[1], "deletefile")
 
+    def test_selective_rules_cover_full_and_incremental_transfers(self):
+        job = SyncJob(
+            account_remote="google",
+            local_path="/data/Drive",
+            selective_extensions=["pdf"],
+            selective_max_size_mb=8,
+            selective_max_age_days=30,
+        )
+        command = self.engine.command_for_job(job)
+        self.assertIn("*.pdf", command)
+        self.assertEqual(command[command.index("--max-size") + 1], "8M")
+        self.assertEqual(command[command.index("--max-age") + 1], "30d")
+        self.assertIsNotNone(
+            self.engine._incremental_command(job, FileChange("report.pdf", "local"))
+        )
+        self.assertIsNone(
+            self.engine._incremental_command(job, FileChange("archive.zip", "local"))
+        )
+
     def test_callback_delta_contains_only_created_changed_and_deleted_paths(self):
         previous = {
             "same.txt": FileState(1, "1"),

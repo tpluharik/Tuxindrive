@@ -133,7 +133,7 @@ class RcloneClient:
         backend_map = {
             provider.rclone_type: provider
             for provider in Provider
-            if provider not in {Provider.NEXTCLOUD, Provider.GITHUB, Provider.PEER}
+            if provider not in {Provider.NEXTCLOUD, Provider.WEBDAV, Provider.GITHUB, Provider.PEER}
         }
         for name, values in raw.items():
             backend = values.get("type") if isinstance(values, dict) else None
@@ -141,6 +141,8 @@ class RcloneClient:
                 accounts[name] = backend_map[backend]
             elif backend == "webdav" and isinstance(values, dict) and values.get("vendor") == "nextcloud":
                 accounts[name] = Provider.NEXTCLOUD
+            elif backend == "webdav":
+                accounts[name] = Provider.WEBDAV
         return accounts
 
     def begin_oauth(
@@ -317,7 +319,10 @@ class RcloneClient:
 
     def public_link(self, remote_spec: str) -> str:
         result = self._run(["link", remote_spec])
-        return result.stdout.strip()
+        link = result.stdout.strip()
+        if not link.startswith("https://"):
+            raise RcloneError("The provider did not return a secure HTTPS share link")
+        return link
 
     def online_url(self, remote_spec: str, provider: Provider) -> tuple[str, bool]:
         """Return a non-sharing provider URL and whether it targets the exact item."""

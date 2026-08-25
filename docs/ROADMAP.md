@@ -7,7 +7,17 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.26
+## Current baseline: 0.26.27
+
+### Completed in 0.26.27: protocol accounts and selective recovery
+
+S3-compatible object stores, generic WebDAV servers, and SFTP servers now use
+the same account, capability, synchronization, history, and integrity surfaces
+as the existing providers. Jobs can select content by extension, maximum size,
+and maximum age. History is searchable and explains retention, while the
+conflict center provides a resolution for every file, including a non-
+destructive keep-both path. Provider share links require a separate explicit
+confirmation and are available only when the capability matrix allows them.
 
 ### Completed in 0.26.26: marketplace-ready release automation
 

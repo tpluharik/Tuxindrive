@@ -203,17 +203,17 @@ class PackagingTests(unittest.TestCase):
         self.assertIn('f"emblem-tuxindrive-{state}"', extension)
         self.assertIn("scalable/emblems", build_script)
 
-    def test_job_action_opens_online_folder_without_creating_share_link(self):
+    def test_online_folder_and_explicit_provider_share_link_are_separate_actions(self):
         app = Path("src/tuxindrive/app.py").read_text(encoding="utf-8")
         i18n = Path("src/tuxindrive/i18n.py").read_text(encoding="utf-8")
         self.assertIn('Gtk.Button(label=tr("open_online_folder"))', app)
         self.assertIn('self.controller._open_online_path(str(job.local))', app)
-        self.assertNotIn('Gtk.Button(label=tr("share_link"))', app)
-        self.assertNotIn("def _share_job", app)
-        self.assertNotIn("Creating a provider share link", app)
+        self.assertIn('Gtk.Button(label=tr("share_link"))', app)
+        self.assertIn("def _create_share_link", app)
+        self.assertIn("Create a public provider link?", app)
         self.assertIn('account.provider is Provider.PROTON_DRIVE and account.backend == "proton_cli"', app)
         self.assertIn("does not\n            # currently publish a stable private web-route contract", app)
-        self.assertNotIn('"share_link":', i18n)
+        self.assertEqual(i18n.count('"share_link":'), 6)
         self.assertEqual(i18n.count('"open_online_folder":'), 6)
 
     def test_nautilus_emblems_are_unbranded_and_visually_distinct(self):

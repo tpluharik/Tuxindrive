@@ -298,6 +298,7 @@ class OAuthWizard(ResponsiveDialog):
         for offset, (key, label, secret, _required) in enumerate(provider.credential_fields, start=2):
             entry = Gtk.Entry()
             entry.set_visibility(not secret)
+            entry.set_text(provider.credential_defaults.get(key, ""))
             if secret:
                 entry.set_input_purpose(Gtk.InputPurpose.PASSWORD)
             grid.attach(Gtk.Label(label=label, xalign=0), 0, offset, 1, 1)
@@ -971,6 +972,20 @@ class SyncJobDialog(ResponsiveDialog):
             if existing
             else [".Trash-*/**", "*.part", "~$*"]
         )
+        self.selective_extensions = Gtk.Entry()
+        self.selective_extensions.set_placeholder_text("Optional allow-list, e.g. pdf, docx, jpg")
+        self.selective_extensions.set_text(
+            ", ".join(existing.selective_extensions) if existing else ""
+        )
+        self.selective_extensions.set_tooltip_text(
+            "When set, only files with these extensions are transferred."
+        )
+        self.selective_max_size = Gtk.SpinButton.new_with_range(0, 1048576, 1)
+        self.selective_max_size.set_value(existing.selective_max_size_mb if existing else 0)
+        self.selective_max_size.set_tooltip_text("0 means no file-size limit")
+        self.selective_max_age = Gtk.SpinButton.new_with_range(0, 36500, 1)
+        self.selective_max_age.set_value(existing.selective_max_age_days if existing else 0)
+        self.selective_max_age.set_tooltip_text("0 means files are not filtered by age")
         rows = [
             ("Name", self.name),
             ("Cloud account", self.account),
@@ -992,6 +1007,9 @@ class SyncJobDialog(ResponsiveDialog):
             ("Bandwidth limit", self.bandwidth),
             ("Google security warning", self.acknowledge_abuse),
             ("Synchronization exceptions", self.excludes),
+            ("Only these extensions", self.selective_extensions),
+            ("Maximum file size (MiB; 0 = unlimited)", self.selective_max_size),
+            ("Maximum file age (days; 0 = any age)", self.selective_max_age),
         ]
         for row, (label, widget) in enumerate(rows):
             grid.attach(Gtk.Label(label=label, xalign=0), 0, row, 1, 1)
@@ -1040,6 +1058,13 @@ class SyncJobDialog(ResponsiveDialog):
                 bandwidth_limit=self.bandwidth.get_text().strip(),
                 acknowledge_google_abuse=self.acknowledge_abuse.get_active(),
                 exclude_patterns=excluded,
+                selective_extensions=[
+                    value.strip().lower().lstrip("*.")
+                    for value in self.selective_extensions.get_text().split(",")
+                    if value.strip()
+                ],
+                selective_max_size_mb=self.selective_max_size.get_value_as_int(),
+                selective_max_age_days=self.selective_max_age.get_value_as_int(),
             )
             values.append(value)
         if self.existing and values:
@@ -1337,23 +1362,72 @@ class RecoveryHistoryDialog(ResponsiveDialog):
         self.controller, self.job = controller, job
         area = self.get_content_area()
         area.set_border_width(16)
+        self.entries = controller.engine.recovery.entries(job.id)
+        self.search = Gtk.SearchEntry()
+        self.search.set_placeholder_text("Filter by file path or reason")
+        self.search.connect("search-changed", self._refresh)
+        area.pack_start(self.search, False, False, 4)
         self.store = Gtk.ListStore(str, str, str, str, object)
         view = Gtk.TreeView(model=self.store)
         for index, title in enumerate(("File", "Saved", "Reason", "Size")):
             view.append_column(Gtk.TreeViewColumn(title, Gtk.CellRendererText(), text=index))
-        for entry in controller.engine.recovery.entries(job.id):
-            self.store.append([entry.relative_path, entry.created_at[:19].replace("T", " "), entry.reason, str(entry.size), entry])
         self.view = view
+        self.view.get_selection().connect("changed", self._selection_changed)
         scroll = Gtk.ScrolledWindow()
         scroll.add(view)
         area.pack_start(Gtk.Label(label="Select a saved version to restore it locally. The current file is archived first.", xalign=0), False, False, 8)
         area.pack_start(scroll, True, True, 0)
+        self.details = Gtk.Label(xalign=0)
+        self.details.set_selectable(True)
+        self.details.set_line_wrap(True)
+        area.pack_start(self.details, False, False, 6)
         self.add_button("Close", Gtk.ResponseType.CLOSE)
+        self.add_button("Open saved copy location", 2)
         self.add_button("Restore selected", Gtk.ResponseType.OK)
         self.connect("response", self._response)
+        self._refresh()
         self.show_all()
 
+    @staticmethod
+    def _size(value: int) -> str:
+        amount = float(value)
+        for unit in ("B", "KiB", "MiB", "GiB"):
+            if amount < 1024 or unit == "GiB":
+                return f"{amount:.0f} {unit}" if unit == "B" else f"{amount:.1f} {unit}"
+            amount /= 1024
+        return str(value)
+
+    def _refresh(self, *_args) -> None:
+        query = self.search.get_text().strip().lower()
+        self.store.clear()
+        for entry in self.entries:
+            if query and query not in entry.relative_path.lower() and query not in entry.reason.lower():
+                continue
+            self.store.append([
+                entry.relative_path,
+                entry.created_at[:19].replace("T", " "),
+                entry.reason,
+                self._size(entry.size),
+                entry,
+            ])
+        self.details.set_text(
+            f"{len(self.store)} saved version(s) shown; retention is {self.job.version_retention_days} days."
+        )
+
+    def _selection_changed(self, selection) -> None:
+        model, selected = selection.get_selected()
+        if selected:
+            entry = model[selected][4]
+            self.details.set_text(
+                f"{entry.relative_path}\nSaved: {entry.created_at}\nReason: {entry.reason}\nSize: {self._size(entry.size)}"
+            )
+
     def _response(self, dialog: Gtk.Dialog, response: int) -> None:
+        if response == 2:
+            model, selected = self.view.get_selection().get_selected()
+            if selected:
+                MainWindow._open_path(Path(model[selected][4].stored_path).parent)
+            return
         if response != Gtk.ResponseType.OK:
             dialog.destroy()
             return
@@ -1379,21 +1453,36 @@ class IntegrityDialog(ResponsiveDialog):
         area.set_border_width(16)
         self.status = Gtk.Label(label="Comparing local and remote content…", xalign=0)
         area.pack_start(self.status, False, False, 8)
-        self.store = Gtk.ListStore(bool, str, str, object)
+        self.store = Gtk.ListStore(bool, str, str, str, object)
         view = Gtk.TreeView(model=self.store)
         toggle = Gtk.CellRendererToggle()
         toggle.connect("toggled", lambda _cell, path: self.store.set_value(self.store.get_iter(path), 0, not self.store[path][0]))
         view.append_column(Gtk.TreeViewColumn("Repair", toggle, active=0))
         view.append_column(Gtk.TreeViewColumn("Path", Gtk.CellRendererText(), text=1))
         view.append_column(Gtk.TreeViewColumn("Finding", Gtk.CellRendererText(), text=2))
+        choices = Gtk.ListStore(str)
+        for choice in ("Keep both", "Use local", "Use cloud/peer", "Skip"):
+            choices.append([choice])
+        choice_renderer = Gtk.CellRendererCombo()
+        choice_renderer.set_property("editable", True)
+        choice_renderer.set_property("model", choices)
+        choice_renderer.set_property("text-column", 0)
+        choice_renderer.set_property("has-entry", False)
+        choice_renderer.connect(
+            "edited",
+            lambda _cell, path, value: self.store.set_value(self.store.get_iter(path), 3, value),
+        )
+        view.append_column(Gtk.TreeViewColumn("Resolution", choice_renderer, text=3))
         scroll = Gtk.ScrolledWindow()
         scroll.add(view)
         area.pack_start(scroll, True, True, 0)
         self.local_button = self.add_button("Use local versions", 1)
         self.remote_button = self.add_button("Use cloud/peer versions", 2)
+        self.apply_button = self.add_button("Apply selected resolutions", 3)
         self.add_button("Close", Gtk.ResponseType.CLOSE)
         self.local_button.set_sensitive(False)
         self.remote_button.set_sensitive(False)
+        self.apply_button.set_sensitive(False)
         self.connect("response", self._response)
         self.show_all()
         account = next((item for item in controller.config.accounts if item.remote == job.account_remote), None)
@@ -1408,21 +1497,44 @@ class IntegrityDialog(ResponsiveDialog):
             return False
         visible = [item for item in (issues or []) if not self.conflicts_only or item.symbol == "*"]
         for issue in visible:
-            self.store.append([True, issue.path, issue.description, issue])
+            self.store.append([
+                True,
+                issue.path,
+                issue.description,
+                "Keep both" if issue.symbol == "*" else "Skip",
+                issue,
+            ])
         self.status.set_text(f"{len(visible)} conflict(s) found." if self.conflicts_only else f"Audit complete: {len(visible)} difference(s) require review.")
         self.local_button.set_sensitive(bool(visible))
         self.remote_button.set_sensitive(bool(visible))
+        self.apply_button.set_sensitive(bool(visible))
         return False
 
     def _response(self, dialog: Gtk.Dialog, response: int) -> None:
-        if response not in (1, 2):
+        if response not in (1, 2, 3):
             dialog.destroy()
             return
-        issues = [row[3] for row in self.store if row[0]]
+        selected = [row for row in self.store if row[0]]
+        issues = [row[4] for row in selected]
         if not issues:
             return
-        winner = "local" if response == 1 else "remote"
-        confirm = Gtk.MessageDialog(transient_for=self, modal=True, message_type=Gtk.MessageType.WARNING, buttons=Gtk.ButtonsType.OK_CANCEL, text=f"Repair {len(issues)} item(s) using {winner} as the authoritative side?")
+        if response == 3:
+            mapping = {
+                "Use local": "local",
+                "Use cloud/peer": "remote",
+                "Keep both": "keep_both",
+            }
+            resolutions = [
+                (row[4], mapping[row[3]]) for row in selected if row[3] in mapping
+            ]
+            if not resolutions:
+                return
+            summary = f"Apply the selected resolution to {len(resolutions)} item(s)?"
+        else:
+            winner = "local" if response == 1 else "remote"
+            resolutions = [(issue, winner) for issue in issues]
+            summary = f"Repair {len(issues)} item(s) using {winner} as the authoritative side?"
+        confirm = Gtk.MessageDialog(transient_for=self, modal=True, message_type=Gtk.MessageType.WARNING, buttons=Gtk.ButtonsType.OK_CANCEL, text=summary)
         accepted = confirm.run() == Gtk.ResponseType.OK
         confirm.destroy()
         if not accepted:
@@ -1432,7 +1544,17 @@ class IntegrityDialog(ResponsiveDialog):
             self.controller.engine.recovery,
             self.controller.bandwidth,
         )
-        _run_thread(auditor.repair, self._repaired, self.job, issues, winner)
+        _run_thread(self._repair_resolutions, self._repaired, auditor, resolutions)
+
+    def _repair_resolutions(
+        self,
+        auditor: IntegrityAuditor,
+        resolutions: list[tuple[AuditIssue, str]],
+    ) -> int:
+        return sum(
+            auditor.repair(self.job, [issue], winner)
+            for issue, winner in resolutions
+        )
 
     def _repaired(self, count: int | None, error: Exception | None) -> bool:
         if error:
@@ -1441,6 +1563,7 @@ class IntegrityDialog(ResponsiveDialog):
             self.status.set_text(f"Repair complete: {count} item(s). Run Verify again to confirm integrity.")
             self.local_button.set_sensitive(False)
             self.remote_button.set_sensitive(False)
+            self.apply_button.set_sensitive(False)
         return False
 
 
@@ -3883,6 +4006,16 @@ class MainWindow(Gtk.ApplicationWindow):
             online_button.set_tooltip_text(
                 "Peer folders and encrypted vaults have no safe provider web location"
             )
+        share_button = Gtk.Button(label=tr("share_link"))
+        share_button.set_tooltip_text(
+            "Create a provider-managed public link after explicit confirmation"
+        )
+        share_button.set_sensitive(bool(
+            account and capabilities_for(account.provider).share_links and not job.is_git
+        ))
+        share_button.connect(
+            "clicked", lambda _button: self.controller._create_share_link(job)
+        )
         history_button = Gtk.Button(label=tr("history"))
         history_button.set_tooltip_text("Restore locally retained versions and recycled files")
         history_button.connect(
@@ -3904,7 +4037,7 @@ class MainWindow(Gtk.ApplicationWindow):
         remove = Gtk.Button.new_from_icon_name("user-trash-symbolic", Gtk.IconSize.BUTTON)
         remove.set_tooltip_text(tr("remove_sync"))
         remove.connect("clicked", self._remove_job, job)
-        for widget in (sync, cancel, availability_button, open_button, online_button, history_button, verify_button, conflicts_button, group_button, rename_button, edit_button, log_button):
+        for widget in (sync, cancel, availability_button, open_button, online_button, share_button, history_button, verify_button, conflicts_button, group_button, rename_button, edit_button, log_button):
             if widget is None:
                 continue
             actions.pack_start(widget, False, False, 0)
@@ -5329,6 +5462,56 @@ class TuxInDriveApplication(Gtk.Application):
         if self.window:
             self.window.message("Locating the corresponding provider page…")
         _run_thread(self.rclone.online_url, self._online_url_ready, remote_spec, account.provider)
+
+    def _create_share_link(self, job: SyncJob) -> None:
+        account = next(
+            (item for item in self.config.accounts if item.remote == job.account_remote),
+            None,
+        )
+        if not account or not capabilities_for(account.provider).share_links:
+            if self.window:
+                self.window.message(
+                    "This provider does not advertise secure public-link support.",
+                    Gtk.MessageType.WARNING,
+                )
+            return
+        confirm = Gtk.MessageDialog(
+            transient_for=self.window,
+            modal=True,
+            message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.OK_CANCEL,
+            text="Create a public provider link?",
+        )
+        confirm.format_secondary_text(
+            "Anyone who receives the URL may be able to access this synchronized "
+            "folder. The link is created and controlled by your storage provider."
+        )
+        accepted = confirm.run() == Gtk.ResponseType.OK
+        confirm.destroy()
+        if accepted:
+            _run_thread(self.rclone.public_link, self._share_link_ready, job.remote_spec)
+
+    def _share_link_ready(self, link: str | None, error: Exception | None) -> bool:
+        if error or not link:
+            if self.window:
+                self.window.message(
+                    f"Share link could not be created: {error}", Gtk.MessageType.ERROR
+                )
+            return False
+        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+        clipboard.set_text(link, -1)
+        clipboard.store()
+        dialog = Gtk.MessageDialog(
+            transient_for=self.window,
+            modal=True,
+            message_type=Gtk.MessageType.INFO,
+            buttons=Gtk.ButtonsType.OK,
+            text="Provider share link copied to the clipboard",
+        )
+        dialog.format_secondary_text(link)
+        dialog.run()
+        dialog.destroy()
+        return False
 
     def _online_url_ready(self, result: tuple[str, bool] | None, error: Exception | None) -> bool:
         if error or not result or not result[0]:
