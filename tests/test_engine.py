@@ -4,6 +4,7 @@ import tempfile
 import threading
 import time
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
@@ -116,6 +117,72 @@ class SyncEngineCommandTests(unittest.TestCase):
             self.assertEqual(command[command.index("--resync-mode") + 1], "newer")
             self.assertTrue(completed[0].success)
             self.assertIn("reinitialized automatically", completed[0].message)
+
+    def test_old_bisync_lock_with_dead_owner_is_removed(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(
+            os.environ, {"XDG_DATA_HOME": temporary},
+        ):
+            job = SyncJob(account_remote="one", local_path="/data/One", initialized=True)
+            workdir = self.engine._prepare_bisync_workdir(job)
+            session = workdir / "one-session"
+            lock = workdir / "one-session.lck"
+            lock.write_text(json.dumps({
+                "Session": str(session),
+                "PID": "424242",
+                "TimeRenewed": (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat(),
+                "TimeExpires": (datetime.now(timezone.utc) + timedelta(days=73000)).isoformat(),
+            }), encoding="utf-8")
+            old = time.time() - 600
+            os.utime(lock, (old, old))
+            with patch.object(self.engine, "_process_is_alive", return_value=False):
+                removed = self.engine._clear_orphaned_bisync_locks(job, workdir)
+            self.assertEqual(removed, [lock.name])
+            self.assertFalse(lock.exists())
+
+    def test_active_or_fresh_bisync_locks_are_never_removed(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(
+            os.environ, {"XDG_DATA_HOME": temporary},
+        ):
+            job = SyncJob(account_remote="one", local_path="/data/One", initialized=True)
+            workdir = self.engine._prepare_bisync_workdir(job)
+            session = workdir / "one-session"
+            lock = workdir / "one-session.lck"
+            lock.write_text(json.dumps({
+                "Session": str(session),
+                "PID": "424242",
+                "TimeRenewed": datetime.now(timezone.utc).isoformat(),
+                "TimeExpires": (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat(),
+            }), encoding="utf-8")
+            with patch.object(self.engine, "_process_is_alive", return_value=False):
+                self.assertEqual(self.engine._clear_orphaned_bisync_locks(job, workdir), [])
+            self.assertTrue(lock.exists())
+            details = json.loads(lock.read_text(encoding="utf-8"))
+            details["TimeRenewed"] = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+            lock.write_text(json.dumps(details), encoding="utf-8")
+            old = time.time() - 600
+            os.utime(lock, (old, old))
+            with patch.object(self.engine, "_process_is_alive", return_value=True):
+                self.assertEqual(self.engine._clear_orphaned_bisync_locks(job, workdir), [])
+            self.assertTrue(lock.exists())
+
+    def test_foreign_bisync_lock_session_is_never_removed(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(
+            os.environ, {"XDG_DATA_HOME": temporary},
+        ):
+            job = SyncJob(account_remote="one", local_path="/data/One", initialized=True)
+            workdir = self.engine._prepare_bisync_workdir(job)
+            lock = workdir / "one-session.lck"
+            lock.write_text(json.dumps({
+                "Session": str(Path(temporary) / "elsewhere" / "one-session"),
+                "PID": "424242",
+                "TimeRenewed": (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat(),
+                "TimeExpires": (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat(),
+            }), encoding="utf-8")
+            old = time.time() - 600
+            os.utime(lock, (old, old))
+            with patch.object(self.engine, "_process_is_alive", return_value=False):
+                self.assertEqual(self.engine._clear_orphaned_bisync_locks(job, workdir), [])
+            self.assertTrue(lock.exists())
 
     def test_preview_can_recover_if_bisync_state_disappears_during_run(self):
         with tempfile.TemporaryDirectory() as temporary, patch.dict(

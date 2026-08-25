@@ -1,3 +1,10 @@
+tuxindrive (0.26.29-1) unstable; urgency=medium
+
+  * Recover verified orphaned Bisync lock files automatically and safely.
+  * Preserve active, fresh, malformed, foreign, and symlinked lock files.
+
+ -- Tomas Pluharik <tpluharik@gmail.com>  Tue, 25 Aug 2026 18:30:00 +0200
+
 tuxindrive (0.26.28-1) unstable; urgency=medium
 
   * Add immediate, redacted synchronization error details beside View log.

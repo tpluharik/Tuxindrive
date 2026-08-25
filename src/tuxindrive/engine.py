@@ -16,6 +16,7 @@ import tempfile
 import uuid
 import hashlib
 import shlex
+import stat
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -58,6 +59,7 @@ class JobResult:
 
 class SyncEngine:
     _MAX_ACTIVE_TRANSFERS = 2
+    _ORPHANED_BISYNC_LOCK_GRACE_SECONDS = 120.0
     _OFFLINE_READ_INACTIVITY_TIMEOUT = 60.0
     _OFFLINE_READ_ATTEMPTS = 2
     _PROVIDER_REMOTE_BACKOFF = {
@@ -380,6 +382,80 @@ class SyncEngine:
             shutil.copytree(legacy, workdir, dirs_exist_ok=True)
         ensure_private_directory(workdir)
         return workdir
+
+    @staticmethod
+    def _process_is_alive(pid: int) -> bool:
+        """Return false only when the operating system proves a PID is gone."""
+        if pid <= 0:
+            return True
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True
+        except OSError as exc:
+            return exc.errno != errno.ESRCH
+        return True
+
+    def _clear_orphaned_bisync_locks(self, job: SyncJob, workdir: Path) -> list[str]:
+        """Remove old rclone locks only after proving their owner has exited.
+
+        Rclone normally expires these files itself. A corrupted timestamp can
+        otherwise keep a job locked for years, so PID liveness is the decisive
+        check. Ambiguous, fresh, foreign, oversized, or symlinked files are
+        deliberately left untouched.
+        """
+        if workdir.resolve() != self._bisync_workdir(job).resolve():
+            return []
+        removed: list[str] = []
+        now = datetime.now(timezone.utc).timestamp()
+        for lock_path in workdir.glob("*.lck"):
+            descriptor = -1
+            try:
+                descriptor = os.open(
+                    lock_path,
+                    os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0),
+                )
+                metadata = os.fstat(descriptor)
+                if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > 64 * 1024:
+                    continue
+                getuid = getattr(os, "getuid", None)
+                if getuid is not None and metadata.st_uid != getuid():
+                    continue
+                raw = os.read(descriptor, 64 * 1024)
+                details = json.loads(raw.decode("utf-8"))
+                pid = int(details["PID"])
+                session = Path(str(details["Session"]))
+                if session.parent.resolve() != workdir.resolve():
+                    continue
+                if lock_path.name != f"{session.name}.lck":
+                    continue
+                renewed = datetime.fromisoformat(
+                    str(details["TimeRenewed"]).replace("Z", "+00:00")
+                )
+                if renewed.tzinfo is None:
+                    continue
+                freshest = max(metadata.st_mtime, renewed.timestamp())
+                if now - freshest < self._ORPHANED_BISYNC_LOCK_GRACE_SECONDS:
+                    continue
+                if self._process_is_alive(pid):
+                    continue
+                current = lock_path.lstat()
+                if (
+                    not stat.S_ISREG(current.st_mode)
+                    or current.st_dev != metadata.st_dev
+                    or current.st_ino != metadata.st_ino
+                ):
+                    continue
+                unlink_confined(workdir, lock_path.name)
+                removed.append(lock_path.name)
+            except (OSError, ValueError, TypeError, KeyError, json.JSONDecodeError):
+                continue
+            finally:
+                if descriptor >= 0:
+                    os.close(descriptor)
+        return removed
 
     @staticmethod
     def _has_bisync_baselines(workdir: Path) -> bool:
@@ -1709,6 +1785,7 @@ class SyncEngine:
         ensure_private_directory(log_path.parent)
         cancelled = False
         auto_reinitialize = False
+        recovered_locks: list[str] = []
         try:
             resolved = resolve_rclone(self.rclone_path)
             if resolved is None:
@@ -1717,6 +1794,8 @@ class SyncEngine:
             self.leases.rclone_path = resolved
             if job.mode is SyncMode.TWO_WAY and job.initialized:
                 workdir = self._prepare_bisync_workdir(job)
+                if not dry_run:
+                    recovered_locks = self._clear_orphaned_bisync_locks(job, workdir)
                 auto_reinitialize = (
                     not dry_run
                     and not self._has_bisync_baselines(workdir)
@@ -1771,6 +1850,11 @@ class SyncEngine:
                     log.write(
                         "Bisync baseline was missing or incomplete; "
                         "starting automatic safe reinitialization.\n"
+                    )
+                if recovered_locks:
+                    log.write(
+                        "Removed a verified orphaned Bisync lock after its owner "
+                        "process exited; continuing without rebuilding sync state.\n"
                     )
                 process = subprocess.Popen(
                     command,

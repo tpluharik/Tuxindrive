@@ -2,6 +2,16 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.29 — automatic orphaned Bisync lock recovery
+
+- Detects old rclone Bisync locks whose recorded owner process has exited and
+  safely removes them before synchronization starts, including locks with a
+  corrupted far-future expiry time.
+- Never removes active, fresh, foreign, malformed, oversized, or symlinked lock
+  files, and verifies the file identity again immediately before removal.
+- Continues with the existing durable synchronization baseline instead of
+  unnecessarily rebuilding state or repeatedly failing the scheduled job.
+
 ## 0.26.28 — immediate synchronization error details
 
 - Added an **Error details** action beside **View log** on every synchronized

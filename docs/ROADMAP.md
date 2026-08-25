@@ -7,7 +7,15 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.28
+## Current baseline: 0.26.29
+
+### Completed in 0.26.29: safe orphaned-lock recovery
+
+- Old rclone Bisync locks are removed automatically only after the recorded
+  owner PID is proven gone and the private lock passes strict path, ownership,
+  freshness, file-type, and identity checks.
+- Corrupted far-future expiry timestamps no longer leave a folder permanently
+  blocked or cause repeated scheduled failures.
 
 ### Completed in 0.26.28: immediate synchronization error details
 

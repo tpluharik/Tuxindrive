@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tuxindrive"
-version = "0.26.28"
+version = "0.26.29"
 description = "Native multi-provider cloud sync and streaming client for desktop and mobile"
 readme = "README.md"
 requires-python = ">=3.10"
