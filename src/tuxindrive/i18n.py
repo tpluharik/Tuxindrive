@@ -48,7 +48,7 @@ _STRINGS = {
         "automatic_sync": "Enable automatic synchronization", "open_drive": "Open drive",
         "start_streaming": "Start streaming", "sync_now": "Sync now", "disconnect": "Disconnect", "stop": "Stop",
         "open_folder": "Open folder", "open_online_folder": "Open online folder", "share_link": "Create share link", "history": "History", "verify": "Verify",
-        "conflicts": "Conflicts", "rename": "Rename", "edit": "Edit", "view_log": "View log",
+        "conflicts": "Conflicts", "rename": "Rename", "edit": "Edit", "view_log": "View log", "error_details": "Error details",
         "remove_sync": "Remove synchronization", "cloud_storage": "Cloud storage",
         "stream_hint": "Show cloud files immediately; download content only when a file is opened",
         "keep_drive_offline": "Keep drive offline", "make_drive_online_only": "Make drive online-only",

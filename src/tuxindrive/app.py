@@ -94,6 +94,7 @@ from .server_client import ServerClient, ServerClientError, normalize_server_url
 from .server_credentials import store_server_token
 from .search_index import FolderSearchIndex, IndexStats, SearchResult
 from .file_preview import PreviewData, PreviewError, preview_path
+from .error_details import details_for_job
 
 try:  # Ubuntu's AppIndicator extension provides Windows-like tray controls.
     gi.require_version("AyatanaAppIndicator3", "0.1")
@@ -1075,6 +1076,9 @@ class SyncJobDialog(ResponsiveDialog):
             value.last_run = self.existing.last_run
             value.last_status = self.existing.last_status
             value.last_error = self.existing.last_error
+            value.last_error_at = self.existing.last_error_at
+            value.last_error_source = self.existing.last_error_source
+            value.last_error_log = self.existing.last_error_log
             value.offline_paths = list(self.existing.offline_paths)
             value.online_only_paths = list(self.existing.online_only_paths)
             value.peer_role = self.existing.peer_role
@@ -1352,7 +1356,60 @@ class GitHubSyncDialog(ResponsiveDialog):
             job.last_run = self.existing_job.last_run
             job.last_status = self.existing_job.last_status
             job.last_error = self.existing_job.last_error
+            job.last_error_at = self.existing_job.last_error_at
+            job.last_error_source = self.existing_job.last_error_source
+            job.last_error_log = self.existing_job.last_error_log
         return account, job
+
+
+class ErrorDetailsDialog(ResponsiveDialog):
+    """Show the last failure immediately, without starting an integrity scan."""
+
+    def __init__(self, parent: Gtk.Window, job: SyncJob) -> None:
+        super().__init__(title=f"Error details · {job.name}", transient_for=parent, modal=True)
+        self.set_default_size(760, 560)
+        details = details_for_job(job, cache_root() / "logs")
+        area = self.get_content_area()
+        area.set_border_width(16)
+        area.set_spacing(10)
+
+        heading = Gtk.Label(xalign=0)
+        heading.set_markup("<b>Last synchronization error</b>")
+        area.pack_start(heading, False, False, 0)
+        for title, value in (
+            ("Reason", details.reason),
+            ("Source file or path", details.source),
+            ("Local folder", job.local_path),
+            ("Cloud source", job.remote_spec),
+            ("Occurred", details.occurred_at),
+            ("Job log", details.log_path),
+        ):
+            label = Gtk.Label(xalign=0)
+            label.set_line_wrap(True)
+            label.set_selectable(True)
+            label.set_markup(
+                f"<b>{GLib.markup_escape_text(title)}:</b> "
+                f"{GLib.markup_escape_text(value)}"
+            )
+            area.pack_start(label, False, False, 0)
+
+        excerpt_label = Gtk.Label(label="Recent error output", xalign=0)
+        excerpt_label.get_style_context().add_class("dim-label")
+        area.pack_start(excerpt_label, False, False, 0)
+        excerpt = Gtk.TextView()
+        excerpt.set_editable(False)
+        excerpt.set_cursor_visible(False)
+        excerpt.set_monospace(True)
+        excerpt.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        excerpt.get_buffer().set_text(details.excerpt)
+        excerpt_scroll = Gtk.ScrolledWindow()
+        excerpt_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        excerpt_scroll.set_min_content_height(180)
+        excerpt_scroll.add(excerpt)
+        area.pack_start(excerpt_scroll, True, True, 0)
+        self.add_button(tr("close"), Gtk.ResponseType.CLOSE)
+        self.connect("response", lambda dialog, _response: dialog.destroy())
+        self.show_all()
 
 
 class RecoveryHistoryDialog(ResponsiveDialog):
@@ -3986,6 +4043,9 @@ class MainWindow(Gtk.ApplicationWindow):
         open_button.connect("clicked", lambda _button: self._open_path(job.local))
         log_button = Gtk.Button(label=tr("view_log"))
         log_button.connect("clicked", lambda _button: self._open_path(cache_root() / "logs"))
+        error_button = Gtk.Button(label=tr("error_details"))
+        error_button.set_tooltip_text("Show the last error immediately without loading conflicts")
+        error_button.connect("clicked", lambda _button: ErrorDetailsDialog(self, job))
         edit_button = Gtk.Button(label=tr("edit"))
         edit_button.connect("clicked", self._edit_job, job)
         rename_button = Gtk.Button(label=tr("rename"))
@@ -4037,7 +4097,7 @@ class MainWindow(Gtk.ApplicationWindow):
         remove = Gtk.Button.new_from_icon_name("user-trash-symbolic", Gtk.IconSize.BUTTON)
         remove.set_tooltip_text(tr("remove_sync"))
         remove.connect("clicked", self._remove_job, job)
-        for widget in (sync, cancel, availability_button, open_button, online_button, share_button, history_button, verify_button, conflicts_button, group_button, rename_button, edit_button, log_button):
+        for widget in (sync, cancel, availability_button, open_button, online_button, share_button, history_button, verify_button, conflicts_button, group_button, rename_button, edit_button, log_button, error_button):
             if widget is None:
                 continue
             actions.pack_start(widget, False, False, 0)
@@ -5774,6 +5834,9 @@ class TuxInDriveApplication(Gtk.Application):
         job.last_run = now.isoformat()
         job.last_status = result.message
         job.last_error = "" if result.success else result.message
+        job.last_error_at = "" if result.success else now.isoformat()
+        job.last_error_source = "" if result.success else result.blocked_path
+        job.last_error_log = "" if result.success else str(result.log_path)
         if result.requires_resync:
             job.initialized = False
             job.enabled = False

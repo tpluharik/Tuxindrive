@@ -1,6 +1,10 @@
 # TuxInDrive architecture
 
-This document describes how TuxInDrive 0.26.27 is implemented. It complements
+This document describes how TuxInDrive 0.26.28 is implemented. Job failures
+persist a bounded structured reference (reason, time, reported source path and
+exact private log path); the desktop error dialog reads at most the final 64
+KiB of that one confined log, redacts common credential forms, and never starts
+a provider or conflict scan. It complements
 the task-oriented [user guide](USER_GUIDE.md), persisted-field
 [configuration reference](CONFIGURATION.md), and threat-focused
 [security guide](SECURITY_HARDENING.md).

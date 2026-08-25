@@ -2,6 +2,16 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.28 — immediate synchronization error details
+
+- Added an **Error details** action beside **View log** on every synchronized
+  folder card. It shows the last reason, reported source file/path, local and
+  cloud locations, timestamp, exact job log, and a bounded recent error excerpt.
+- Kept error inspection local and immediate: opening the dialog performs no
+  provider request, integrity comparison, or conflict scan.
+- Persisted structured error context across restarts and redacted common
+  credential fields and credential-bearing URLs before rendering log lines.
+
 ## 0.26.27 — protocol backends, selective synchronization, and safer recovery
 
 - Added first-class S3-compatible, generic WebDAV, and SFTP accounts with

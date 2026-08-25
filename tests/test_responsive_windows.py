@@ -57,6 +57,14 @@ class ResponsiveWindowTests(unittest.TestCase):
         self.assertIn("result.local_path.resolve(strict=True)", dialog)
         self.assertIn('"edit-find-symbolic"', source)
 
+    def test_job_error_details_do_not_open_the_conflict_scanner(self) -> None:
+        source = (REPOSITORY / "src/tuxindrive/app.py").read_text(encoding="utf-8")
+        dialog = source[source.index("class ErrorDetailsDialog"):source.index("class RecoveryHistoryDialog")]
+        self.assertIn("details_for_job(job", dialog)
+        self.assertNotIn("IntegrityDialog", dialog)
+        self.assertIn('Gtk.Button(label=tr("error_details"))', source)
+        self.assertLess(source.index('Gtk.Button(label=tr("view_log"))'), source.index('Gtk.Button(label=tr("error_details"))'))
+
 
 if __name__ == "__main__":
     unittest.main()

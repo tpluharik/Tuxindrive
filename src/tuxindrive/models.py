@@ -432,6 +432,9 @@ class SyncJob:
     last_run: str | None = None
     last_status: str = "Not synchronized yet"
     last_error: str = ""
+    last_error_at: str = ""
+    last_error_source: str = ""
+    last_error_log: str = ""
 
     @property
     def remote_spec(self) -> str:

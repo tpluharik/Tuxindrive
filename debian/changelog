@@ -1,3 +1,10 @@
+tuxindrive (0.26.28-1) unstable; urgency=medium
+
+  * Add immediate, redacted synchronization error details beside View log.
+  * Persist the last error time, source path, and exact per-job log location.
+
+ -- Tomas Pluharik <tpluharik@gmail.com>  Tue, 25 Aug 2026 16:45:00 +0200
+
 tuxindrive (0.26.27-1) unstable; urgency=medium
 
   * Add S3-compatible, WebDAV, and SFTP protocol accounts.

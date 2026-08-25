@@ -307,9 +307,13 @@ class HeadlessAgent:
         with self._lock:
             job = next((item for item in self.config.jobs if item.id == result.job_id), None)
             if job:
-                job.last_run = datetime.now(timezone.utc).isoformat()
+                finished_at = datetime.now(timezone.utc).isoformat()
+                job.last_run = finished_at
                 job.last_status = result.message
                 job.last_error = "" if result.success else result.message
+                job.last_error_at = "" if result.success else finished_at
+                job.last_error_source = "" if result.success else result.blocked_path
+                job.last_error_log = "" if result.success else str(result.log_path)
                 self.store.save(self.config)
             self._results[result.job_id] = {
                 "success": result.success, "message": result.message,

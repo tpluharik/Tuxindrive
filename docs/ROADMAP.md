@@ -7,7 +7,14 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.27
+## Current baseline: 0.26.28
+
+### Completed in 0.26.28: immediate synchronization error details
+
+Every synchronized-folder card now provides **Error details** beside **View
+log**. It renders the persisted reason, reported source path, endpoints,
+timestamp, exact job log, and a bounded redacted error excerpt without opening
+the conflict center or contacting a provider.
 
 ### Completed in 0.26.27: protocol accounts and selective recovery
 
