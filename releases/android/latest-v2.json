@@ -1,8 +1,8 @@
 {
-  "version": "0.26.27",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.27/TuxInDrive-0.26.27-android.apk",
-  "sha256": "45ec84d6c2a0dda2f159699232249832eb4bed37e9e364b159892f681bc67448",
-  "notes": "Version history, graphical conflict resolution, selective synchronization, and safer repair controls",
-  "expires_at": "2026-11-23T14:21:49.301242+00:00",
-  "signature": "cd1pKYXdo+mvdupccWIWa3vmPsWErUv9duAQPreQf5nh78J/rUc5jNFwKq55q04mSpRJhDzKDvf+g/MarLvhCg=="
+  "version": "0.26.28",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.28/TuxInDrive-0.26.28-android.apk",
+  "sha256": "2b021536ae65e04dca3b2f8dc55e62b5b468b5764d5830c889320682ac18392e",
+  "notes": "Immediate redacted synchronization error details without conflict scans",
+  "expires_at": "2026-11-23T15:16:36.157458+00:00",
+  "signature": "wBZYR07+0bBvE9bURoM0s3BqX9QdhJBETgr40AM8XhgnMqSj3XbroqP+h+fyRoKmvm82SDek5EXTnuX0V6dcCw=="
 }

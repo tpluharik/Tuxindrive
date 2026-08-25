@@ -1,8 +1,8 @@
 {
-  "version": "0.26.27",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.27/TuxInDrive-0.26.27-windows-x64-setup.exe",
-  "sha256": "a8220fe5c71c4c3727fd3001b2561f9d3699574c1d48f6c99ac20767562a43e6",
-  "notes": "Version history, graphical conflict resolution, selective synchronization, and safer repair controls",
-  "expires_at": "2026-11-23T14:21:49.581365+00:00",
-  "signature": "U9LAir8LeCYXEuLWB/Nf+m0Rht/dV3P3mAdbwUZUxS3Clb8e7a+iGxTgO+EsKXa63MDnvAhdt1jKbqzPc6OxCQ=="
+  "version": "0.26.28",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.28/TuxInDrive-0.26.28-windows-x64-setup.exe",
+  "sha256": "005873e02da34d1e4b2a84579fc49d78f554b1b07d930552d52c0b87b7d0ae0b",
+  "notes": "Immediate redacted synchronization error details without conflict scans",
+  "expires_at": "2026-11-23T15:16:34.945514+00:00",
+  "signature": "ZGqpTm/VOBHiiMxjRs5qg9n3BuR1wHgVVaCzKj7DSiTs9SI22QLRD372s0cjqdRZg2jg8o08c72B6wUgt9woDA=="
 }

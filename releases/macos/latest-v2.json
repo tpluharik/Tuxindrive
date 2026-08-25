@@ -1,8 +1,8 @@
 {
-  "version": "0.26.27",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.27/TuxInDrive-0.26.27-macos-arm64.dmg",
-  "sha256": "b995e44b12a045c53feab3a95569d343cfdb3d959832189a48a672b615bf5c96",
-  "notes": "Version history, graphical conflict resolution, selective synchronization, and safer repair controls",
-  "expires_at": "2026-11-23T14:21:48.515994+00:00",
-  "signature": "6qP8ETYKVCmt4rIRZmgswu4G88/8CBKsZ94eNP6XU1uCwV/0/8BtIFR5w6M+ttVamK4LJSmx5k0sJMCkqqXIDQ=="
+  "version": "0.26.28",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.28/TuxInDrive-0.26.28-macos-arm64.dmg",
+  "sha256": "52810e7ab9b97409274016e03ec08b7f859eba9e62c4b7924c6fbdea35a27195",
+  "notes": "Immediate redacted synchronization error details without conflict scans",
+  "expires_at": "2026-11-23T15:16:35.950617+00:00",
+  "signature": "RsADHRzAaSH/U6kbgd5Tcrj8QGtYk9GA39c9ptBDkheaY9tyPYkG1v6jyjFjMc5yI3/6varZlxDPaPB+vLxKDw=="
 }
