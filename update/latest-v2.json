@@ -1,8 +1,8 @@
 {
-  "version": "0.26.26",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.26/tuxindrive_0.26.26_all.deb",
-  "sha256": "33894777b18dc0733451c994974a9f023385efb7c7ebef3ea03d528bf9fcb2a5",
-  "notes": "Automated marketplace distribution metadata and store-ready Android bundle",
-  "expires_at": "2026-11-22T11:33:37.905751+00:00",
-  "signature": "RajoEyPDmJg8O0JD8ivfwcFLNGlSmjyz+SA2RouxP3zxBvXm8SR6Knj1PQtSJWFW6T7FUaW6VzbruTY4ZWsbDQ=="
+  "version": "0.26.27",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.27/tuxindrive_0.26.27_all.deb",
+  "sha256": "8c8e85ea1ce719f2325add240a78b269bba4def6c89596974a104ac7fb613920",
+  "notes": "Version history, graphical conflict resolution, selective synchronization, and safer repair controls",
+  "expires_at": "2026-11-23T14:21:49.268007+00:00",
+  "signature": "1cE1+w9kY1ZIXWqHW+OfNXSQksKacdP/4g819AXquVJ/TzDmP0Krguy2IrT08kzdbLojXfS7SInHkDCi2IvxAQ=="
 }
