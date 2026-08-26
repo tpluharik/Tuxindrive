@@ -1,8 +1,8 @@
 {
-  "version": "0.26.29",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.29/tuxindrive_0.26.29_all.deb",
-  "sha256": "a58ea02cb911f09be85e0c1d706445b72dc5eda95f37de1f8676b969f29e5211",
-  "notes": "Safe automatic recovery from verified orphaned Bisync locks",
-  "expires_at": "2026-11-23T17:24:27.219956+00:00",
-  "signature": "NTS4a6Y1kBWriUhplNLk5wZdByAhOmJoi/g31Mq5/BQ6HqQNbN3x8ryLT+ASHkm5LOfmKvd0jR8EDqhDBUnNBQ=="
+  "version": "0.26.30",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.30/tuxindrive_0.26.30_all.deb",
+  "sha256": "692d31ee72b5f241f6f95ce66f40e1e356d2531ce56906fa6f0cb5c65453cbf3",
+  "notes": "Managed policy, content search, cloud copy, and reliability improvements",
+  "expires_at": "2026-11-24T09:01:04.171349+00:00",
+  "signature": "FXRjFCAMDIOliyf717WVWdOutxJErjxeiqrIOaYGYybd7GsJ6jXmlEPH48tmPLJgZS3q2QtF8rwr4trji+W9Ag=="
 }

@@ -1,8 +1,8 @@
 {
-  "version": "0.26.29",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.29/TuxInDrive-0.26.29-macos-arm64.dmg",
-  "sha256": "04cde6a113951efaf66dffe9e2696e3c485e00cd5445d4103819836c7b4ec163",
-  "notes": "Safe automatic recovery from verified orphaned Bisync locks",
-  "expires_at": "2026-11-23T17:24:27.363365+00:00",
-  "signature": "8pbmypbbHW/oOtjOBq45ncGnr+p+V+4T4932VAmTQFUTH91gv8dM5Vk2SVdB/inSlHhTkyhvoT8wKP8/Ga/KAA=="
+  "version": "0.26.30",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.30/TuxInDrive-0.26.30-macos-arm64.dmg",
+  "sha256": "05eb53fa1ec9e4d5d88fba5b67e9cae2dd085fe3243a5390f4b6bfbbe9a82df8",
+  "notes": "Managed policy, content search, cloud copy, and reliability improvements",
+  "expires_at": "2026-11-24T09:01:04.502501+00:00",
+  "signature": "tQpxM0HQxm8LJvtQim2W3r+DFfudFfp8luYE6lqqJLkwkdjWw7SI+5qsah2ELlCHkKyPi8GGxOczmujUwkpRDA=="
 }

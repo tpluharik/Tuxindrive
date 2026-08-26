@@ -1,8 +1,8 @@
 {
-  "version": "0.26.29",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.29/TuxInDrive-0.26.29-android.apk",
-  "sha256": "488cad14017ed0f70f47c59c01074c004cd19e6fd2bb9ef26883341fd104e2b3",
-  "notes": "Safe automatic recovery from verified orphaned Bisync locks",
-  "expires_at": "2026-11-23T17:24:27.608103+00:00",
-  "signature": "3s2WATruwdHLwDy4qS0wOKsv0+N8Wv5PcfE0nXBDBG/Cwa+0w7LxW0cKknEJuRK6+5uIh0PLDpAawwfpOCnlDg=="
+  "version": "0.26.30",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.30/TuxInDrive-0.26.30-android.apk",
+  "sha256": "272b06848b12b58ceff987c8b99447bc894109c77ba4e0630bc108d4c6813344",
+  "notes": "Managed policy, content search, cloud copy, and reliability improvements",
+  "expires_at": "2026-11-24T09:01:04.974545+00:00",
+  "signature": "ezXgONDBHOTVDwLM2GYWzM78rkIzqeY7ReH4V6OGoXdjcFM1sHsbKu31s+Fj1dVW2ggD+izwgHItP3Mr0cd+Ag=="
 }
