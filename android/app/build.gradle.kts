@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.tuxindrive.mobile"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2629
-        versionName = "0.26.29"
+        versionCode = 2630
+        versionName = "0.26.30"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

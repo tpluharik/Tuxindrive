@@ -2,6 +2,18 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.30 — recovery, private content search and managed operation
+
+- Added optional bounded local content indexing for supported formats. It is
+  off by default, never traverses files-on-demand mounts, and never sends
+  indexed text to a provider.
+- Added preview-first cloud-to-cloud copying between configured rclone
+  accounts, with global bandwidth admission and no delete semantics.
+- Added immediate categorized recovery advice to error details, root-controlled
+  managed desktop policy, and private CSV/JSONL audit export.
+- Added historical configuration upgrade tests, a scheduled offline reliability
+  matrix, and reproducible metadata/content-index performance evidence.
+
 ## 0.26.29 — automatic orphaned Bisync lock recovery
 
 - Detects old rclone Bisync locks whose recorded owner process has exited and

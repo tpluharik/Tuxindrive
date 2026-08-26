@@ -5,7 +5,7 @@ from pathlib import Path
 from subprocess import CompletedProcess
 from unittest.mock import patch
 
-from tuxindrive.file_preview import MAX_TEXT_BYTES, PreviewError, preview_path
+from tuxindrive.file_preview import MAX_TEXT_BYTES, PreviewError, index_text_path, preview_path
 
 
 class FilePreviewTests(unittest.TestCase):
@@ -149,6 +149,14 @@ class FilePreviewTests(unittest.TestCase):
         result = preview_path(path)
         self.assertEqual(result.format_label, "Preview unavailable")
         self.assertIn("system application", result.text)
+
+    def test_index_text_is_bounded_and_ignores_unknown_formats(self):
+        path = self.root / "notes.txt"
+        path.write_text("searchable phrase", encoding="utf-8")
+        self.assertEqual(index_text_path(path), "searchable phrase")
+        binary = self.root / "program.exe"
+        binary.write_bytes(b"searchable phrase")
+        self.assertEqual(index_text_path(binary), "")
 
 
 if __name__ == "__main__":

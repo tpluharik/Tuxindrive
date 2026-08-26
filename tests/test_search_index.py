@@ -38,6 +38,16 @@ class FolderSearchIndexTests(unittest.TestCase):
         self.assertEqual(result.local_path, secret)
         self.assertEqual(self.index.search("content must not"), [])
 
+    def test_content_indexing_is_explicit_bounded_and_reports_match_kind(self):
+        document = self.root / "meeting-notes.txt"
+        document.write_text("Project Zephyr launch checklist", encoding="utf-8")
+        self.index.refresh([self.job], include_content=True)
+        result = self.index.search("Zephyr")[0]
+        self.assertEqual(result.name, "meeting-notes.txt")
+        self.assertTrue(result.matched_content)
+        self.index.refresh([self.job], include_content=False)
+        self.assertEqual(self.index.search("Zephyr"), [])
+
     def test_search_is_unicode_casefolded_and_supports_multiple_tokens(self):
         (self.root / "PŘEHLED faktur 2026.pdf").touch()
         self.index.refresh([self.job])

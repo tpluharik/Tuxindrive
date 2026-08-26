@@ -103,6 +103,38 @@ class RcloneClient:
         """Copy one object without exposing its contents to logs or stdout."""
         self._run(["copyto", str(source), str(destination)])
 
+    def copy_between_remotes(
+        self,
+        source_remote: str,
+        source_path: str,
+        destination_remote: str,
+        destination_path: str,
+        *,
+        dry_run: bool = True,
+        bandwidth_args: Iterable[str] = (),
+    ) -> subprocess.CompletedProcess[str]:
+        """Copy cloud-to-cloud without deleting either endpoint.
+
+        The caller must complete a dry run before invoking the real operation.
+        rclone uses a provider-side transfer when supported and safely falls
+        back to streamed transfer otherwise.
+        """
+        self._validate_remote_name(source_remote)
+        self._validate_remote_name(destination_remote)
+        if source_remote == destination_remote:
+            raise ValueError("Cloud-to-cloud copy requires two different accounts")
+        source = self._remote_spec(source_remote, source_path)
+        destination = self._remote_spec(destination_remote, destination_path)
+        args = [
+            "copy", source, destination,
+            "--server-side-across-configs",
+            "--stats-one-line", "--stats", "5s",
+            *list(bandwidth_args),
+        ]
+        if dry_run:
+            args.append("--dry-run")
+        return self._run(args, timeout=24 * 60 * 60)
+
     def object_exists(self, spec: str) -> bool:
         try:
             self._run(["lsjson", "--stat", spec])
@@ -591,6 +623,14 @@ class RcloneClient:
             raise ValueError("Remote names cannot contain spaces, slashes, colons, or control characters")
         if " " in remote:
             raise ValueError("Remote names cannot contain spaces")
+
+    @staticmethod
+    def _remote_spec(remote: str, path: str) -> str:
+        value = str(path or "").strip().strip("/")
+        parts = Path(value).parts
+        if any(part in {".", ".."} for part in parts) or "\x00" in value:
+            raise ValueError("Cloud folder paths cannot contain traversal components")
+        return f"{remote}:{value}" if value else f"{remote}:"
 
 
 def rclone_config_path() -> Path:

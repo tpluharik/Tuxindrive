@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 import threading
+import csv
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -63,6 +64,40 @@ class AuditTimeline:
             if len(events) >= limit:
                 break
         return events
+
+    def export(self, destination: Path, *, format: str = "csv") -> int:
+        """Export a bounded operator-selected copy without weakening the private source."""
+        if format not in {"csv", "jsonl"}:
+            raise ValueError("Audit export format must be csv or jsonl")
+        events = list(reversed(self.recent(self.limit)))
+        destination = Path(destination)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        descriptor, temporary = tempfile.mkstemp(
+            prefix="audit-export-", suffix=f".{format}", dir=destination.parent
+        )
+        try:
+            private_descriptor(descriptor)
+            with os.fdopen(descriptor, "w", encoding="utf-8", newline="") as handle:
+                if format == "jsonl":
+                    for event in events:
+                        handle.write(json.dumps(asdict(event), ensure_ascii=False) + "\n")
+                else:
+                    fields = tuple(AuditEvent.__dataclass_fields__)
+                    writer = csv.DictWriter(handle, fieldnames=fields)
+                    writer.writeheader()
+                    for event in events:
+                        writer.writerow(asdict(event))
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, destination)
+            try:
+                os.chmod(destination, 0o600)
+            except (OSError, NotImplementedError):
+                pass
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+        return len(events)
 
     def _compact(self) -> None:
         lines = self.path.read_text(encoding="utf-8").splitlines()[-self.limit:]

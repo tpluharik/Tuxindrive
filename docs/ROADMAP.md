@@ -7,7 +7,21 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.29
+## Current baseline: 0.26.30
+
+### Completed in 0.26.30: operational reliability and managed workflows
+
+- Search can optionally index bounded text from supported fully local files;
+  the private feature defaults off and excludes files-on-demand mounts.
+- Preview-first cloud-to-cloud copy uses provider-side transfer where supported,
+  never deletes destination data, and shares the global bandwidth controller.
+- Error details include deterministic recovery advice without a provider scan.
+- A root-controlled desktop policy can restrict providers, bandwidth headroom,
+  content indexing, cloud copy and audit export. Audit export supports private
+  CSV and JSONL files.
+- Scheduled CI publishes machine-readable upgrade, recovery and local index
+  performance evidence. Live-provider longevity and native store-signing tests
+  remain credential/platform-gated release evidence, not simulated claims.
 
 ### Completed in 0.26.29: safe orphaned-lock recovery
 

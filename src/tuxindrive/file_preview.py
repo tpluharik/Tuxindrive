@@ -29,6 +29,8 @@ MAX_ARCHIVE_ENTRY_BYTES = 8 * 1024 * 1024
 MAX_ARCHIVE_EXPANDED_BYTES = 64 * 1024 * 1024
 MAX_COMPRESSION_RATIO = 100
 MAX_PDF_PAGES = 3
+MAX_INDEX_FILE_BYTES = 8 * 1024 * 1024
+MAX_INDEX_CHARACTERS = 16_000
 
 TEXT_SUFFIXES = {
     ".txt", ".md", ".rst", ".log", ".csv", ".tsv", ".json", ".jsonl",
@@ -287,3 +289,27 @@ def preview_path(path: Path | str) -> PreviewData:
         "Preview unavailable",
         text="This file type is not previewed. Use Open selected to open it with the system application.",
     )
+
+
+def index_text_path(path: Path | str) -> str:
+    """Extract a small searchable text fragment using the preview safety boundary.
+
+    Callers must make this explicitly opt-in. Images and unknown executables are
+    never decoded, and no result contains more than ``MAX_INDEX_CHARACTERS``.
+    """
+    selected = Path(path)
+    if selected.suffix.lower() not in TEXT_SUFFIXES | OFFICE_SUFFIXES | {".pdf"}:
+        return ""
+    try:
+        details = os.stat(selected, follow_symlinks=False)
+    except OSError:
+        return ""
+    if not stat.S_ISREG(details.st_mode) or details.st_size > MAX_INDEX_FILE_BYTES:
+        return ""
+    try:
+        preview = preview_path(selected)
+    except PreviewError:
+        return ""
+    if preview.kind != "text" or preview.format_label == "Preview unavailable":
+        return ""
+    return preview.text[:MAX_INDEX_CHARACTERS]

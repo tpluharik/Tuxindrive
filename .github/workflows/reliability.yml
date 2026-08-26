@@ -1,0 +1,30 @@
+name: Reliability evidence
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 3 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  offline-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - name: Run upgrade and recovery matrix
+        run: PYTHONPATH=src python3 scripts/run-reliability-matrix.py
+      - name: Benchmark metadata index
+        run: PYTHONPATH=src python3 scripts/benchmark-search-index.py --files 5000
+      - name: Benchmark opt-in content index
+        run: PYTHONPATH=src python3 scripts/benchmark-search-index.py --files 1000 --content --output dist/search-content-benchmark.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: reliability-evidence
+          path: dist/*.json

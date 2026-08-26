@@ -95,6 +95,8 @@ from .server_credentials import store_server_token
 from .search_index import FolderSearchIndex, IndexStats, SearchResult
 from .file_preview import PreviewData, PreviewError, preview_path
 from .error_details import details_for_job
+from .recovery_advisor import advice_for_error
+from .managed_policy import ManagedPolicy, load_managed_policy
 
 try:  # Ubuntu's AppIndicator extension provides Windows-like tray controls.
     gi.require_version("AyatanaAppIndicator3", "0.1")
@@ -1407,6 +1409,17 @@ class ErrorDetailsDialog(ResponsiveDialog):
         excerpt_scroll.set_min_content_height(180)
         excerpt_scroll.add(excerpt)
         area.pack_start(excerpt_scroll, True, True, 0)
+        advice = advice_for_error(details.reason, details.excerpt)
+        recovery = Gtk.Label(xalign=0)
+        recovery.set_line_wrap(True)
+        steps = "\n".join(f"• {step}" for step in advice.steps)
+        recovery.set_markup(
+            f"<b>{GLib.markup_escape_text(advice.title)}</b> "
+            f"<small>({GLib.markup_escape_text(advice.code)})</small>\n"
+            f"{GLib.markup_escape_text(advice.explanation)}\n"
+            f"{GLib.markup_escape_text(steps)}"
+        )
+        area.pack_start(recovery, False, False, 0)
         self.add_button(tr("close"), Gtk.ResponseType.CLOSE)
         self.connect("response", lambda dialog, _response: dialog.destroy())
         self.show_all()
@@ -3006,11 +3019,44 @@ class OperationsDashboard(ResponsiveDialog):
         notebook.append_page(self._health(controller), Gtk.Label(label="Sync health"))
         notebook.append_page(self._audit(controller), Gtk.Label(label="Audit timeline"))
         notebook.append_page(self._capabilities(), Gtk.Label(label="Provider capabilities"))
+        policy = Gtk.Label(label=controller.managed_policy.summary, xalign=0, yalign=0)
+        policy.set_line_wrap(True)
+        policy.set_selectable(True)
+        policy.set_margin_start(16)
+        policy.set_margin_end(16)
+        policy.set_margin_top(16)
+        notebook.append_page(policy, Gtk.Label(label="Managed policy"))
         self.get_content_area().set_border_width(12)
         self.get_content_area().pack_start(notebook, True, True, 0)
+        if controller.managed_policy.allow_audit_export:
+            self.add_button("Export audit…", 2)
         self.add_button("Close", Gtk.ResponseType.CLOSE)
-        self.connect("response", lambda dialog, _response: dialog.destroy())
+        self.connect("response", self._response)
         self.show_all()
+
+    def _response(self, dialog: Gtk.Dialog, response: int) -> None:
+        if response != 2:
+            dialog.destroy()
+            return
+        chooser = Gtk.FileChooserDialog(
+            title="Export private audit timeline", transient_for=self,
+            action=Gtk.FileChooserAction.SAVE,
+        )
+        chooser.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        chooser.add_button("Export", Gtk.ResponseType.OK)
+        chooser.set_current_name("tuxindrive-audit.csv")
+        chooser.set_do_overwrite_confirmation(True)
+        if chooser.run() == Gtk.ResponseType.OK:
+            path = Path(chooser.get_filename())
+            try:
+                export_format = "jsonl" if path.suffix.lower() == ".jsonl" else "csv"
+                count = self.get_transient_for().controller.audit.export(
+                    path, format=export_format
+                )
+                self.get_transient_for().message(f"Exported {count} private audit events to {path}.")
+            except (OSError, ValueError) as exc:
+                self.get_transient_for().message(f"Audit export failed: {exc}", Gtk.MessageType.ERROR)
+        chooser.destroy()
 
     @staticmethod
     def _tree(columns: tuple[str, ...], rows: list[tuple[str, ...]]) -> Gtk.Widget:
@@ -3150,16 +3196,9 @@ class FolderSearchDialog(ResponsiveDialog):
         content = self.get_content_area()
         content.set_border_width(18)
         content.set_spacing(10)
-        intro = Gtk.Label(
-            label=(
-                "Searches file and folder names stored in the private local index. "
-                "File contents are not read, and files-on-demand drives are excluded "
-                "so a search cannot download cloud data."
-            ),
-            xalign=0,
-        )
-        intro.set_line_wrap(True)
-        content.pack_start(intro, False, False, 0)
+        self.intro = Gtk.Label(xalign=0)
+        self.intro.set_line_wrap(True)
+        content.pack_start(self.intro, False, False, 0)
 
         search_row = Gtk.Box(spacing=8)
         self.search_entry = Gtk.SearchEntry()
@@ -3177,12 +3216,22 @@ class FolderSearchDialog(ResponsiveDialog):
         )
         self.preview_enabled.connect("toggled", self._preview_toggled)
         search_row.pack_start(self.preview_enabled, False, False, 0)
+        self.content_index_enabled = Gtk.CheckButton(label="Index local file contents")
+        self.content_index_enabled.set_active(
+            self.controller.config.settings.search_content_indexing
+        )
+        self.content_index_enabled.set_tooltip_text(
+            "Opt in to a private bounded text index for supported local files. Cloud-only files are never downloaded."
+        )
+        self.content_index_enabled.connect("toggled", self._content_index_toggled)
+        search_row.pack_start(self.content_index_enabled, False, False, 0)
         content.pack_start(search_row, False, False, 0)
+        self._update_intro()
 
-        self.store = Gtk.ListStore(str, str, str, str)
+        self.store = Gtk.ListStore(str, str, str, str, str)
         self.view = Gtk.TreeView(model=self.store)
         self.view.set_headers_visible(True)
-        for index, title in enumerate(("Name", "Synchronized folder", "Location", "Size")):
+        for index, title in enumerate(("Name", "Synchronized folder", "Location", "Size", "Match")):
             renderer = Gtk.CellRendererText()
             renderer.set_property("ellipsize", 3)
             column = Gtk.TreeViewColumn(title, renderer, text=index)
@@ -3283,13 +3332,44 @@ class FolderSearchDialog(ResponsiveDialog):
         self.store.clear()
         for result in self._results:
             size = "Folder" if result.is_directory else format_bytes(result.size)
-            self.store.append((result.name, result.job_name, result.relative_path, size))
+            self.store.append((
+                result.name, result.job_name, result.relative_path, size,
+                "Content" if result.matched_content else "Name/path",
+            ))
         suffix = " (first 200 shown)" if len(self._results) == 200 else ""
         self.status.set_text(f"{len(self._results)} matches for “{query}”{suffix}")
 
     def _refresh_index(self, _button: Gtk.Widget) -> None:
         self.status.set_text("Refreshing the private local index…")
         self.controller.refresh_search_index(self._refresh_ready)
+
+    def _content_index_toggled(self, button: Gtk.CheckButton) -> None:
+        enabled = button.get_active()
+        if enabled and not self.controller.managed_policy.allow_content_indexing:
+            button.set_active(False)
+            self.status.set_text("Content indexing is disabled by the managed desktop policy.")
+            return
+        self._update_intro()
+        self.controller.config.settings.search_content_indexing = enabled
+        self.controller.save()
+        self.status.set_text(
+            "Building the private bounded content index…"
+            if enabled else "Removing indexed content while retaining file names…"
+        )
+        self.controller.refresh_search_index(self._refresh_ready)
+
+    def _update_intro(self) -> None:
+        if self.content_index_enabled.get_active():
+            detail = (
+                "Supported local file contents are read within strict size limits and stored "
+                "only in the private local index."
+            )
+        else:
+            detail = "File contents are not read."
+        self.intro.set_text(
+            "Searches synchronized folders using a private local index. "
+            f"{detail} Files-on-demand drives are excluded so indexing cannot download cloud data."
+        )
 
     def _refresh_ready(self, result: IndexStats | None, error: Exception | None) -> bool:
         if self._closed:
@@ -3425,6 +3505,151 @@ class FolderSearchDialog(ResponsiveDialog):
         )
 
 
+class CloudTransferDialog(ResponsiveDialog):
+    """Preview and run a non-destructive copy between configured cloud accounts."""
+
+    def __init__(self, parent: Gtk.Window, controller: "TuxInDriveApplication") -> None:
+        super().__init__(title="Cloud-to-cloud copy", transient_for=parent, modal=False)
+        self.set_default_size(700, 500)
+        self.controller = controller
+        self._previewed: tuple[str, str, str, str] | None = None
+        self._running = False
+        self.accounts = [
+            account for account in controller.config.accounts
+            if account.backend == "rclone"
+            and account.provider not in {Provider.GITHUB, Provider.PEER}
+        ]
+        area = self.get_content_area()
+        area.set_border_width(18)
+        area.set_spacing(10)
+        explanation = Gtk.Label(
+            label=(
+                "Copies files without deleting either endpoint. TuxInDrive first runs a dry-run preview. "
+                "The provider may perform the transfer server-side; otherwise the global bandwidth controller applies."
+            ),
+            xalign=0,
+        )
+        explanation.set_line_wrap(True)
+        area.pack_start(explanation, False, False, 0)
+        grid = Gtk.Grid(column_spacing=12, row_spacing=10)
+        self.source = Gtk.ComboBoxText()
+        self.destination = Gtk.ComboBoxText()
+        for account in self.accounts:
+            label = f"{account.display_name} · {account.provider.label}"
+            self.source.append(account.remote, label)
+            self.destination.append(account.remote, label)
+        if self.accounts:
+            self.source.set_active(0)
+            self.destination.set_active(1 if len(self.accounts) > 1 else 0)
+        self.source_path = Gtk.Entry()
+        self.source_path.set_placeholder_text("Source folder (blank = account root)")
+        self.destination_path = Gtk.Entry()
+        self.destination_path.set_placeholder_text("Destination folder (blank = account root)")
+        for row, (label, widget) in enumerate((
+            ("Source account", self.source),
+            ("Source folder", self.source_path),
+            ("Destination account", self.destination),
+            ("Destination folder", self.destination_path),
+        )):
+            grid.attach(Gtk.Label(label=label, xalign=0), 0, row, 1, 1)
+            grid.attach(widget, 1, row, 1, 1)
+        area.pack_start(grid, False, False, 0)
+        self.output = Gtk.TextView()
+        self.output.set_editable(False)
+        self.output.set_cursor_visible(False)
+        self.output.set_monospace(True)
+        self.output.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scroll.set_min_content_height(180)
+        scroll.add(self.output)
+        area.pack_start(scroll, True, True, 0)
+        self.status = Gtk.Label(xalign=0)
+        self.status.set_line_wrap(True)
+        area.pack_start(self.status, False, False, 0)
+        self.preview_button = self.add_button("Preview copy", 2)
+        self.copy_button = self.add_button("Start verified copy", 3)
+        self.copy_button.set_sensitive(False)
+        self.add_button("Close", Gtk.ResponseType.CLOSE)
+        self.connect("response", self._response)
+        for widget in (self.source, self.destination, self.source_path, self.destination_path):
+            signal = "changed" if isinstance(widget, Gtk.ComboBoxText) else "changed"
+            widget.connect(signal, self._selection_changed)
+        if not controller.managed_policy.allow_cloud_to_cloud:
+            self.status.set_text("Cloud-to-cloud copy is disabled by the managed desktop policy.")
+            self.preview_button.set_sensitive(False)
+        elif len(self.accounts) < 2:
+            self.status.set_text("Connect at least two rclone-backed cloud accounts first.")
+            self.preview_button.set_sensitive(False)
+        self.show_all()
+
+    def _spec(self) -> tuple[str, str, str, str]:
+        return (
+            self.source.get_active_id() or "",
+            self.source_path.get_text().strip(),
+            self.destination.get_active_id() or "",
+            self.destination_path.get_text().strip(),
+        )
+
+    def _selection_changed(self, _widget: Gtk.Widget) -> None:
+        self._previewed = None
+        self.copy_button.set_sensitive(False)
+
+    def _response(self, dialog: Gtk.Dialog, response: int) -> None:
+        if response in {Gtk.ResponseType.CLOSE, Gtk.ResponseType.DELETE_EVENT}:
+            if not self._running:
+                dialog.destroy()
+            return
+        if self._running:
+            return
+        values = self._spec()
+        if response == 2:
+            self._run(values, dry_run=True)
+        elif response == 3 and values == self._previewed:
+            self._run(values, dry_run=False)
+
+    def _run(self, values: tuple[str, str, str, str], *, dry_run: bool) -> None:
+        self._running = True
+        self.preview_button.set_sensitive(False)
+        self.copy_button.set_sensitive(False)
+        self.status.set_text("Previewing the copy…" if dry_run else "Copying between cloud accounts…")
+
+        def operation():
+            with self.controller.bandwidth.guard():
+                return self.controller.rclone.copy_between_remotes(
+                    *values,
+                    dry_run=dry_run,
+                    bandwidth_args=self.controller.bandwidth.rclone_args(),
+                )
+
+        def ready(result, error: Exception | None) -> bool:
+            self._running = False
+            self.preview_button.set_sensitive(True)
+            if error:
+                self.status.set_text(f"Cloud copy failed safely: {error}")
+                self.controller.audit.record(
+                    "cloud-copy", "preview" if dry_run else "copy", "failed",
+                    path=f"{values[0]}:{values[1]}", detail=str(error),
+                )
+                return False
+            output = ((result.stdout or "") + (result.stderr or "")).strip()
+            self.output.get_buffer().set_text(output[-20_000:] or "No changes are required.")
+            if dry_run:
+                self._previewed = values
+                self.copy_button.set_sensitive(True)
+                self.status.set_text("Preview complete. Review it, then start the verified non-destructive copy.")
+            else:
+                self._previewed = None
+                self.status.set_text("Cloud-to-cloud copy completed.")
+            self.controller.audit.record(
+                "cloud-copy", "preview" if dry_run else "copy", "success",
+                path=f"{values[0]}:{values[1]}", detail=f"destination={values[2]}:{values[3]}",
+            )
+            return False
+
+        _run_thread(operation, ready)
+
+
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, application: "TuxInDriveApplication") -> None:
         super().__init__(application=application, title="TuxInDrive")
@@ -3458,6 +3683,10 @@ class MainWindow(Gtk.ApplicationWindow):
         search.set_tooltip_text("Search synchronized folders")
         search.connect("clicked", lambda _button: FolderSearchDialog(self, self.controller))
         header.pack_start(search)
+        cloud_copy = Gtk.Button.new_from_icon_name("edit-copy-symbolic", Gtk.IconSize.BUTTON)
+        cloud_copy.set_tooltip_text("Copy between cloud accounts")
+        cloud_copy.connect("clicked", lambda _button: CloudTransferDialog(self, self.controller))
+        header.pack_start(cloud_copy)
         settings = Gtk.Button.new_from_icon_name("emblem-system-symbolic", Gtk.IconSize.BUTTON)
         settings.set_tooltip_text(tr("settings"))
         settings.connect("clicked", self._show_settings)
@@ -4199,7 +4428,11 @@ class MainWindow(Gtk.ApplicationWindow):
         prompt.set_markup(f"<span size='large' weight='bold'>{GLib.markup_escape_text(tr('choose_provider_heading'))}</span>\n<small>{GLib.markup_escape_text(tr('provider_hint'))}</small>")
         area.pack_start(prompt, False, False, 8)
         grid = Gtk.Grid(column_spacing=12, row_spacing=12, column_homogeneous=True)
-        providers = [provider for provider in Provider if provider not in {Provider.PEER, Provider.VAULT}]
+        providers = [
+            provider for provider in Provider
+            if provider not in {Provider.PEER, Provider.VAULT}
+            and self.controller.managed_policy.provider_allowed(provider)
+        ]
         for index, provider in enumerate(providers, start=1):
             button = Gtk.Button(label=provider.label)
             button.set_image(Gtk.Image.new_from_icon_name(provider.icon_name, Gtk.IconSize.DND))
@@ -4208,12 +4441,20 @@ class MainWindow(Gtk.ApplicationWindow):
             button.connect("clicked", lambda _button, response=index: dialog.response(response))
             grid.attach(button, (index - 1) % 2, (index - 1) // 2, 1, 1)
         area.pack_start(grid, True, True, 8)
+        if not providers:
+            restricted = Gtk.Label(
+                label="No cloud provider is permitted by the managed desktop policy.",
+                xalign=0,
+            )
+            restricted.get_style_context().add_class("warning")
+            area.pack_start(restricted, False, False, 8)
         vault_response = len(providers) + 1
         vault = Gtk.Button(label=tr("create_vault"))
         vault.set_image(Gtk.Image.new_from_icon_name(Provider.VAULT.icon_name, Gtk.IconSize.DND))
         vault.set_always_show_image(True)
         vault.connect("clicked", lambda _button: dialog.response(vault_response))
-        area.pack_start(vault, False, False, 8)
+        if self.controller.managed_policy.provider_allowed(Provider.VAULT):
+            area.pack_start(vault, False, False, 8)
         dialog.add_button(tr("cancel"), Gtk.ResponseType.CANCEL)
         dialog.show_all()
         response = dialog.run()
@@ -5136,6 +5377,12 @@ class TuxInDriveApplication(Gtk.Application):
             self.config = self.store.load()
         except RuntimeError:
             self.config = AppConfig()
+        try:
+            self.managed_policy = load_managed_policy()
+        except RuntimeError as exc:
+            LOGGER.error("Managed policy rejected: %s", exc)
+            self.managed_policy = ManagedPolicy()
+        self.managed_policy.apply(self.config.settings)
         self.bandwidth = GlobalBandwidthController(
             self.config.settings.global_bandwidth_limit,
             automatic=self.config.settings.automatic_bandwidth_control,
@@ -5692,6 +5939,16 @@ class TuxInDriveApplication(Gtk.Application):
                 os.unlink(temporary)
 
     def add_account(self, account: Account) -> None:
+        if not self.managed_policy.provider_allowed(account.provider):
+            LOGGER.warning(
+                "Managed policy rejected account provider %s", account.provider.value
+            )
+            if self.window:
+                self.window.message(
+                    f"{account.provider.label} is disabled by the managed desktop policy.",
+                    Gtk.MessageType.ERROR,
+                )
+            return
         previous = next(
             (item for item in self.config.accounts if item.remote == account.remote),
             None,
@@ -5811,9 +6068,15 @@ class TuxInDriveApplication(Gtk.Application):
         def refresh() -> IndexStats:
             with self._search_index_lock:
                 return (
-                    self.search_index.refresh_job(job)
+                    self.search_index.refresh_job(
+                        job,
+                        include_content=self.config.settings.search_content_indexing,
+                    )
                     if job is not None
-                    else self.search_index.refresh(jobs)
+                    else self.search_index.refresh(
+                        jobs,
+                        include_content=self.config.settings.search_content_indexing,
+                    )
                 )
 
         def ready(result: IndexStats | None, error: Exception | None) -> bool:

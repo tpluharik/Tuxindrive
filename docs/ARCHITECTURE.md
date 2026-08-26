@@ -147,6 +147,18 @@ same model before upload/download, while `search_index.py` omits locally
 unselected files. Empty extension and zero size/age values preserve the prior
 unfiltered behavior.
 
+`search_index.py` stores metadata by default. A persisted, default-off feature
+flag permits bounded text extraction through `file_preview.index_text_path`
+for supported ordinary local files. Streaming roots are structurally
+ineligible, so enabling content search cannot hydrate cloud placeholders.
+`rclone.copy_between_remotes` provides non-destructive, preview-first
+cloud-to-cloud copy with server-side transfer hints and global admission.
+
+`managed_policy.py` parses the fixed root-controlled Linux policy path and
+constrains provider availability, bandwidth, content indexing, cloud copy and
+audit export. `recovery_advisor.py` maps persisted redacted failures to offline
+operator guidance; it does not probe providers while an error dialog opens.
+
 ### Incremental callbacks
 
 `callbacks.py` combines event-driven local monitoring with adaptive remote

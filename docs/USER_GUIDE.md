@@ -75,9 +75,11 @@ the result identifies its TuxInDrive job, relative location and size. Select a
 row and choose **Open selected**, or double-click it, to open the current local
 item. A stale result is rejected safely rather than opening another path.
 
-The search is private and local. TuxInDrive records only normalized names,
-relative paths, type, size and modification time; it never reads or indexes
-file contents. The index refreshes in the background at startup and after a
+The search is private and local. By default TuxInDrive records only normalized
+names, relative paths, type, size and modification time. Enable **Index local
+file contents** to opt in to bounded text extraction for supported fully local
+formats. The extracted text stays in the private index; files-on-demand mounts
+are never traversed or hydrated. The index refreshes at startup and after a
 successful synchronization. Use the refresh button in the search window after
 a local bulk rename if an immediate result is needed. Paused jobs remain
 searchable. Exclusion rules and symbolic links are honored.
@@ -104,6 +106,16 @@ files-on-demand mounts or send content to a provider. Text input is capped at
 archive expansion and compression ratios are bounded. PDF text is limited to
 the first three pages and uses the optional `pdftotext` utility; when that
 utility is absent, the panel explains the limitation without opening the file.
+
+### Copy between cloud accounts
+
+Select the copy button in the top bar, choose two different configured cloud
+accounts and enter confined source and destination paths. Run **Preview** first;
+only an unchanged preview can enable the final copy. The operation uses provider-
+side copying when rclone and both providers support it, otherwise streams data
+through this device under the global bandwidth controller. It never deletes
+destination files. Provider support and quota limitations can still cause the
+operation to fail safely.
 
 ### Choose a visual design
 

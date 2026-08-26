@@ -1,8 +1,9 @@
-"""Private, local filename index for synchronized folders.
+"""Private local search index for synchronized folders.
 
-The index deliberately records metadata only.  It never opens file contents and
-does not walk files-on-demand mounts, so refreshing it cannot hydrate cloud data
-or turn an idle desktop into a remote metadata scan.
+Metadata-only indexing is the default.  A separate explicit feature flag may
+store bounded text extracted from supported files already present in ordinary
+local roots.  Files-on-demand mounts are never walked, so either mode cannot
+hydrate cloud data or turn an idle desktop into a remote metadata scan.
 """
 
 from __future__ import annotations
@@ -17,9 +18,10 @@ from threading import Event
 from typing import Iterable
 
 from .models import SyncJob, SyncMode
+from .file_preview import index_text_path
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 DEFAULT_MAX_ENTRIES_PER_JOB = 250_000
 
 
@@ -32,6 +34,7 @@ class SearchResult:
     is_directory: bool
     size: int
     modified_ns: int
+    matched_content: bool = False
 
     @property
     def name(self) -> str:
@@ -112,6 +115,7 @@ class FolderSearchIndex:
                     root TEXT NOT NULL,
                     relative_path TEXT NOT NULL,
                     search_text TEXT NOT NULL,
+                    content_text TEXT NOT NULL DEFAULT '',
                     is_directory INTEGER NOT NULL,
                     size INTEGER NOT NULL,
                     modified_ns INTEGER NOT NULL,
@@ -124,6 +128,13 @@ class FolderSearchIndex:
                     ON entries(job_id, generation);
                 """
             )
+            columns = {
+                str(row[1]) for row in connection.execute("PRAGMA table_info(entries)")
+            }
+            if "content_text" not in columns:
+                connection.execute(
+                    "ALTER TABLE entries ADD COLUMN content_text TEXT NOT NULL DEFAULT ''"
+                )
             connection.execute(
                 "INSERT OR REPLACE INTO metadata(key, value) VALUES('schema_version', ?)",
                 (str(SCHEMA_VERSION),),
@@ -147,6 +158,7 @@ class FolderSearchIndex:
         jobs: Iterable[SyncJob],
         *,
         stop_event: Event | None = None,
+        include_content: bool = False,
     ) -> IndexStats:
         indexed = removed = skipped = limited = 0
         cancelled = False
@@ -168,7 +180,7 @@ class FolderSearchIndex:
                     ).rowcount
                     continue
                 count, hit_limit, was_cancelled = self._refresh_job(
-                    connection, job, generation, stop_event
+                    connection, job, generation, stop_event, include_content
                 )
                 indexed += count
                 limited += int(hit_limit)
@@ -196,6 +208,7 @@ class FolderSearchIndex:
         job: SyncJob,
         *,
         stop_event: Event | None = None,
+        include_content: bool = False,
     ) -> IndexStats:
         if not self._eligible(job):
             with self._connect() as connection:
@@ -208,7 +221,7 @@ class FolderSearchIndex:
                 "SELECT COALESCE(MAX(generation), 0) FROM entries"
             ).fetchone()[0]) + 1
             count, hit_limit, cancelled = self._refresh_job(
-                connection, job, generation, stop_event
+                connection, job, generation, stop_event, include_content
             )
             removed = 0
             if not cancelled and not hit_limit:
@@ -224,6 +237,7 @@ class FolderSearchIndex:
         job: SyncJob,
         generation: int,
         stop_event: Event | None,
+        include_content: bool,
     ) -> tuple[int, bool, bool]:
         root = job.local.resolve(strict=False)
         pending = [root]
@@ -252,16 +266,31 @@ class FolderSearchIndex:
                     relative, size=stat.st_size, modified_timestamp=stat.st_mtime
                 ):
                     continue
+                content_text = ""
+                if include_content and not is_directory:
+                    previous = connection.execute(
+                        "SELECT size, modified_ns, content_text FROM entries WHERE job_id = ? AND relative_path = ?",
+                        (job.id, relative),
+                    ).fetchone()
+                    if (
+                        previous is not None
+                        and int(previous["size"]) == int(stat.st_size)
+                        and int(previous["modified_ns"]) == int(stat.st_mtime_ns)
+                    ):
+                        content_text = str(previous["content_text"] or "")
+                    else:
+                        content_text = _normalized(index_text_path(Path(child.path)))
                 connection.execute(
                     """
                     INSERT INTO entries(
-                        job_id, job_name, root, relative_path, search_text,
+                        job_id, job_name, root, relative_path, search_text, content_text,
                         is_directory, size, modified_ns, generation
-                    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(job_id, relative_path) DO UPDATE SET
                         job_name=excluded.job_name,
                         root=excluded.root,
                         search_text=excluded.search_text,
+                        content_text=excluded.content_text,
                         is_directory=excluded.is_directory,
                         size=excluded.size,
                         modified_ns=excluded.modified_ns,
@@ -273,6 +302,7 @@ class FolderSearchIndex:
                         str(root),
                         relative,
                         _normalized(relative),
+                        content_text,
                         int(is_directory),
                         0 if is_directory else max(0, int(stat.st_size)),
                         max(0, int(stat.st_mtime_ns)),
@@ -295,26 +325,32 @@ class FolderSearchIndex:
         tokens = [self._like_token(item) for item in _normalized(query).split() if item]
         if not tokens or limit <= 0:
             return []
-        where = " AND ".join("search_text LIKE ? ESCAPE '\\'" for _ in tokens)
-        parameters: list[object] = [f"%{token}%" for token in tokens]
+        where = " AND ".join(
+            "(search_text LIKE ? ESCAPE '\\' OR content_text LIKE ? ESCAPE '\\')"
+            for _ in tokens
+        )
+        parameters: list[object] = []
+        for token in tokens:
+            parameters.extend((f"%{token}%", f"%{token}%"))
         parameters.append(min(max(int(limit), 1), 1000))
         with self._connect() as connection:
             rows = connection.execute(
                 f"""
                 SELECT job_id, job_name, root, relative_path, is_directory,
-                       size, modified_ns
+                       size, modified_ns,
+                       CASE WHEN search_text LIKE ? ESCAPE '\\' THEN 0 ELSE 1 END AS matched_content
                 FROM entries
                 WHERE {where}
                 ORDER BY is_directory DESC, length(relative_path), relative_path
                 LIMIT ?
                 """,
-                parameters,
+                [f"%{tokens[0]}%", *parameters],
             ).fetchall()
         return [
             SearchResult(
                 row["job_id"], row["job_name"], Path(row["root"]),
                 row["relative_path"], bool(row["is_directory"]),
-                int(row["size"]), int(row["modified_ns"]),
+                int(row["size"]), int(row["modified_ns"]), bool(row["matched_content"]),
             )
             for row in rows
         ]

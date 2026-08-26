@@ -100,6 +100,31 @@ class RcloneClientTests(unittest.TestCase):
         self.assertEqual(folders, ["Projects", "Reports"])
         self.assertEqual(run.call_args.args[0][1], "work:Shared")
 
+    def test_cloud_to_cloud_copy_is_non_destructive_and_previewed(self):
+        client = RcloneClient()
+        completed = subprocess.CompletedProcess([], 0, stdout="Transferred: 0 B", stderr="")
+        with patch.object(client, "_run", return_value=completed) as run:
+            client.copy_between_remotes(
+                "source", "Team/Reports", "archive", "Imported",
+                dry_run=True, bandwidth_args=["--bwlimit", "2M"],
+            )
+        command = run.call_args.args[0]
+        self.assertEqual(command[:3], ["copy", "source:Team/Reports", "archive:Imported"])
+        self.assertIn("--server-side-across-configs", command)
+        self.assertIn("--dry-run", command)
+        self.assertNotIn("sync", command)
+        self.assertNotIn("delete", " ".join(command))
+
+    def test_cloud_to_cloud_paths_reject_traversal(self):
+        client = RcloneClient()
+        with self.assertRaisesRegex(ValueError, "traversal"):
+            client.copy_between_remotes("source", "../secret", "archive", "safe")
+
+    def test_cloud_to_cloud_copy_requires_distinct_accounts(self):
+        client = RcloneClient()
+        with self.assertRaisesRegex(ValueError, "different accounts"):
+            client.copy_between_remotes("same", "source", "same", "destination")
+
     def test_google_online_folder_url_uses_private_item_id_without_creating_share(self):
         client = RcloneClient()
         result = subprocess.CompletedProcess([], 0, stdout=json.dumps({"ID": "folder 123", "IsDir": True}), stderr="")

@@ -76,10 +76,12 @@ and local paths before sharing.
 ## Local search-index maintenance
 
 The magnifying-glass window reports the current local item count and provides
-an explicit refresh control. Refreshing reads directory entries and metadata,
-not file contents. It does not traverse streaming drives and therefore does not
-download cloud data. Paused ordinary jobs remain indexed; removed jobs and
-stale paths are pruned after a complete refresh.
+an explicit refresh control. Refreshing always reads directory entries and
+metadata. If content indexing is off, it opens no file contents. If the
+explicit feature is on, it reads only bounded supported files already present
+in ordinary local sync roots. It never traverses streaming drives and therefore
+does not download cloud data. Paused ordinary jobs remain indexed; removed jobs
+and stale paths are pruned after a complete refresh.
 
 If results appear damaged, close TuxInDrive, remove only
 `folder-search.sqlite3` plus its optional `-wal`/`-shm` companions from the
@@ -96,6 +98,10 @@ Debian/Ubuntu); other supported document previews use the packaged Python
 runtime. Turning **Enable preview** off cancels display of outstanding work and
 clears the panel. Never relax the archive, size, page or timeout limits to make
 an untrusted document render.
+
+The **Sync health and audit** window exports filtered events as private CSV or
+JSONL. Export is disabled when managed policy forbids it. Treat exports as
+sensitive operational data because paths, job names and peer names may appear.
 
 Record these facts with an incident: application/platform version, provider,
 job mode and direction, first failure time, account status, current network

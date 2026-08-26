@@ -1,7 +1,7 @@
 # TuxInDrive configuration reference
 
 This reference describes the persisted desktop configuration in TuxInDrive
-0.26.28. Normal changes should be made in **Settings**, **Connect account**, or
+0.26.30. Normal changes should be made in **Settings**, **Connect account**, or
 **Add/Edit folder**. Stop TuxInDrive and make a backup before manually editing
 JSON; a syntactically valid but inconsistent mapping can still synchronize the
 wrong location.
@@ -31,9 +31,11 @@ Service, Credential Manager, or Keychain. GitHub credentials remain in the Git
 credential helper/SSH agent; Proton sessions remain in Secret Service.
 
 `folder-search.sqlite3` is a rebuildable private file under the Cache root. It
-contains local names, relative paths, file type, size and timestamps—never file
-content or credentials. Deleting it while TuxInDrive is stopped is safe; the
-next start reconstructs it from fully synchronized local roots.
+contains local names, relative paths, file type, size and timestamps. When the
+explicit `search_content_indexing` feature flag is enabled, it also contains a
+bounded normalized text extract from supported fully local files. It never
+contains credentials and never traverses files-on-demand mounts. Deleting it
+while TuxInDrive is stopped is safe; the next start reconstructs it.
 
 The search-window **Enable preview** feature flag is intentionally
 session-local and default-off. It is not written to `config.json`: opening a
@@ -84,10 +86,20 @@ job state (`initialized`, last run/status/error) is persisted with the job.
 | `streaming_refresh_mode` | `realtime` | `realtime`, `balanced`, or `low_traffic`. |
 | `show_network_usage` | `true` | Feature flag for the current/daily traffic panel. |
 | `show_live_activity_log` | `true` | Feature flag for live-log rendering and visibility. |
+| `search_content_indexing` | `false` | Opt in to bounded local content indexing for supported formats; streaming mounts remain excluded. |
 | `server_integration_enabled` | `false` | Preview feature flag. False means no server client is created and no request is made. |
 | `server_url` | `http://127.0.0.1:9443` | Server origin only; remote plain HTTP, embedded credentials, paths, queries and fragments are rejected. Loopback HTTP matches the local server default; remote servers require HTTPS. |
 | `server_ca_file` | empty | Optional PEM CA for a privately issued server certificate. |
 | `config_version` | `1` | Persisted schema generation. |
+
+### Managed desktop policy
+
+Linux administrators may install `/etc/tuxindrive/policy.json`. TuxInDrive
+accepts only a small regular, non-symlink, root-owned file which is not group or
+world writable. Schema 1 supports `allowed_providers`,
+`global_bandwidth_ceiling`, `minimum_headroom_percent`,
+`allow_content_indexing`, `allow_cloud_to_cloud`, and `allow_audit_export`.
+An invalid policy is rejected and logged rather than interpreted partially.
 
 ### Bandwidth syntax and scope
 

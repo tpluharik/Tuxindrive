@@ -532,6 +532,7 @@ class AppSettings:
     streaming_refresh_mode: str = "realtime"
     show_network_usage: bool = True
     show_live_activity_log: bool = True
+    search_content_indexing: bool = False
     server_integration_enabled: bool = False
     server_url: str = "http://127.0.0.1:9443"
     server_ca_file: str = ""
