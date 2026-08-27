@@ -77,7 +77,7 @@ def effective_rclone_limit(global_limit: str, job_limit: str = "") -> str:
 
 
 def protected_bandwidth_limit(
-    limit: str, *, headroom_percent: int = 20, parallel_budget: int = 1
+    limit: str, *, headroom_percent: int = 50, parallel_budget: int = 1
 ) -> str:
     """Reserve link headroom and divide a process limit across consumers.
 
@@ -113,7 +113,7 @@ class GlobalBandwidthController:
         max_active: int = 1,
         *,
         automatic: bool = False,
-        headroom_percent: int = 20,
+        headroom_percent: int = 50,
     ) -> None:
         self.max_active = max(1, int(max_active))
         self._slots = threading.BoundedSemaphore(self.max_active)
@@ -136,7 +136,7 @@ class GlobalBandwidthController:
             self._next_download = 0.0
             self._next_upload = 0.0
 
-    def configure_automatic(self, enabled: bool, headroom_percent: int = 20) -> None:
+    def configure_automatic(self, enabled: bool, headroom_percent: int = 50) -> None:
         automatic = bool(enabled)
         headroom = min(80, max(0, int(headroom_percent)))
         with self._lock:

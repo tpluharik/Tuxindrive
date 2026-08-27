@@ -520,7 +520,7 @@ class AppSettings:
     network_policy: str = "maximum"
     global_bandwidth_limit: str = "10M"
     automatic_bandwidth_control: bool = True
-    bandwidth_headroom_percent: int = 20
+    bandwidth_headroom_percent: int = 50
     allow_metered_networks: bool = True
     pause_below_battery_percent: int = 0
     schedule_start: str = ""
@@ -557,10 +557,10 @@ class AppSettings:
         )
         try:
             data["bandwidth_headroom_percent"] = min(
-                80, max(0, int(data.get("bandwidth_headroom_percent", 20)))
+                80, max(0, int(data.get("bandwidth_headroom_percent", 50)))
             )
         except (TypeError, ValueError):
-            data["bandwidth_headroom_percent"] = 20
+            data["bandwidth_headroom_percent"] = 50
         for key, default in (
             ("streaming_cache_max_gib", 20),
             ("streaming_cache_min_free_gib", 5),

@@ -60,4 +60,12 @@ class MobileValidationTest {
             MobileValidation.isNewer("0.beta.0", "0.26.6")
         }
     }
+
+    @Test
+    fun indexedFileIsReusedOnlyWhenBothSidesAreUnchanged() {
+        assertTrue(MobileValidation.canReuseIndexedFile(10, 20, 30, 40, 10, 20, 30, 40))
+        assertFalse(MobileValidation.canReuseIndexedFile(10, 0, 30, 40, 10, 0, 30, 40))
+        assertFalse(MobileValidation.canReuseIndexedFile(11, 20, 30, 40, 10, 20, 30, 40))
+        assertFalse(MobileValidation.canReuseIndexedFile(10, 20, 30, 41, 10, 20, 30, 40))
+    }
 }

@@ -112,6 +112,21 @@ class NetworkUsageTests(unittest.TestCase):
         self.assertFalse(usage.available)
         self.assertEqual((usage.downloaded_today, usage.uploaded_today), (0, 0))
 
+    def test_expensive_platform_reader_is_cached_between_display_ticks(self):
+        reader = Mock(side_effect=[(100, 200), (400, 500)])
+        with tempfile.TemporaryDirectory() as temporary:
+            meter = NetworkUsageMeter(
+                Path(temporary) / "usage.json", reader=reader,
+                clock=Sequence([1.0, 1.0, 2.0, 5.0]),
+                minimum_sample_seconds=3.0,
+            )
+            cached = meter.sample()
+            self.assertEqual(reader.call_count, 1)
+            updated = meter.sample()
+        self.assertEqual(cached.downloaded_today, 0)
+        self.assertEqual(updated.downloaded_today, 300)
+        self.assertEqual(reader.call_count, 2)
+
     def test_human_readable_units(self):
         self.assertEqual(format_bytes(0), "0 B")
         self.assertEqual(format_bytes(1536), "1.5 KiB")

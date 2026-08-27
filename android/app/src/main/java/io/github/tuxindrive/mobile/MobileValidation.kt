@@ -69,4 +69,19 @@ internal object MobileValidation {
         }
         return false
     }
+
+    fun canReuseIndexedFile(
+        documentSize: Long,
+        documentModified: Long,
+        mirrorSize: Long,
+        mirrorModified: Long,
+        indexedDocumentSize: Long,
+        indexedDocumentModified: Long,
+        indexedMirrorSize: Long,
+        indexedMirrorModified: Long,
+    ): Boolean = documentModified > 0 &&
+        documentSize == indexedDocumentSize &&
+        documentModified == indexedDocumentModified &&
+        mirrorSize == indexedMirrorSize &&
+        mirrorModified == indexedMirrorModified
 }

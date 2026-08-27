@@ -164,6 +164,12 @@ class SyncEngine:
             monitor = self._monitors.get(job_id)
         return bool(monitor and monitor.healthy)
 
+    def has_durable_bisync_baseline(self, job: SyncJob) -> bool:
+        """Report whether an initialized two-way job can resume incrementally."""
+        if job.mode is not SyncMode.TWO_WAY:
+            return False
+        return self._has_bisync_baselines(self._bisync_workdir(job))
+
     def configure_jobs(self, jobs: list[SyncJob], accounts: list[Account] | None = None) -> None:
         # One regular transfer and one responsive update can overlap the
         # configured persistent mounts. Reserve a fair process-local share for
@@ -493,6 +499,42 @@ class SyncEngine:
                 )
             return snapshot
         except (OSError, ValueError):
+            return None
+
+    def _bisync_local_snapshot(self, job: SyncJob) -> dict[str, FileState] | None:
+        """Convert the verified path1 baseline to local stat-compatible state."""
+        try:
+            listings = sorted(
+                self._bisync_workdir(job).glob("*.path1.lst"),
+                key=lambda item: item.stat().st_mtime_ns,
+                reverse=True,
+            )
+            if not listings:
+                return None
+            snapshot: dict[str, FileState] = {}
+            timestamp_pattern = re.compile(
+                r"^(.*?)(?:\.(\d{1,9}))?(Z|[+-]\d{2}:?\d{2})$"
+            )
+            for line in listings[0].read_text(encoding="utf-8").splitlines():
+                if not line or line.startswith("#"):
+                    continue
+                fields = shlex.split(line)
+                if len(fields) < 6 or fields[0] != "-":
+                    continue
+                relative = normalize_remote_path(fields[5])
+                match = timestamp_pattern.fullmatch(fields[4])
+                if not relative or ".." in Path(relative).parts or match is None:
+                    return None
+                offset = "+00:00" if match.group(3) == "Z" else match.group(3)
+                if len(offset) == 5:
+                    offset = f"{offset[:3]}:{offset[3:]}"
+                seconds = int(datetime.fromisoformat(match.group(1) + offset).timestamp())
+                nanoseconds = int((match.group(2) or "0").ljust(9, "0"))
+                snapshot[relative] = FileState(
+                    int(fields[1]), str(seconds * 1_000_000_000 + nanoseconds)
+                )
+            return snapshot
+        except (OSError, ValueError, OverflowError):
             return None
 
     def _verified_remote_snapshot(self, job: SyncJob) -> dict[str, FileState] | None:
@@ -1445,6 +1487,15 @@ class SyncEngine:
         ):
             return
         self.stop_callbacks(job.id)
+        initial_remote = self._callback_baselines.pop(job.id, None)
+        initial_local = None
+        if initial_remote is None and job.mode is SyncMode.TWO_WAY:
+            # A verified bisync path2 listing is durable state.  Reusing it on
+            # process restart avoids an immediate recursive provider listing;
+            # the monitor still performs its bounded authoritative scan and
+            # falls back to reconciliation on any ambiguity.
+            initial_remote = self._bisync_remote_snapshot(job)
+            initial_local = self._bisync_local_snapshot(job)
         monitor = ChangeMonitor(
             job,
             lambda: self.rclone_path,
@@ -1454,7 +1505,8 @@ class SyncEngine:
             remote_backoff=self._remote_backoffs.get(
                 job.id, (30.0, 60.0, 120.0, 300.0)
             ),
-            initial_remote_snapshot=self._callback_baselines.pop(job.id, None),
+            initial_local_snapshot=initial_local,
+            initial_remote_snapshot=initial_remote,
             network_activity=lambda: self._record_network(job.id),
             network_guard=self.bandwidth.guard,
             rclone_args=lambda: [

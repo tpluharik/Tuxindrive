@@ -156,7 +156,7 @@ The default configuration is `/etc/tuxindrive-server/server.json`:
   "default_ttl_seconds": 86400,
   "global_bandwidth_limit": "10M",
   "automatic_bandwidth_control": true,
-  "bandwidth_headroom_percent": 20,
+  "bandwidth_headroom_percent": 50,
   "max_concurrent_requests": 16,
   "max_requests_per_source": 4,
   "request_timeout_seconds": 30,

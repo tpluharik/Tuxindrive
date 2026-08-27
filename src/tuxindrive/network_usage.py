@@ -142,6 +142,7 @@ class NetworkUsageMeter:
         reader: Callable[[], tuple[int, int] | None] = read_network_counters,
         clock: Callable[[], float] = time.monotonic,
         today: Callable[[], date] = date.today,
+        minimum_sample_seconds: float | None = None,
     ) -> None:
         self.state_path = state_path or cache_root() / "network-usage.json"
         self.reader, self.clock, self.today = reader, clock, today
@@ -151,6 +152,11 @@ class NetworkUsageMeter:
         self.previous: tuple[int, int] | None = None
         self.previous_time: float | None = None
         self._last_saved = 0.0
+        self.minimum_sample_seconds = max(
+            0.0,
+            3.0 if minimum_sample_seconds is None and platform.system() == "Darwin"
+            else float(minimum_sample_seconds or 0.0),
+        )
         persisted = self._load()
         current = self.reader()
         if persisted and persisted.get("day") == self.day:
@@ -180,7 +186,13 @@ class NetworkUsageMeter:
             return self._sample_locked()
 
     def _sample_locked(self) -> NetworkUsage:
-        current, now, day = self.reader(), self.clock(), self.today().isoformat()
+        now = self.clock()
+        if (
+            self.previous_time is not None and self.minimum_sample_seconds
+            and now - self.previous_time < self.minimum_sample_seconds
+        ):
+            return self._usage
+        current, day = self.reader(), self.today().isoformat()
         if current is None:
             self._usage = NetworkUsage(
                 downloaded_today=self.downloaded, uploaded_today=self.uploaded,

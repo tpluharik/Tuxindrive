@@ -2,6 +2,20 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.31 — restart and idle-transfer optimization
+
+- Restore strictly validated scheduler timestamps and durable Bisync monitor
+  baselines after restart, avoiding an unnecessary immediate full preview and
+  reconciliation while retaining safe recovery for stale or incomplete state.
+- Replace Android whole-tree import/export with a one-pass Storage Access
+  Framework snapshot and atomic private index so unchanged files are not copied
+  on every run; mass-deletion protection remains enforced.
+- Briefly share identical authoritative metadata scans, cache expensive macOS
+  interface samples, and retain adaptive backoff and scan jitter.
+- Reserve 50% of the configured bandwidth ceiling for other applications by
+  default on desktop, server, and Android; existing explicit settings remain
+  unchanged during upgrade.
+
 ## 0.26.30 — recovery, private content search and managed operation
 
 - Added optional bounded local content indexing for supported formats. It is

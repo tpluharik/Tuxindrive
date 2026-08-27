@@ -27,6 +27,13 @@ TRANSIENT_PATTERNS = (
     "*.partial", "*.crdownload", "*.swp", "*.swx", "*~",
 )
 
+_REMOTE_METADATA_CACHE_LOCK = threading.Lock()
+_REMOTE_METADATA_CACHE: dict[
+    tuple[str, str, tuple[str, ...], tuple[str, ...]],
+    tuple[float, dict[str, "FileState"]],
+] = {}
+_REMOTE_METADATA_CACHE_SECONDS = 5.0
+
 
 def is_transient_path(relative: str) -> bool:
     return any(
@@ -240,6 +247,7 @@ class ChangeMonitor:
         local_poll_seconds: float = 10.0,
         remote_poll_seconds: float = 30.0,
         remote_backoff: tuple[float, ...] = (30.0, 60.0, 120.0, 300.0),
+        initial_local_snapshot: dict[str, FileState] | None = None,
         initial_remote_snapshot: dict[str, FileState] | None = None,
         event_factory: Callable[[Path, Callable[[str], bool]], InotifyTreeMonitor] = InotifyTreeMonitor,
         network_activity: Callable[[], None] | None = None,
@@ -255,6 +263,7 @@ class ChangeMonitor:
         self.local_poll_seconds = max(1.0, local_poll_seconds)
         self.remote_poll_seconds = max(1.0, remote_poll_seconds)
         self.remote_backoff = tuple(max(1.0, value) for value in remote_backoff)
+        self.initial_local_snapshot = initial_local_snapshot
         self.initial_remote_snapshot = initial_remote_snapshot
         self.event_factory = event_factory
         self.network_activity = network_activity or (lambda: None)
@@ -332,11 +341,21 @@ class ChangeMonitor:
         return result
 
     def remote_snapshot(self) -> dict[str, FileState]:
+        key = (
+            self.rclone_path(), self.job.remote_spec,
+            tuple(self.rclone_args()),
+            tuple(sorted((*self.job.exclude_patterns, *self.protected_patterns))),
+        )
+        now = time.monotonic()
+        with _REMOTE_METADATA_CACHE_LOCK:
+            cached = _REMOTE_METADATA_CACHE.get(key)
+            if cached and now - cached[0] <= _REMOTE_METADATA_CACHE_SECONDS:
+                return dict(cached[1])
         self.network_activity()
         with self.network_guard():
             process = subprocess.run(
-                [self.rclone_path(), "lsjson", self.job.remote_spec, "--recursive",
-                 "--files-only", "--no-mimetype", *self.rclone_args()],
+                [key[0], "lsjson", self.job.remote_spec, "--recursive",
+                 "--files-only", "--no-mimetype", *key[2]],
                 check=False, capture_output=True, text=True, timeout=120,
             )
         if process.returncode:
@@ -344,7 +363,7 @@ class ChangeMonitor:
         values = json.loads(process.stdout or "[]")
         if not isinstance(values, list):
             raise ValueError("Cloud change scan returned an invalid object")
-        return {
+        snapshot = {
             normalize_remote_path(str(item["Path"])): FileState(
                 int(item.get("Size", -1)),
                 normalize_remote_modtime(str(item.get("ModTime", ""))),
@@ -356,6 +375,14 @@ class ChangeMonitor:
                 str(item["Path"]), size=int(item.get("Size", -1))
             )
         }
+        with _REMOTE_METADATA_CACHE_LOCK:
+            _REMOTE_METADATA_CACHE[key] = (time.monotonic(), dict(snapshot))
+            if len(_REMOTE_METADATA_CACHE) > 128:
+                cutoff = time.monotonic() - _REMOTE_METADATA_CACHE_SECONDS
+                for old_key, (stamp, _value) in list(_REMOTE_METADATA_CACHE.items()):
+                    if stamp < cutoff:
+                        _REMOTE_METADATA_CACHE.pop(old_key, None)
+        return snapshot
 
     def remote_path_state(self, relative: str) -> FileState | None:
         """Read one existing remote file without recursively listing the job root.
@@ -425,7 +452,16 @@ class ChangeMonitor:
                 Path(manifest_name).unlink(missing_ok=True)
 
     def _run(self) -> None:
-        local = self.local_snapshot()
+        local = self.initial_local_snapshot
+        if local is None:
+            local = self.local_snapshot()
+        else:
+            local = {
+                normalize_remote_path(path): state
+                for path, state in local.items()
+                if not self._excluded(path)
+            }
+            self.initial_local_snapshot = None
         try:
             events: InotifyTreeMonitor | None = self.event_factory(self.job.local, self._excluded)
         except OSError:

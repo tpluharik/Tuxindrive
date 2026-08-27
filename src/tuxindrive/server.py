@@ -73,7 +73,7 @@ class ServerConfig:
     default_ttl_seconds: int = 86400
     global_bandwidth_limit: str = "10M"
     automatic_bandwidth_control: bool = True
-    bandwidth_headroom_percent: int = 20
+    bandwidth_headroom_percent: int = 50
     max_concurrent_requests: int = 16
     max_requests_per_source: int = 4
     request_timeout_seconds: int = 30

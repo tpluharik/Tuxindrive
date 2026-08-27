@@ -7,7 +7,15 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.30
+## Current baseline: 0.26.31
+
+### Completed in 0.26.31: restart and idle-transfer optimization
+
+Validated persisted run clocks and durable Bisync listings now seed startup
+monitoring, Android mirrors only changed SAF files through an atomic private
+index, identical metadata reads are briefly shared, macOS sampling is cached,
+and the default automatic network headroom is 50%. All ambiguous, stale, or
+incomplete state retains the existing authoritative recovery path.
 
 ### Completed in 0.26.30: operational reliability and managed workflows
 

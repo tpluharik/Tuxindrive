@@ -116,7 +116,7 @@ class AndroidUpdater(private val context: Context) {
         val protected = MobileValidation.protectedBandwidth(
             preferences.getString("global-bandwidth-limit", "10M").orEmpty(),
             preferences.getBoolean("automatic-bandwidth-control", true),
-            preferences.getInt("bandwidth-headroom-percent", 20),
+            preferences.getInt("bandwidth-headroom-percent", 50),
         ).orEmpty()
         val rate = MobileValidation.downloadRateBytes(protected)
         if (rate <= 0.0 || byteCount <= 0) return

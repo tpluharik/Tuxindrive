@@ -13,7 +13,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
+import org.json.JSONObject
 
 class MobileSyncWorker(
     appContext: Context,
@@ -33,23 +35,19 @@ class MobileSyncWorker(
             ?: return@withContext failure("The selected Android folder is no longer available")
         val root = File(applicationContext.noBackupFilesDir, "sync")
         val mirror = File(root, "mirror")
-        val incoming = File(root, "incoming")
         val baseline = File(root, "baseline.ready")
         val workdir = File(root, "bisync")
+        val indexFile = File(root, "android-tree-index.json")
         return@withContext runCatching {
-            incoming.deleteRecursively()
-            incoming.mkdirs()
-            copyFromDocuments(tree, incoming)
-            guardMassDeletion(mirror, incoming)
-            mirror.deleteRecursively()
-            if (!incoming.renameTo(mirror)) {
-                incoming.copyRecursively(mirror, overwrite = true)
-                incoming.deleteRecursively()
-            }
+            mirror.mkdirs()
+            val previous = loadIndex(indexFile)
+            val documents = snapshotDocuments(tree)
+            updateMirrorFromDocuments(documents, mirror, previous)
             setForeground(foregroundInfo("Synchronizing cloud files…"))
             repository.runBisync(mirror, remote, repository.syncRemotePath(), workdir, !baseline.exists())
             setForeground(foregroundInfo("Updating offline folder…"))
-            copyToDocuments(mirror, tree)
+            val completed = updateDocumentsFromMirror(mirror, tree, documents, previous)
+            saveIndex(indexFile, completed)
             baseline.parentFile?.mkdirs()
             baseline.writeText("ready\n")
             success("Synchronization complete")
@@ -58,63 +56,181 @@ class MobileSyncWorker(
         }
     } }
 
-    private fun copyFromDocuments(source: DocumentFile, destination: File) {
-        for (document in source.listFiles()) {
-            val name = document.name ?: continue
-            if (name in setOf(".", "..") || '/' in name || '\\' in name) continue
-            val target = File(destination, name)
-            if (document.isDirectory) {
-                target.mkdirs()
-                copyFromDocuments(document, target)
-            } else if (document.isFile) {
-                applicationContext.contentResolver.openInputStream(document.uri).use { input ->
-                    requireNotNull(input) { "Could not read $name" }
-                    target.outputStream().use { output -> input.copyTo(output) }
+    private data class DocumentNode(val document: DocumentFile, val directory: Boolean, val size: Long, val modified: Long)
+    private data class IndexEntry(
+        val documentSize: Long, val documentModified: Long,
+        val mirrorSize: Long, val mirrorModified: Long, val sha256: String,
+    )
+
+    /** Enumerate the Android provider exactly once for this synchronization. */
+    private fun snapshotDocuments(root: DocumentFile): MutableMap<String, DocumentNode> {
+        val result = mutableMapOf<String, DocumentNode>()
+        fun visit(directory: DocumentFile, prefix: String) {
+            for (document in directory.listFiles()) {
+                val name = document.name ?: continue
+                if (name in setOf(".", "..") || '/' in name || '\\' in name) continue
+                val path = if (prefix.isBlank()) name else "$prefix/$name"
+                if (document.isDirectory) {
+                    result[path] = DocumentNode(document, true, 0, document.lastModified())
+                    visit(document, path)
+                } else if (document.isFile) {
+                    result[path] = DocumentNode(document, false, document.length(), document.lastModified())
                 }
             }
         }
+        visit(root, "")
+        return result
     }
 
-    private fun copyToDocuments(source: File, destination: DocumentFile) {
-        val existing = destination.listFiles().associateBy { it.name.orEmpty() }.toMutableMap()
-        for (local in source.listFiles().orEmpty()) {
-            val current = existing.remove(local.name)
-            if (local.isDirectory) {
-                val folder = if (current?.isDirectory == true) current else {
-                    current?.delete()
-                    destination.createDirectory(local.name)
-                } ?: throw RcloneException("Could not create ${local.name}")
-                copyToDocuments(local, folder)
-            } else {
-                val document = if (current?.isFile == true) current else {
-                    current?.delete()
-                    destination.createFile("application/octet-stream", local.name)
-                } ?: throw RcloneException("Could not create ${local.name}")
-                applicationContext.contentResolver.openOutputStream(document.uri, "rwt").use { output ->
-                    requireNotNull(output) { "Could not write ${local.name}" }
-                    local.inputStream().use { input -> input.copyTo(output) }
-                }
-            }
-        }
-        val removals = existing.values.toList()
-        val removedCount = removals.sumOf(::documentCount)
-        val total = removedCount + source.walkTopDown().count { it != source }
-        if (removedCount >= 10 && removedCount * 100 > total.coerceAtLeast(1) * 25) {
-            throw RcloneException("Safety stop: cloud changes would remove too many Android files")
-        }
-        removals.forEach { it.delete() }
+    private fun fileMetadata(file: File): Pair<Long, Long> = file.length() to file.lastModified()
+
+    private fun unchanged(node: DocumentNode, file: File, previous: IndexEntry?): Boolean {
+        if (previous == null || node.modified <= 0 || !file.isFile) return false
+        val (size, modified) = fileMetadata(file)
+        return MobileValidation.canReuseIndexedFile(
+            node.size, node.modified, size, modified,
+            previous.documentSize, previous.documentModified,
+            previous.mirrorSize, previous.mirrorModified,
+        )
     }
 
-    private fun documentCount(document: DocumentFile): Int =
-        1 + if (document.isDirectory) document.listFiles().sumOf(::documentCount) else 0
-
-    private fun guardMassDeletion(previous: File, current: File) {
-        if (!previous.exists()) return
-        val before = previous.walkTopDown().filter { it.isFile }.map { it.relativeTo(previous).path }.toSet()
-        val after = current.walkTopDown().filter { it.isFile }.map { it.relativeTo(current).path }.toSet()
-        val removed = before - after
+    private fun updateMirrorFromDocuments(
+        documents: Map<String, DocumentNode>, mirror: File, previous: Map<String, IndexEntry>,
+    ) {
+        val currentFiles = documents.filterValues { !it.directory }.keys
+        val before = mirror.walkTopDown().filter { it.isFile }.map { it.relativeTo(mirror).invariantSeparatorsPath }.toSet()
+        val removed = before - currentFiles
         if (removed.size >= 10 && removed.size * 100 > before.size.coerceAtLeast(1) * 25) {
             throw RcloneException("Safety stop: local changes would remove too many cloud files")
+        }
+        documents.filterValues { it.directory }.keys.sortedBy { it.count { char -> char == '/' } }
+            .forEach { File(mirror, it).mkdirs() }
+        for ((path, node) in documents) {
+            if (node.directory) continue
+            val target = File(mirror, path)
+            if (unchanged(node, target, previous[path])) continue
+            target.parentFile?.mkdirs()
+            applicationContext.contentResolver.openInputStream(node.document.uri).use { input ->
+                requireNotNull(input) { "Could not read $path" }
+                target.outputStream().use { output -> input.copyTo(output) }
+            }
+        }
+        removed.sortedByDescending { it.count { char -> char == '/' } }.forEach { File(mirror, it).delete() }
+        mirror.walkBottomUp().filter { it != mirror && it.isDirectory && it.list().isNullOrEmpty() }.forEach { it.delete() }
+    }
+
+    private fun updateDocumentsFromMirror(
+        mirror: File,
+        tree: DocumentFile,
+        documents: MutableMap<String, DocumentNode>,
+        previous: Map<String, IndexEntry>,
+    ): Map<String, IndexEntry> {
+        val mirrorFiles = mirror.walkTopDown().filter { it.isFile }
+            .associateBy { it.relativeTo(mirror).invariantSeparatorsPath }
+        val mirrorDirectories = mirror.walkTopDown()
+            .filter { it != mirror && it.isDirectory }
+            .map { it.relativeTo(mirror).invariantSeparatorsPath }
+            .toSet()
+        val existingFiles = documents.filterValues { !it.directory }.keys
+        val removedFiles = existingFiles - mirrorFiles.keys
+        if (removedFiles.size >= 10 && removedFiles.size * 100 > existingFiles.size.coerceAtLeast(1) * 25) {
+            throw RcloneException("Safety stop: cloud changes would remove too many Android files")
+        }
+        val directories = mutableMapOf("" to tree)
+        documents.filterValues { it.directory }.forEach { (path, node) -> directories[path] = node.document }
+
+        fun directory(path: String): DocumentFile {
+            directories[path]?.let { return it }
+            val parentPath = path.substringBeforeLast('/', "")
+            val name = path.substringAfterLast('/')
+            val parent = directory(parentPath)
+            val current = documents[path]?.document
+            if (current != null && !current.isDirectory) current.delete()
+            return (current?.takeIf { it.isDirectory } ?: parent.createDirectory(name))
+                ?.also { directories[path] = it }
+                ?: throw RcloneException("Could not create $path")
+        }
+
+        mirrorDirectories.sortedBy { it.count { char -> char == '/' } }.forEach(::directory)
+
+        val completed = mutableMapOf<String, IndexEntry>()
+        for ((path, local) in mirrorFiles) {
+            val parentPath = path.substringBeforeLast('/', "")
+            val name = path.substringAfterLast('/')
+            val oldNode = documents[path]
+            val oldIndex = previous[path]
+            val mirrorMetadata = fileMetadata(local)
+            val canSkip = oldNode != null && !oldNode.directory && oldIndex != null &&
+                MobileValidation.canReuseIndexedFile(
+                    oldNode.size, oldNode.modified, mirrorMetadata.first, mirrorMetadata.second,
+                    oldIndex.documentSize, oldIndex.documentModified,
+                    oldIndex.mirrorSize, oldIndex.mirrorModified,
+                )
+            val document = if (canSkip) oldNode!!.document else {
+                val parent = directory(parentPath)
+                if (oldNode?.directory == true) oldNode.document.delete()
+                val target = oldNode?.document?.takeIf { it.isFile }
+                    ?: parent.createFile("application/octet-stream", name)
+                    ?: throw RcloneException("Could not create $path")
+                applicationContext.contentResolver.openOutputStream(target.uri, "rwt").use { output ->
+                    requireNotNull(output) { "Could not write $path" }
+                    local.inputStream().use { input -> input.copyTo(output) }
+                }
+                target
+            }
+            completed[path] = IndexEntry(
+                document.length(), document.lastModified(), mirrorMetadata.first,
+                mirrorMetadata.second, oldIndex?.sha256?.takeIf { canSkip } ?: sha256(local),
+            )
+        }
+        val removedDocuments = documents.keys - mirrorFiles.keys - mirrorDirectories
+        val removalRoots = removedDocuments.filter { candidate ->
+            removedDocuments.none { other -> other != candidate && candidate.startsWith("$other/") }
+        }
+        removalRoots.forEach { documents[it]?.document?.delete() }
+        return completed
+    }
+
+    private fun sha256(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input ->
+            val buffer = ByteArray(64 * 1024)
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) break
+                digest.update(buffer, 0, count)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+    private fun loadIndex(file: File): Map<String, IndexEntry> = runCatching {
+        val root = JSONObject(file.readText())
+        val entries = root.getJSONObject("entries")
+        entries.keys().asSequence().associateWith { path ->
+            val item = entries.getJSONObject(path)
+            IndexEntry(
+                item.getLong("documentSize"), item.getLong("documentModified"),
+                item.getLong("mirrorSize"), item.getLong("mirrorModified"),
+                item.optString("sha256"),
+            )
+        }
+    }.getOrDefault(emptyMap())
+
+    private fun saveIndex(file: File, entries: Map<String, IndexEntry>) {
+        val values = JSONObject()
+        for ((path, item) in entries) {
+            values.put(path, JSONObject()
+                .put("documentSize", item.documentSize).put("documentModified", item.documentModified)
+                .put("mirrorSize", item.mirrorSize).put("mirrorModified", item.mirrorModified)
+                .put("sha256", item.sha256))
+        }
+        file.parentFile?.mkdirs()
+        val temporary = File(file.parentFile, "${file.name}.new")
+        temporary.writeText(JSONObject().put("version", 1).put("entries", values).toString())
+        if (!temporary.renameTo(file)) {
+            temporary.copyTo(file, overwrite = true)
+            temporary.delete()
         }
     }
 

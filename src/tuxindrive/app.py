@@ -97,6 +97,7 @@ from .file_preview import PreviewData, PreviewError, preview_path
 from .error_details import details_for_job
 from .recovery_advisor import advice_for_error
 from .managed_policy import ManagedPolicy, load_managed_policy
+from .scheduling import persisted_run_time
 
 try:  # Ubuntu's AppIndicator extension provides Windows-like tray controls.
     gi.require_version("AyatanaAppIndicator3", "0.1")
@@ -5434,6 +5435,7 @@ class TuxInDriveApplication(Gtk.Application):
         self._last_nautilus_state: bytes | None = None
         self._last_cache_maintenance = 0.0
         self._cache_maintenance_running = False
+        self._runtime_ready_monotonic = 0.0
 
     def change_language(self, code: str) -> None:
         if code not in LANGUAGE_CODES:
@@ -6238,12 +6240,23 @@ class TuxInDriveApplication(Gtk.Application):
             if not job.enabled or job.mode is SyncMode.VIRTUAL_DRIVE or job.id in self.engine.running_jobs:
                 continue
             baseline = self._last_full_completed.get(job.id) or self._last_started.get(job.id)
+            if baseline is None and job.last_run:
+                baseline = persisted_run_time(job.last_run, now)
+                if baseline is None:
+                    LOGGER.warning("Ignoring invalid persisted last_run for job %s", job.id)
             due = baseline is None or (now - baseline).total_seconds() >= job.interval_minutes * 60
             # A healthy callback already preserves the configured remote scan
             # latency. Keep full bisync as an hourly safety checkpoint instead
             # of duplicating the same recursive provider traversal every tick.
             if due and self.engine.callback_healthy(job.id) and baseline is not None:
                 due = (now - baseline).total_seconds() >= 3600
+            if (
+                due and job.initialized and job.realtime_sync
+                and self.engine.has_durable_bisync_baseline(job)
+                and self._runtime_ready_monotonic
+                and monotonic - self._runtime_ready_monotonic < 120
+            ):
+                due = False
             if due:
                 if policy_decision is None:
                     policy_decision = TransferPolicy(self.config.settings).evaluate()
@@ -6450,10 +6463,13 @@ class TuxInDriveApplication(Gtk.Application):
             ):
                 self.peers.start_discovery()
             self.save()
+            self._runtime_ready_monotonic = time.monotonic()
             for job in self.config.jobs:
                 if job.enabled and job.mode is SyncMode.VIRTUAL_DRIVE:
                     self.run_job(job, quiet=True)
                 elif job.enabled and job.initialized and job.realtime_sync:
+                    if self.engine.has_durable_bisync_baseline(job):
+                        self._last_started[job.id] = datetime.now(timezone.utc)
                     self.start_callbacks(job)
             pending, self._pending_nautilus_paths = self._pending_nautilus_paths, []
             started_jobs: set[str] = set()

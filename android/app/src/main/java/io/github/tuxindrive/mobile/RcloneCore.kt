@@ -165,7 +165,7 @@ class RcloneCore(private val context: Context) {
         setBandwidthLimit(MobileValidation.protectedBandwidth(
             preferences.getString("global-bandwidth-limit", "10M").orEmpty(),
             preferences.getBoolean("automatic-bandwidth-control", true),
-            preferences.getInt("bandwidth-headroom-percent", 20),
+            preferences.getInt("bandwidth-headroom-percent", 50),
         ).orEmpty())
         local.mkdirs()
         workDirectory.mkdirs()
@@ -265,7 +265,7 @@ class MobileRepository(context: Context) {
     fun automaticBandwidthControl(): Boolean =
         preferences.getBoolean("automatic-bandwidth-control", true)
     fun bandwidthHeadroomPercent(): Int =
-        preferences.getInt("bandwidth-headroom-percent", 20).coerceIn(0, 80)
+        preferences.getInt("bandwidth-headroom-percent", 50).coerceIn(0, 80)
     private fun effectiveBandwidthLimit(): String = MobileValidation.protectedBandwidth(
         bandwidthLimit(), automaticBandwidthControl(), bandwidthHeadroomPercent(),
     ).orEmpty()

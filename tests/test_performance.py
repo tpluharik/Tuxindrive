@@ -6,7 +6,7 @@ import threading
 import time
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from tuxindrive.cache_manager import StreamingCacheManager
 from tuxindrive.cache_manager import CacheCleanupResult
@@ -16,6 +16,64 @@ from tuxindrive.models import SyncJob, SyncMode
 
 
 class PerformanceAndRecoveryTests(unittest.TestCase):
+    def test_engine_reuses_durable_bisync_snapshot_after_restart(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(
+            os.environ, {"XDG_DATA_HOME": temporary},
+        ):
+            job = SyncJob("cloud", "/tmp/tuxindrive-local", id="resume", initialized=True)
+            workdir = Path(temporary) / "tuxindrive" / "bisync" / job.id
+            workdir.mkdir(parents=True)
+            listing = (
+                "# bisync listing v1\n"
+                '- 5 - - 2026-08-27T10:00:00.000000000+0000 "ready.txt"\n'
+            )
+            (workdir / "state.path1.lst").write_text(listing, encoding="utf-8")
+            (workdir / "state.path2.lst").write_text(listing, encoding="utf-8")
+            engine = SyncEngine()
+            with patch("tuxindrive.engine.ChangeMonitor") as monitor_class:
+                engine.start_callbacks(job, lambda _result: None, lambda _job: None)
+            initial = monitor_class.call_args.kwargs["initial_remote_snapshot"]
+            initial_local = monitor_class.call_args.kwargs["initial_local_snapshot"]
+        self.assertEqual(initial, {"ready.txt": FileState(5, "2026-08-27T10:00:00Z")})
+        self.assertEqual(
+            initial_local,
+            {"ready.txt": FileState(5, "1787824800000000000")},
+        )
+
+    def test_restart_baseline_detects_local_changes_made_while_closed(self):
+        class IdleEvents:
+            def __init__(self, *_args):
+                pass
+
+            def read(self, timeout):
+                from tuxindrive.callbacks import LocalEvents
+                time.sleep(min(timeout, 0.01))
+                return LocalEvents()
+
+            def close(self):
+                pass
+
+        applied = []
+        with tempfile.TemporaryDirectory() as temporary:
+            changed = Path(temporary) / "changed.txt"
+            changed.write_text("new", encoding="utf-8")
+            job = SyncJob("restart", temporary, initialized=True)
+            monitor = ChangeMonitor(
+                job, lambda: "rclone",
+                lambda _job, changes: applied.extend(changes) or True,
+                lambda _job: None,
+                initial_local_snapshot={"changed.txt": FileState(1, "1")},
+                initial_remote_snapshot={},
+                remote_backoff=(300,), event_factory=IdleEvents,
+            )
+            with patch.object(monitor, "remote_path_state", side_effect=ValueError), \
+                    patch.object(monitor, "remote_snapshot", return_value={}):
+                monitor.start()
+                time.sleep(0.08)
+                monitor.stop()
+                monitor.thread.join(2)
+        self.assertTrue(any(item.path == "changed.txt" for item in applied))
+
     def test_verified_bisync_baseline_avoids_immediate_remote_relist(self):
         class IdleEvents:
             def __init__(self, *_args):
@@ -42,6 +100,19 @@ class PerformanceAndRecoveryTests(unittest.TestCase):
                 monitor.stop()
                 monitor.thread.join(2)
         remote_snapshot.assert_not_called()
+
+    def test_identical_remote_metadata_scans_are_short_lived_and_shared(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            job = SyncJob("shared", temporary, initialized=True)
+            monitor_a = ChangeMonitor(job, lambda: "rclone", lambda *_args: True, lambda _job: None)
+            monitor_b = ChangeMonitor(job, lambda: "rclone", lambda *_args: True, lambda _job: None)
+            response = Mock(
+                returncode=0,
+                stdout='[{"Path":"ready.txt","Size":5,"ModTime":"2026-08-27T10:00:00Z"}]',
+            )
+            with patch("tuxindrive.callbacks.subprocess.run", return_value=response) as run:
+                self.assertEqual(monitor_a.remote_snapshot(), monitor_b.remote_snapshot())
+        self.assertEqual(run.call_count, 1)
 
     @unittest.skipUnless(platform.system() == "Linux", "inotify is Linux-specific")
     def test_idle_streaming_cache_skips_unchanged_recursive_rescan(self):

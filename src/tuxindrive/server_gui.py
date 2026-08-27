@@ -174,7 +174,7 @@ class ServerWindow(Gtk.ApplicationWindow):
         self.automatic_bandwidth = Gtk.CheckButton(label="Automatic bandwidth protection")
         self.automatic_bandwidth.set_active(True)
         self.bandwidth_headroom = Gtk.SpinButton.new_with_range(0, 80, 5)
-        self.bandwidth_headroom.set_value(20)
+        self.bandwidth_headroom.set_value(50)
         self.max_requests = Gtk.SpinButton.new_with_range(4, 256, 1); self.max_requests.set_value(16)
         self.max_source_requests = Gtk.SpinButton.new_with_range(1, 256, 1); self.max_source_requests.set_value(4)
         self.request_timeout = Gtk.SpinButton.new_with_range(5, 300, 1); self.request_timeout.set_value(30)
