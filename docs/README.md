@@ -7,7 +7,7 @@
 
 This index separates end-user instructions, operator guidance, implementation
 details, security controls, and release procedures. Documentation describes
-TuxInDrive 0.26.28 unless a section is explicitly historical. Release-specific
+TuxInDrive 0.26.31 unless a section is explicitly historical. Release-specific
 facts are identified by version; planned work is never described as shipped.
 
 ## Start here
@@ -25,9 +25,10 @@ facts are identified by version; planned work is never described as shipped.
 | Security reviewers | [Security hardening](SECURITY_HARDENING.md) | Trust boundaries, credential storage, update verification and residual risk. |
 | Platform users | [Platform support](PLATFORM_SUPPORT.md) | Linux, Windows, macOS and Android differences and requirements. |
 | Server operators | [Server preview](SERVER.md) | Headless roles, `.deb` installation, API, client feature flag, quotas, TLS and limitations. |
+| Testers and maintainers | [Network Lab](NETWORK_LAB.md) | Separate loopback-only server/client scenario application, fictional data, logs and release channel. |
 | Contributors | [Contributing](../CONTRIBUTING.md) | Development workflow and pull-request expectations. |
 | Release users | [Platform channels](../releases/README.md) | Stable updater manifests and durable installer locations. |
-| Community maintainers | [0.26.23 announcement notes](ANNOUNCEMENT_0.26.23.md) | Verified release facts, short social drafts and answers to common questions. |
+| Community maintainers | [0.26.31 media kit](ANNOUNCEMENT_0.26.31.md) | Verified release facts, social drafts, visual asset and answers to common questions. |
 
 ## Feature and history references
 
@@ -35,7 +36,8 @@ facts are identified by version; planned work is never described as shipped.
 - [Changelog](../CHANGELOG.md) — release-by-release history.
 - [Security policy](../SECURITY.md) — supported releases and private vulnerability reporting.
 - [Release channel layout](../releases/README.md) — durable package and manifest locations.
-- [0.26.23 announcement notes](ANNOUNCEMENT_0.26.23.md) — factual, reusable community-release text.
+- [0.26.31 media kit](ANNOUNCEMENT_0.26.31.md) — current factual, reusable community-release text.
+- [0.26.23 announcement notes](ANNOUNCEMENT_0.26.23.md) — archived search-release text.
 
 ## Documentation conventions
 

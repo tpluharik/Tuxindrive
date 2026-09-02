@@ -1,7 +1,7 @@
 # TuxInDrive operations guide
 
 This guide covers normal administration, health checks, traffic policy,
-backup, recovery, and incident response for TuxInDrive 0.26.28. User-facing
+backup, recovery, and incident response for TuxInDrive 0.26.31. User-facing
 procedures are in the [user guide](USER_GUIDE.md); persisted fields and exact
 paths are in [Configuration](CONFIGURATION.md).
 
@@ -241,6 +241,22 @@ roles, quotas and limits, tenant/bootstrap tokens, service lifecycle and recent
 journal entries. Closing the window leaves the system service running. The
 `tuxindrive-server init`, `check` and `serve` commands remain available for
 unattended deployment, diagnostics and recovery.
+
+### Network Lab operation
+
+Use the separately installed **TuxInDrive Network Lab** when a server protocol
+regression needs to be reproduced without connecting an account or selecting a
+real folder. A normal run should complete 19 scenarios and show non-zero local
+connection and byte counters. The endpoints must remain `127.0.0.1`,
+`127.0.0.2` and `127.0.0.3`; stop the run and report a defect if any other
+destination appears.
+
+Results are written below
+`$XDG_STATE_HOME/tuxindrive/network-lab/<UTC-run>/`. Review `summary.json` and
+the JSONL log before attaching them to an issue. The normal redaction contract
+excludes bearer tokens and opaque payload bytes, but screenshots can still
+capture unrelated desktop information. The optional retained sandbox is for
+local diagnosis and should be deleted after the issue is resolved.
 
 ## Incident response
 

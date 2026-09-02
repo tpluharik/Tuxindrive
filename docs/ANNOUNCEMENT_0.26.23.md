@@ -1,5 +1,9 @@
 # TuxInDrive 0.26.23 announcement notes
 
+> Historical media kit. Use the current
+> [0.26.31 media kit](ANNOUNCEMENT_0.26.31.md) for new posts; retain this page
+> only as an accurate record of the 0.26.23 search release.
+
 Use these short drafts when announcing the release. Adapt the opening sentence
 to the community and disclose that you maintain the project. Do not paste the
 same text into unrelated discussions, imply endorsement, or describe untested

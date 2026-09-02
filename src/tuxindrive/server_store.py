@@ -193,7 +193,7 @@ class ServerStore:
         with self._lock:
             self.purge()
             rows = self._connection.execute(
-                "SELECT id,body,created,expires FROM collaboration WHERE tenant=? AND workspace=? AND created>=? ORDER BY created,id LIMIT ?",
+                "SELECT id,body,created,expires FROM collaboration WHERE tenant=? AND workspace=? AND created>=? ORDER BY created,rowid LIMIT ?",
                 (tenant, workspace, max(0, int(after)), max(1, min(100, int(limit)))),
             ).fetchall()
         return [{"id": row[0], "body": bytes(row[1]), "created": row[2], "expires": row[3]} for row in rows]

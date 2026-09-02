@@ -58,6 +58,17 @@ class ServerStoreTests(unittest.TestCase):
             self.assertEqual(store.list_collaboration("tenant", "workspace")[0]["body"], b"encrypted-op")
             store.close()
 
+    def test_collaboration_preserves_insertion_order_within_one_second(self):
+        with tempfile.TemporaryDirectory() as folder, mock.patch("tuxindrive.server_store.time.time", return_value=1000):
+            store = ServerStore(Path(folder) / "store.sqlite3")
+            store.put_collaboration("tenant", "workspace", b"first", 3600)
+            store.put_collaboration("tenant", "workspace", b"second", 3600)
+            self.assertEqual(
+                [item["body"] for item in store.list_collaboration("tenant", "workspace")],
+                [b"first", b"second"],
+            )
+            store.close()
+
     def test_quota_and_identifiers_are_bounded(self):
         with tempfile.TemporaryDirectory() as folder:
             store = ServerStore(Path(folder) / "store.sqlite3", quota_bytes=1024 * 1024)

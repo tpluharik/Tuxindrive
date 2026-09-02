@@ -18,7 +18,7 @@ The dependency-install step is required when using an isolated Python environmen
 
 CI pins third-party actions by immutable commit, runs high-severity Bandit checks and `pip-audit`, and publishes a CycloneDX dependency SBOM with the package.
 
-The TuxInDrive development suite contains **448 automated tests: 436 Python tests and 12 Android JVM tests**. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing and historical upgrades. Server API integration uses only a temporary loopback listener and random ciphertext-like bytes.
+The TuxInDrive development suite contains **460 automated tests: 448 Python tests and 12 Android JVM tests**. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing and historical upgrades. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
 
 ## Test groups
 
@@ -54,7 +54,8 @@ The TuxInDrive development suite contains **448 automated tests: 436 Python test
 | `test_responsive_windows.py` | 5 | Monitor-safe, freely resizable client/server windows, local scrolling, wide-control isolation and search preview feature gating. |
 | `test_search_index.py` | 12 | Private metadata indexing, explicit bounded content opt-in, Unicode/token lookup, literal wildcard handling, stale pruning, exclusions, symlink rejection, paused roots, streaming avoidance and safety-limit retention. |
 | `test_security.py` | 8 | Empty/absolute/parent path rejection, symlink refusal, confined atomic installation, Ed25519-only keys and signed transaction tamper detection. |
-| `test_server.py` | 25 | Private initialization, race-resistant root configuration writes, shared agent/relay bandwidth control, package-launcher forwarding and private library isolation, TLS/URL/token validation, default-off client flag, opaque mailbox/object/rendezvous/collaboration isolation, expiry/quota bounds, bounded authenticated HTTP and relay admission, relay rejection, read-only MCP, GUI/desktop packaging and private staging-file permission rejection. |
+| `test_server.py` | 26 | Private initialization, race-resistant root configuration writes, shared agent/relay bandwidth control, package-launcher forwarding and private library isolation, TLS/URL/token validation, default-off client flag, opaque mailbox/object/rendezvous/collaboration isolation and deterministic same-second operation ordering, expiry/quota bounds, bounded authenticated HTTP and relay admission, relay rejection, read-only MCP, GUI/desktop packaging and private staging-file permission rejection. |
+| `test_network_lab.py` | 4 | Separate release packaging, 19 loopback-only production-protocol scenarios with fictional tenants, real multi-address local TCP/HTTP traffic, private redacted reports, cancellation/cleanup, visual topology and non-blocking GUI progress reporting. |
 | `test_themes.py` | 5 | Nordic Glass, Bento Cloud and Midnight Sync registration; shared components and distinct palettes; Midnight-only dark preference; persisted selection; safe legacy/invalid fallback. |
 | `test_tor.py` | 4 | Fail-closed transport policy, private bridge handling, Onion client authorization validation and revocation. |
 | `test_update_dialog.py` | 2 | Safe close behavior during active work and rejection of late callbacks after shutdown. |
@@ -109,9 +110,9 @@ Android JVM coverage is kept beside the mobile source: `MobileValidationTest` co
 
 ```bash
 sh scripts/build-deb.sh
-dpkg-deb --info dist/tuxindrive_0.26.28_all.deb
-dpkg-deb --contents dist/tuxindrive_0.26.28_all.deb
-sha256sum dist/tuxindrive_0.26.28_all.deb
+dpkg-deb --info dist/tuxindrive_0.26.31_all.deb
+dpkg-deb --contents dist/tuxindrive_0.26.31_all.deb
+sha256sum dist/tuxindrive_0.26.31_all.deb
 ```
 
 The CI **Static security analysis** step must run before tests and packaging:
@@ -126,8 +127,8 @@ The release is blocked on any high-severity Bandit result or unresolved dependen
 Release manifests must be signed outside Git with the Ed25519 release key:
 
 ```bash
-python3 scripts/sign-update.py --version 0.26.28 \
-  --package dist/tuxindrive_0.26.28_all.deb \
+python3 scripts/sign-update.py --version 0.26.31 \
+  --package dist/tuxindrive_0.26.31_all.deb \
   --output update/latest-v2.json \
   --private-key /secure/offline/TuxInDrive-update-signing-private.pem
 ```
@@ -143,8 +144,8 @@ private bootstrap and installed module layout:
 
 ```bash
 sh scripts/build-server-deb.sh
-dpkg-deb --info dist/tuxindrive-server_0.26.28_all.deb
-dpkg-deb --contents dist/tuxindrive-server_0.26.28_all.deb
+dpkg-deb --info dist/tuxindrive-server_0.26.31_all.deb
+dpkg-deb --contents dist/tuxindrive-server_0.26.31_all.deb
 PYTHONPATH=src python3 -m unittest -v tests.test_server
 ```
 
@@ -181,6 +182,7 @@ Automated tests do **not** replace live provider and desktop testing. Before a s
 | Internet peer sharing | Direct, UPnP, NAT-PMP and reverse-relay connections; verify host-key pinning, relay fallback, no retained relay content, tunnel recovery, and manual direct mode. |
 | Transfer policies | Maximum environmental policy, metered connection, AC/battery transition, overnight schedule, invalid/disconnected NetworkManager state, global and job directional ceilings, streaming/update/Git/Proton admission, scan jitter, and queued retry. |
 | Platform packages | Install and upgrade the signed Windows setup, macOS DMG and Android APK; verify dedicated channel manifests, durable Release URLs, platform/architecture rejection, Android certificate continuity and branded launcher icon. |
+| Network Lab | Install the separate `0.26.31+lab5` package, confirm all controls and topology nodes are visible, run all 19 scenarios, observe Alice/Bob link animation and non-zero connection/byte counters, cancel and restart once, and verify the listener never leaves loopback. Review the private summary/JSONL logs and confirm that no real account, credential, synchronized path or payload is present. |
 | Update | No-update result, valid update, corrupted package, symlink, same-user replacement race, manifest change, cancelled PolicyKit prompt and successful installation from root-only staging. |
 | Diagnostics | Startup log, application log, per-job log and crash-log paths contain useful information without secrets. |
 | Recovery | Replace and remotely delete test files, restore several versions, expire retention, and verify current-file archival before restore. |
@@ -196,7 +198,8 @@ Use test accounts and disposable folders. Back up both sides before testing dele
 The repository suite is primarily deterministic unit and command-construction testing. It does not currently provide:
 
 - automated live-provider OAuth tests;
-- a disposable two-host network integration environment;
+- a disposable two-physical-host network integration environment (Network Lab
+  provides two distinct loopback client addresses on one host);
 - GTK screenshot regression testing;
 - fault injection for power loss during transfers or configuration writes;
 - multi-gigabyte performance and memory benchmarks;

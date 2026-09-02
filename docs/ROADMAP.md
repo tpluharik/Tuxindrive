@@ -202,12 +202,21 @@ allowlisted byte relay, update attestation, authenticated administration API,
 and read-only MCP. Roles are independently enabled; remote HTTP fails closed
 without TLS; payload, TTL, quota and audit bounds are enforced; and desktop
 integration defaults off behind a Settings flag with native token storage.
-Direct peer/cloud operation remains unchanged.
+Direct peer/cloud operation remains unchanged. Network Lab 0.26.31.5 expands
+that separate test application to 19 functional scenarios, adds a live visual
+Alice/server/Bob topology and generates real parallel TCP/HTTP traffic from
+`127.0.0.2` and `127.0.0.3` to the production server on `127.0.0.1` using only
+fictional bounded data.
 
 This is not completion of the 1.0 hardening milestone. Federation, web UI,
 hardware-backed service keys, OCI/NAS/Windows/macOS packages, push adapters,
 stable SDK schemas, mutating MCP consent, external review and long-duration
-fault testing remain planned. See [Server preview](SERVER.md).
+fault testing remain planned. A separately released loopback-only Network Lab
+now covers repeatable authentication, tenant isolation, mailbox/object/
+rendezvous/collaboration, invalid-input, concurrency, audit and restart
+scenarios with fictional data; real provider, NAT, public TLS and long-duration
+network fault testing remain manual. See [Server preview](SERVER.md) and
+[Network Lab](NETWORK_LAB.md).
 
 ### Completed in 0.26.11
 

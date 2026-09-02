@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+unset PYTHONPATH PYTHONHOME
+exec /usr/bin/python3 -I -c 'import runpy,sys; sys.path.insert(0,"/usr/lib/tuxindrive-network-lab"); sys.argv[0]="tuxindrive-network-lab"; runpy.run_module("tuxindrive.network_lab_gui",run_name="__main__")' "$@"

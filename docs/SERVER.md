@@ -13,7 +13,13 @@ This release establishes a bounded, self-hostable foundation. It is not a
 public multi-tenant cloud service and does not weaken direct peer operation.
 Direct LAN/SFTP synchronization continues to work without this server.
 
-The 0.26.28 cross-folder filename index remains entirely on each desktop
+Protocol and lifecycle testing is available in the separately released
+[TuxInDrive Network Lab](NETWORK_LAB.md). It starts this production server code
+on loopback with an ephemeral database and fictional clients, while disabling
+the synchronization agent and all production configuration. It does not expose
+the service to the LAN and is not a substitute for a production deployment.
+
+The 0.26.31 cross-folder filename index remains entirely on each desktop
 client. It is not uploaded to the server preview, and no server endpoint accepts
 filenames or search queries. Server-backed search would require a separate
 privacy and authorization design and is not part of the current preview.
@@ -40,18 +46,18 @@ service manager. All `/v1/` endpoints require a bearer token.
 
 ## Installation
 
-Download `tuxindrive-server_0.26.28_all.deb` from the matching
-[GitHub Release](https://github.com/tpluharik/Tuxindrive/releases/tag/v0.26.28),
+Download `tuxindrive-server_0.26.31_all.deb` from the matching
+[GitHub Release](https://github.com/tpluharik/Tuxindrive/releases/tag/v0.26.31),
 then install that local file. The leading `./` is required so APT treats the
 name as a file instead of searching configured package repositories:
 
 ```bash
 cd ~/Downloads
-sudo apt install ./tuxindrive-server_0.26.28_all.deb
+sudo apt install ./tuxindrive-server_0.26.31_all.deb
 ```
 
 If configuration of the defective 0.26.12 preview was left unfinished,
-installing 0.26.28 replaces its launcher and completes the pending package
+installing 0.26.31 replaces its launcher and completes the pending package
 configuration. If APT asks to repair dependencies afterward, run:
 
 ```bash
@@ -63,9 +69,9 @@ Build and inspect the package:
 
 ```bash
 sh scripts/build-server-deb.sh
-dpkg-deb --info dist/tuxindrive-server_0.26.28_all.deb
-dpkg-deb --contents dist/tuxindrive-server_0.26.28_all.deb
-sudo apt install ./dist/tuxindrive-server_0.26.28_all.deb
+dpkg-deb --info dist/tuxindrive-server_0.26.31_all.deb
+dpkg-deb --contents dist/tuxindrive-server_0.26.31_all.deb
+sudo apt install ./dist/tuxindrive-server_0.26.31_all.deb
 ```
 
 The package creates a locked `tuxindrive-server` system account, a root-owned

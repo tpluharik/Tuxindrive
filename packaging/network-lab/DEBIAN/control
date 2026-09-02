@@ -1,0 +1,16 @@
+Package: tuxindrive-network-lab
+Version: 0.26.31+lab5
+Section: net
+Priority: optional
+Architecture: all
+Maintainer: TuxInDrive contributors <tpluharik@users.noreply.github.com>
+Depends: python3 (>= 3.10), python3-cryptography, python3-defusedxml, python3-gi, gir1.2-gtk-3.0, xdg-utils
+Homepage: https://github.com/tpluharik/TuxInDrive
+Description: Isolated TuxInDrive server and client networking scenario lab
+ TuxInDrive Network Lab runs production protocol code against a loopback-only,
+ ephemeral server and fictional clients. Its visual topology shows actual
+ multi-address loopback traffic. It automatically tests authentication,
+ tenant isolation, opaque mailbox/object/rendezvous/collaboration operations,
+ invalid inputs, concurrency, observability and restart durability. It never
+ loads real cloud accounts, production client configuration or synchronized
+ folders. Results are shown in a separate resizable window and private logs.

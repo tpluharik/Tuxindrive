@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=TuxInDrive Network Lab
+Comment=Run isolated fictional server and client networking scenarios
+Exec=tuxindrive-network-lab
+Icon=tuxindrive-network-lab
+Terminal=false
+Categories=Network;Development;Utility;
+Keywords=cloud;sync;server;test;sandbox;network;
+StartupNotify=true
+StartupWMClass=io.github.tuxindrive.NetworkLab

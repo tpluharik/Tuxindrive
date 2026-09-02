@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-labelledby="title desc">
+  <title id="title">TuxInDrive Network Lab 0.26.31.5</title>
+  <desc id="desc">Visual overview of Alice and Bob connecting through a local TuxInDrive server, with 19 functional scenarios and no external network.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17122b"/>
+      <stop offset="1" stop-color="#342269"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7c5cff"/>
+      <stop offset="1" stop-color="#38d6c4"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#080611" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="675" rx="36" fill="url(#background)"/>
+  <circle cx="1060" cy="80" r="170" fill="#7c5cff" opacity="0.10"/>
+  <circle cx="100" cy="620" r="210" fill="#38d6c4" opacity="0.07"/>
+
+  <text x="70" y="82" fill="#ffffff" font-family="sans-serif" font-size="42" font-weight="700">TuxInDrive Network Lab</text>
+  <text x="70" y="122" fill="#c9c1e7" font-family="sans-serif" font-size="22">0.26.31.5 · visual, repeatable, local-only testing</text>
+
+  <line x1="278" y1="332" x2="484" y2="332" stroke="url(#accent)" stroke-width="10" stroke-linecap="round"/>
+  <line x1="716" y1="332" x2="922" y2="332" stroke="url(#accent)" stroke-width="10" stroke-linecap="round"/>
+  <path d="M454 314l30 18-30 18" fill="none" stroke="#38d6c4" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M746 314l-30 18 30 18" fill="none" stroke="#7c5cff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <g filter="url(#shadow)">
+    <rect x="80" y="225" width="210" height="220" rx="28" fill="#ffffff"/>
+    <circle cx="185" cy="294" r="40" fill="#ebe7ff"/>
+    <circle cx="185" cy="286" r="14" fill="#6f51df"/>
+    <path d="M153 335c8-26 56-26 64 0" fill="#6f51df"/>
+    <text x="185" y="382" text-anchor="middle" fill="#1d1732" font-family="sans-serif" font-size="30" font-weight="700">Alice</text>
+    <text x="185" y="414" text-anchor="middle" fill="#655d78" font-family="monospace" font-size="18">127.0.0.2</text>
+
+    <rect x="460" y="190" width="280" height="290" rx="32" fill="#ffffff"/>
+    <rect x="548" y="245" width="104" height="88" rx="18" fill="#20183b"/>
+    <circle cx="574" cy="273" r="7" fill="#38d6c4"/>
+    <circle cx="600" cy="273" r="7" fill="#7c5cff"/>
+    <circle cx="626" cy="273" r="7" fill="#ffcf5a"/>
+    <rect x="566" y="300" width="68" height="8" rx="4" fill="#c9c1e7"/>
+    <text x="600" y="382" text-anchor="middle" fill="#1d1732" font-family="sans-serif" font-size="30" font-weight="700">Production protocol</text>
+    <text x="600" y="416" text-anchor="middle" fill="#655d78" font-family="sans-serif" font-size="21">TuxInDrive Server</text>
+    <text x="600" y="447" text-anchor="middle" fill="#655d78" font-family="monospace" font-size="18">127.0.0.1</text>
+
+    <rect x="910" y="225" width="210" height="220" rx="28" fill="#ffffff"/>
+    <circle cx="1015" cy="294" r="40" fill="#e1fbf7"/>
+    <circle cx="1015" cy="286" r="14" fill="#138f83"/>
+    <path d="M983 335c8-26 56-26 64 0" fill="#138f83"/>
+    <text x="1015" y="382" text-anchor="middle" fill="#1d1732" font-family="sans-serif" font-size="30" font-weight="700">Bob</text>
+    <text x="1015" y="414" text-anchor="middle" fill="#655d78" font-family="monospace" font-size="18">127.0.0.3</text>
+  </g>
+
+  <g font-family="sans-serif">
+    <rect x="70" y="535" width="315" height="82" rx="22" fill="#ffffff" opacity="0.10" stroke="#8f7aff"/>
+    <text x="100" y="570" fill="#ffffff" font-size="25" font-weight="700">19 functional scenarios</text>
+    <text x="100" y="598" fill="#c9c1e7" font-size="17">auth · isolation · objects · restart</text>
+
+    <rect x="442" y="535" width="315" height="82" rx="22" fill="#ffffff" opacity="0.10" stroke="#55dccc"/>
+    <text x="472" y="570" fill="#ffffff" font-size="25" font-weight="700">Real loopback traffic</text>
+    <text x="472" y="598" fill="#c9c1e7" font-size="17">parallel TCP/HTTP connections</text>
+
+    <rect x="814" y="535" width="315" height="82" rx="22" fill="#ffffff" opacity="0.10" stroke="#ffcf5a"/>
+    <text x="844" y="570" fill="#ffffff" font-size="25" font-weight="700">Fictional data only</text>
+    <text x="844" y="598" fill="#c9c1e7" font-size="17">no accounts · no Internet route</text>
+  </g>
+</svg>

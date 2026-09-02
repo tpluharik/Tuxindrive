@@ -1,6 +1,6 @@
 # TuxInDrive architecture
 
-This document describes how TuxInDrive 0.26.28 is implemented. Job failures
+This document describes how TuxInDrive 0.26.31 is implemented. Job failures
 persist a bounded structured reference (reason, time, reported source path and
 exact private log path); the desktop error dialog reads at most the final 64
 KiB of that one confined log, redacts common credential forms, and never starts
@@ -37,6 +37,24 @@ The desktop process owns configuration and job scheduling. Transfer tools own
 provider protocols. This separation keeps OAuth/provider compatibility in
 rclone while TuxInDrive implements user intent, safety previews, concurrency,
 recovery, audit, desktop integration, and release verification.
+
+### Isolated Network Lab
+
+`network_lab.py` is a separate runner around the production `server_api` and
+`server_store` boundaries. It creates an ephemeral private SQLite sandbox,
+binds the server to an OS-selected `127.0.0.1` port and supplies fictional
+tenants and ciphertext-like bytes. Nineteen scenarios exercise the actual HTTP
+request routing and storage implementation while disabling the headless agent,
+relay and attestation roles.
+
+The multi-address scenario opens parallel client sockets bound to `127.0.0.2`
+and `127.0.0.3`; it therefore generates real local TCP/HTTP traffic without an
+external route. `network_lab_gui.py` renders the two clients, server, active
+links, scenario state and observed counters in a separate GTK window. The GUI
+paces presentation only; the runner and command-line mode remain deterministic
+and unpaced by default. The Network Lab has its own Debian identity, launcher,
+version revision and release tag namespace and cannot enter a normal updater
+manifest.
 
 ## Desktop process
 

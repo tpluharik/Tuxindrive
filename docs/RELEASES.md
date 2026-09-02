@@ -1,7 +1,7 @@
 # TuxInDrive release process
 
 This document defines the release and signed update-channel workflow for
-TuxInDrive 0.26.28. It is intended for maintainers. Users should use
+TuxInDrive 0.26.31. It is intended for maintainers. Users should use
 the installation and update instructions in the [user guide](USER_GUIDE.md).
 
 ## Release outputs
@@ -14,6 +14,7 @@ the installation and update instructions in the [user guide](USER_GUIDE.md).
 | Android store | `TuxInDrive-VERSION-android-store.aab` | Marketplace-controlled update channel |
 | Linux | `tuxindrive_VERSION_all.deb` | `update/latest-v2.json` |
 | Linux server preview | `tuxindrive-server_VERSION_all.deb` | No automatic-update channel in the first preview |
+| Linux Network Lab | `tuxindrive-network-lab_VERSION+labREVISION_all.deb` | Separate `network-lab-vVERSION.REVISION` release; never the desktop/server updater |
 
 Large packages are GitHub Release assets, not Git objects. The dedicated
 `releases/windows`, `releases/macos`, and `releases/android` folders are stable
@@ -38,6 +39,13 @@ attached to a Release, run its focused tests, inspect its installed layout and
 control scripts, validate the systemd hardening and perform a clean
 Debian/Ubuntu install. A future server update channel must receive its own signed
 platform/product manifest; it must never reuse the desktop Linux manifest.
+
+The Network Lab is even more strictly separated. It is built by
+`.github/workflows/network-lab-release.yml`, uses `+labREVISION` Debian versions
+and is published only from `network-lab-vVERSION.REVISION` tags. Its package and
+checksum are not staged by the desktop platform workflow, are not attached to a
+normal `vVERSION` release and never enter an in-app update manifest. See
+[Network Lab](NETWORK_LAB.md) for the scenario and isolation contract.
 
 ## Version sources
 

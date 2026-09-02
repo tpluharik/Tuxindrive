@@ -2,6 +2,36 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## Network Lab 0.26.31.5 — visual topology and real loopback traffic
+
+- Added a standalone Linux Network Lab application with a separate resizable
+  window, dedicated `.deb`, release tag namespace and no desktop/server update
+  channel overlap.
+- Runs 19 bounded production-protocol scenarios using two fictional tenants,
+  an ephemeral SQLite database and an OS-selected loopback port. Real accounts,
+  credentials, synchronized folders, the headless agent and Internet access are
+  outside the lab boundary.
+- Writes private human-readable, JSONL and summary reports, continues after an
+  independent scenario failure and supports cancellation plus optional sandbox
+  retention for diagnosis.
+- Shows live percentage, completed/total scenario count and current activity in
+  a progress bar without blocking the Network Lab window.
+- Explicitly reveals the complete GTK3 widget tree during application
+  activation, fixing an empty window where the controls and progress bar were
+  created but remained hidden.
+- Expands the production-protocol matrix from 10 to 19 scenarios, including a
+  complete two-client workflow, device routing, cross-service tenant isolation,
+  object deduplication, public/private health boundaries, security headers,
+  disabled roles, read-only MCP and quota recovery.
+- Adds a live topology diagram for Alice (`127.0.0.2`), the production-protocol
+  server (`127.0.0.1`) and Bob (`127.0.0.3`), with active/pass/fail colors,
+  connection and byte counters, and deliberately paced GUI updates.
+- Adds a nineteenth scenario that binds two real source addresses, opens
+  parallel TCP/HTTP connections, transfers fictional 128 KiB objects and reads
+  them back through the local server without using an external interface.
+- Fixed collaboration operations created in the same second to retain server
+  insertion order instead of being reordered by random identifiers.
+
 ## 0.26.31 — restart and idle-transfer optimization
 
 - Restore strictly validated scheduler timestamps and durable Bisync monitor

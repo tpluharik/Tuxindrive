@@ -20,6 +20,8 @@ dependencies = [
 tuxindrive = "tuxindrive.app:main"
 tuxindrive-rclone-password = "tuxindrive.password_helper:main"
 tuxindrive-server = "tuxindrive.server:main"
+tuxindrive-network-lab = "tuxindrive.network_lab_gui:main"
+tuxindrive-network-lab-cli = "tuxindrive.network_lab:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
