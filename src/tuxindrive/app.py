@@ -5422,6 +5422,7 @@ class TuxInDriveApplication(Gtk.Application):
         )
         self.window: MainWindow | None = None
         self.indicator = None
+        self.activity_indicator = None
         self._tray_icon = TrayIconModel()
         self._tray_animation_source = 0
         self._runtime_ready_once = False
@@ -6294,7 +6295,6 @@ class TuxInDriveApplication(Gtk.Application):
         self.indicator.set_title("TuxInDrive")
         self.indicator.set_icon_theme_path("/usr/share/icons/hicolor/scalable/apps")
         self.indicator.set_icon_full("tuxindrive", "TuxInDrive is running")
-        self.indicator.set_attention_icon_full("tuxindrive-error", "TuxInDrive needs attention")
         menu = Gtk.Menu()
         show = Gtk.MenuItem(label="Open TuxInDrive")
         show.connect("activate", lambda _item: self.activate())
@@ -6324,8 +6324,36 @@ class TuxInDriveApplication(Gtk.Application):
             menu.append(item)
         menu.show_all()
         self.indicator.set_menu(menu)
+
+        # AppIndicator forces each icon into a square panel slot.  A wide
+        # composite logo is therefore distorted by GNOME into an oval.  Keep
+        # the product identity in its own stable slot and publish activity as
+        # a second, genuinely square indicator beside it, matching the native
+        # SessionSifu main-icon + spinner arrangement.
+        self.activity_indicator = AyatanaAppIndicator3.Indicator.new(
+            "tuxindrive-activity",
+            "tuxindrive-sync",
+            AyatanaAppIndicator3.IndicatorCategory.APPLICATION_STATUS,
+        )
+        self.activity_indicator.set_status(AyatanaAppIndicator3.IndicatorStatus.PASSIVE)
+        self.activity_indicator.set_title("TuxInDrive activity")
+        self.activity_indicator.set_icon_theme_path("/usr/share/icons/hicolor/scalable/apps")
+        self.activity_indicator.set_icon_full(
+            "tuxindrive-sync",
+            "TuxInDrive synchronization activity",
+        )
+        self.activity_indicator.set_attention_icon_full(
+            "tuxindrive-error",
+            "TuxInDrive needs attention",
+        )
+        activity_menu = Gtk.Menu()
+        activity_show = Gtk.MenuItem(label="Open TuxInDrive")
+        activity_show.connect("activate", lambda _item: self.activate())
+        activity_menu.append(activity_show)
+        activity_menu.show_all()
+        self.activity_indicator.set_menu(activity_menu)
         self._apply_tray_icon()
-        LOGGER.info("Tray indicator initialized")
+        LOGGER.info("Stable tray and separate activity indicators initialized")
         GLib.timeout_add_seconds(
             2,
             lambda: (self.notify("TuxInDrive loaded", "Cloud synchronization is running in the tray"), False)[1],
@@ -6343,20 +6371,30 @@ class TuxInDriveApplication(Gtk.Application):
         self._apply_tray_icon()
 
     def _apply_tray_icon(self) -> None:
-        if not self.indicator or AyatanaAppIndicator3 is None:
+        if (
+            not self.indicator
+            or not self.activity_indicator
+            or AyatanaAppIndicator3 is None
+        ):
             return
-        self.indicator.set_icon_full(
+        self.indicator.set_icon_full("tuxindrive", "TuxInDrive is running")
+        self.indicator.set_status(AyatanaAppIndicator3.IndicatorStatus.ACTIVE)
+        self.activity_indicator.set_icon_full(
             self._tray_icon.icon_name,
             self._tray_icon.accessible_label,
         )
-        self.indicator.set_status(
+        self.activity_indicator.set_status(
             AyatanaAppIndicator3.IndicatorStatus.ATTENTION
             if self._tray_icon.attention
-            else AyatanaAppIndicator3.IndicatorStatus.ACTIVE
+            else (
+                AyatanaAppIndicator3.IndicatorStatus.ACTIVE
+                if self._tray_icon.animated
+                else AyatanaAppIndicator3.IndicatorStatus.PASSIVE
+            )
         )
 
     def _advance_tray_animation(self) -> bool:
-        if not self._tray_icon.animated or not self.indicator:
+        if not self._tray_icon.animated or not self.activity_indicator:
             self._tray_animation_source = 0
             return False
         self._tray_icon.advance()
@@ -6549,6 +6587,8 @@ class TuxInDriveApplication(Gtk.Application):
     def do_shutdown(self) -> None:
         LOGGER.info("TuxInDrive shutting down")
         self._stop_tray_animation()
+        if self.activity_indicator is not None and AyatanaAppIndicator3 is not None:
+            self.activity_indicator.set_status(AyatanaAppIndicator3.IndicatorStatus.PASSIVE)
         self.network_meter.save()
         self.peers.shutdown()
         self.engine.shutdown()

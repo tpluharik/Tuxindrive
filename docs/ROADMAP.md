@@ -7,7 +7,13 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.33
+## Current baseline: 0.26.34
+
+### Completed in 0.26.34: native adjacent tray indicators
+
+- Keep the primary TuxInDrive identity in a stable AppIndicator slot.
+- Show a separate square activity/error slot beside it only when needed, so
+  desktop shells preserve the status mark as a circle instead of an oval.
 
 ### Completed in 0.26.33: high-visibility tray activity
 

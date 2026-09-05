@@ -1,3 +1,10 @@
+tuxindrive (0.26.34-1) unstable; urgency=medium
+
+  * Render synchronization activity as a separate circular tray indicator
+    beside the stable TuxInDrive icon instead of a distorted wide composite.
+
+ -- Tomas Pluharik <tpluharik@gmail.com>  Sat, 05 Sep 2026 14:00:00 +0200
+
 tuxindrive (0.26.33-1) unstable; urgency=medium
 
   * Enlarge the animated tray activity indicator to exactly three times its

@@ -2,6 +2,15 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.34 — circular adjacent tray activity
+
+- Replaced the wide composite tray image with two genuine AppIndicator slots:
+  a stable TuxInDrive logo and a separate activity/error indicator beside it.
+- Made every animation frame square, keeping the blue activity mark circular
+  when GNOME constrains system-tray images to a square panel slot.
+- Hide the secondary indicator while idle and preserve the eight-frame animation
+  and outstanding-error state without changing synchronization behavior.
+
 ## 0.26.33 — triple-size tray activity indicator
 
 - Enlarged the animated synchronization indicator to exactly three times its

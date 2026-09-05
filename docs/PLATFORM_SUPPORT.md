@@ -1,6 +1,6 @@
 # Platform support and adaptive installation
 
-TuxInDrive 0.26.33 publishes packages for Debian-family Linux, Windows x64, macOS and Android. Linux, Windows and macOS use the same GTK desktop UI; Android uses a Material mobile UI backed by rclone's in-process gomobile library. The main desktop window remains freely resizable; dialogs open at 92% of the active monitor work area and keep oversized content reachable through local scrolling. Android Settings is vertically scrollable. Credentials remain in GNOME Secret Service, Windows Credential Manager, macOS Keychain, or Android's private application sandbox. A missing optional integration disables only that feature. Package locations and updater behavior are documented in [Release process](RELEASES.md).
+TuxInDrive 0.26.34 publishes packages for Debian-family Linux, Windows x64, macOS and Android. Linux, Windows and macOS use the same GTK desktop UI; Android uses a Material mobile UI backed by rclone's in-process gomobile library. The main desktop window remains freely resizable; dialogs open at 92% of the active monitor work area and keep oversized content reachable through local scrolling. Android Settings is vertically scrollable. Credentials remain in GNOME Secret Service, Windows Credential Manager, macOS Keychain, or Android's private application sandbox. A missing optional integration disables only that feature. Package locations and updater behavior are documented in [Release process](RELEASES.md).
 
 ## Compatibility matrix
 

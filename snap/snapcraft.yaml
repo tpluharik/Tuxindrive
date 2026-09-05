@@ -1,6 +1,6 @@
 name: tuxindrive
 base: core24
-version: "0.26.33"
+version: "0.26.34"
 summary: Multi-cloud sync, streaming, and encrypted collaboration
 description: |
   TuxInDrive is a Linux-first desktop client for synchronizing and streaming
