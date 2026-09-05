@@ -2,6 +2,14 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.33 — triple-size tray activity indicator
+
+- Enlarged the animated synchronization indicator to exactly three times its
+  former source diameter, making active transfers substantially easier to see.
+- Kept the primary TuxInDrive logo stable and the outstanding-error indicator
+  unchanged, preserving the established distinction between activity and failure.
+- Added packaging regression coverage for the exact activity-indicator size.
+
 ## 0.26.32 — animated tray activity and clearer errors
 
 - Kept the primary TuxInDrive tray logo stable while displaying a separate,

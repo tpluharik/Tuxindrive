@@ -7,7 +7,14 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.32
+## Current baseline: 0.26.33
+
+### Completed in 0.26.33: high-visibility tray activity
+
+- Enlarge the animated synchronization indicator to exactly three times the
+  0.26.32 source diameter while keeping the primary logo stable.
+- Lock the size into packaging regression tests so future asset changes cannot
+  silently reduce it.
 
 ### Completed in 0.26.32: animated tray state
 

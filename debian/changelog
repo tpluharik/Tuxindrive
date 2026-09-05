@@ -1,3 +1,10 @@
+tuxindrive (0.26.33-1) unstable; urgency=medium
+
+  * Enlarge the animated tray activity indicator to exactly three times its
+    previous source diameter while retaining the stable primary logo.
+
+ -- Tomas Pluharik <tpluharik@gmail.com>  Sat, 05 Sep 2026 13:30:00 +0200
+
 tuxindrive (0.26.32-1) unstable; urgency=medium
 
   * Animate synchronization activity beside the stable system tray icon.
