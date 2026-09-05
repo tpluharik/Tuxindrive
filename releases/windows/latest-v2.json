@@ -1,8 +1,8 @@
 {
-  "version": "0.26.32",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.32/TuxInDrive-0.26.32-windows-x64-setup.exe",
-  "sha256": "b78d87c3bceb55d961a9a5f6c9dcddd443082ff398cfdbcc044c5f623c471121",
-  "notes": "Animated tray activity, clearer error state, and aggregate synchronization status",
-  "expires_at": "2026-12-04T09:07:15.904735+00:00",
-  "signature": "3Jcp0i5ZlkViJkcvN3Hb/qWt9BvETtFjcVBtiaLIvpIdprj/JbjfJ5dfndcVbQ5mympHQptrDoCb8YdZE9oWCg=="
+  "version": "0.26.33",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.33/TuxInDrive-0.26.33-windows-x64-setup.exe",
+  "sha256": "465757203a62207e1e4ed0fb69087852bbee3fe773a1db56fcb144565785ca70",
+  "notes": "Triple-size animated tray activity indicator for clearer synchronization visibility",
+  "expires_at": "2026-12-04T09:35:08.734893+00:00",
+  "signature": "XpFpG9tA8FDLiUQnSRyrqsEbtx5hYYXo6fVhXVYFxTmTJgyNfrJ4Zkjwtpmj3Pwwn5R2GB3/l/Ig2pusb6O+AQ=="
 }

@@ -1,8 +1,8 @@
 {
-  "version": "0.26.32",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.32/tuxindrive_0.26.32_all.deb",
-  "sha256": "62b6777c2eb53df400c86ddceb43bd474d2ec5cdb993c46c4b4f41f5f6bea6e8",
-  "notes": "Animated tray activity, clearer error state, and aggregate synchronization status",
-  "expires_at": "2026-12-04T09:07:15.831141+00:00",
-  "signature": "niJ6r32VQOmx1gm9zhYT1gSmk9+Q3N8QoBTsxdrbj5Az1XgyrYdzIIeSNoVbTsMNyhrEs7EezDPIvc+PSB/YBg=="
+  "version": "0.26.33",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.33/tuxindrive_0.26.33_all.deb",
+  "sha256": "e2480daac7b2a1ecbeaaf68f7c6ba0260aefe169a79876f86bd823b3c2548c0f",
+  "notes": "Triple-size animated tray activity indicator for clearer synchronization visibility",
+  "expires_at": "2026-12-04T09:35:08.658174+00:00",
+  "signature": "e68fbHqz3x3dTOnv8VOygQqhZvmI/zERS9mXOj333Ip2A72pYwf/iHT3uyWVrjGp2uLzUctYtQRiutAi1J7uBQ=="
 }

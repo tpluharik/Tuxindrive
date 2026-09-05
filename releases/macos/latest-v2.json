@@ -1,8 +1,8 @@
 {
-  "version": "0.26.32",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.32/TuxInDrive-0.26.32-macos-arm64.dmg",
-  "sha256": "da134ea772e3b4ba97f0e72d6a70e9fb3a7e78f4b6036ace25198bd6c2696254",
-  "notes": "Animated tray activity, clearer error state, and aggregate synchronization status",
-  "expires_at": "2026-12-04T09:07:15.987045+00:00",
-  "signature": "ixbE/cm2VZ8Yj4AYGX+ewhykOjWG8fqA7KDx2hcYBckP/FuDvzy6MKjS66Ij5WgfwRl45Mwv9iWxKLWMMpRkAg=="
+  "version": "0.26.33",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.33/TuxInDrive-0.26.33-macos-arm64.dmg",
+  "sha256": "0223db65cec4bbff74dd9656dac25a1b07ced5f0f0f1609524b97d2838d1c3b5",
+  "notes": "Triple-size animated tray activity indicator for clearer synchronization visibility",
+  "expires_at": "2026-12-04T09:35:08.816335+00:00",
+  "signature": "rRgGku5MxW2DmqLvYcIK0VVrKe0KvdJYjDua/ay947NXYkMggnTAj52wm6Nwf0lZBOVwhcVXZpRk1CUeMPqsDA=="
 }

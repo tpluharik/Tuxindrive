@@ -22,9 +22,9 @@ A relevant push to `main` builds all four packages and publishes a durable
 Release only when the source version does not already exist. An existing
 release is never replaced by an ordinary main-branch build. A matching version
 tag validates the tag/source version pair and can publish the same package set.
-The current 0.26.32 package set is available at:
+The current 0.26.33 package set is available at:
 
-`https://github.com/tpluharik/Tuxindrive/releases/tag/v0.26.32`
+`https://github.com/tpluharik/Tuxindrive/releases/tag/v0.26.33`
 
 Maintainer signing, validation, publication, and rollback rules are documented
 in [`docs/RELEASES.md`](../docs/RELEASES.md).
