@@ -7,7 +7,14 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.31
+## Current baseline: 0.26.32
+
+### Completed in 0.26.32: animated tray state
+
+- Keep the primary tray logo stable and animate a separate adjacent activity
+  indicator while one or more synchronization jobs are running.
+- Show a larger adjacent red alert while any job retains an unresolved error.
+- Package all animation frames for Debian and Snap installations.
 
 ### Completed in 0.26.31: restart and idle-transfer optimization
 

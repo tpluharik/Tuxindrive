@@ -133,7 +133,7 @@ Select **?** in the top bar. Choose a chapter on the left or type a word in the 
 
 Select the flag next to **?** and choose **🇬🇧 English**, **🇩🇪 Deutsch**, **🇫🇷 Français**, **🇪🇸 Español**, **🇸🇦 العربية**, or **🇮🇱 עברית**. TuxInDrive saves the language in `~/.config/tuxindrive/config.json` and rebuilds only the visible window; background synchronization, mounts and peer listeners continue. Arabic and Hebrew labels, search fields, topic titles and documentation bodies render right-to-left, but the window, sidebar and controls retain their familiar positions. Provider-generated OAuth questions, raw rclone errors, logs and some advanced dialogs remain in their technical source language to preserve diagnostic accuracy.
 
-The black-and-white penguin inside a white circle, with its red bow tie, identifies TuxInDrive itself. It is the same mark in the window header, dialogs, launcher, taskbar or dock, system tray, Android launcher, installers, and repository documentation. Content and wording outside the source circle are not part of the TuxInDrive identity. Each cloud service keeps its own provider icon while connected and in the account chooser; blue sync and red error badges communicate changing activity without altering the primary mark.
+The black-and-white penguin inside a white circle, with its red bow tie, identifies TuxInDrive itself. It is the same mark in the window header, dialogs, launcher, taskbar or dock, system tray, Android launcher, installers, and repository documentation. Content and wording outside the source circle are not part of the TuxInDrive identity. Each cloud service keeps its own provider icon while connected and in the account chooser. On supported Linux panels, the primary tray mark stays fixed while a blue indicator beside it animates during synchronization; an outstanding error replaces that activity indicator with a larger adjacent red alert.
 
 ### Update TuxInDrive
 
@@ -628,6 +628,11 @@ The tray menu contains:
 - **Pause all synchronization**
 - **Open diagnostic logs**
 - **Quit**
+
+The tray icon summarizes all jobs, not only the last one to finish. It keeps
+animating while any job is active and keeps the red alert visible while any
+configured job retains an unresolved error. Open the application to see the
+affected folder and its error details.
 
 Settings control:
 

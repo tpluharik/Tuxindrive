@@ -2,6 +2,17 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.32 — animated tray activity and clearer errors
+
+- Kept the primary TuxInDrive tray logo stable while displaying a separate,
+  SessionSifu-style animated activity indicator beside it during transfers.
+- Replaced the small overlapping error mark with a larger adjacent red alert
+  indicator that remains readable in compact desktop panels.
+- Made tray state aggregate-aware: parallel work keeps the animation running,
+  and an outstanding job error remains visible after other jobs complete.
+- Packaged all eight animation frames for Debian and Snap installations and
+  added deterministic model and packaging coverage.
+
 ## Network Lab 0.26.31.5 — visual topology and real loopback traffic
 
 - Added a standalone Linux Network Lab application with a separate resizable

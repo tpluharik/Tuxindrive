@@ -1,6 +1,6 @@
 name: tuxindrive
 base: core24
-version: "0.26.31"
+version: "0.26.32"
 summary: Multi-cloud sync, streaming, and encrypted collaboration
 description: |
   TuxInDrive is a Linux-first desktop client for synchronizing and streaming
@@ -57,3 +57,13 @@ parts:
       craftctl default
       install -Dm644 packaging/io.github.tuxindrive.TuxInDrive.desktop \
         "$CRAFT_PART_INSTALL/share/applications/io.github.tuxindrive.TuxInDrive.desktop"
+      install -d "$CRAFT_PART_INSTALL/share/icons/hicolor/scalable/apps"
+      for icon in packaging/tuxindrive.svg packaging/tuxindrive-sync.svg \
+        packaging/tuxindrive-sync-0.svg packaging/tuxindrive-sync-1.svg \
+        packaging/tuxindrive-sync-2.svg packaging/tuxindrive-sync-3.svg \
+        packaging/tuxindrive-sync-4.svg packaging/tuxindrive-sync-5.svg \
+        packaging/tuxindrive-sync-6.svg packaging/tuxindrive-sync-7.svg \
+        packaging/tuxindrive-error.svg; do
+        install -Dm644 "$icon" \
+          "$CRAFT_PART_INSTALL/share/icons/hicolor/scalable/apps/$(basename "$icon")"
+      done

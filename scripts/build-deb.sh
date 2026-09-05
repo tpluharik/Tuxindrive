@@ -38,6 +38,10 @@ cp "$PROJECT_ROOT/packaging/tuxindrive.svg" \
   "$PACKAGE_ROOT/usr/share/icons/hicolor/scalable/apps/tuxindrive.svg"
 cp "$PROJECT_ROOT/packaging/tuxindrive-sync.svg" \
   "$PACKAGE_ROOT/usr/share/icons/hicolor/scalable/apps/tuxindrive-sync.svg"
+for FRAME in 0 1 2 3 4 5 6 7; do
+  cp "$PROJECT_ROOT/packaging/tuxindrive-sync-${FRAME}.svg" \
+    "$PACKAGE_ROOT/usr/share/icons/hicolor/scalable/apps/tuxindrive-sync-${FRAME}.svg"
+done
 cp "$PROJECT_ROOT/packaging/tuxindrive-error.svg" \
   "$PACKAGE_ROOT/usr/share/icons/hicolor/scalable/apps/tuxindrive-error.svg"
 for STATE in synced syncing streaming paused pending error; do

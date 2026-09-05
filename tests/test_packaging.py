@@ -146,6 +146,23 @@ class PackagingTests(unittest.TestCase):
         self.assertIn("@drawable/tuxindrive_logo", foreground)
         self.assertIn("@drawable/tuxindrive_logo_monochrome", monochrome)
 
+    def test_tray_animation_frames_are_valid_and_packaged(self):
+        build_script = Path("scripts/build-deb.sh").read_text(encoding="utf-8")
+        app = Path("src/tuxindrive/app.py").read_text(encoding="utf-8")
+        for frame in range(8):
+            asset = Path(f"packaging/tuxindrive-sync-{frame}.svg")
+            self.assertTrue(asset.is_file(), asset)
+            ET.parse(asset)
+        for asset in ("packaging/tuxindrive-sync.svg", "packaging/tuxindrive-error.svg"):
+            content = Path(asset).read_text(encoding="utf-8")
+            ET.parse(asset)
+            self.assertIn('viewBox="0 0 340 256"', content)
+            self.assertIn("next to the main icon", content)
+        self.assertIn("for FRAME in 0 1 2 3 4 5 6 7", build_script)
+        self.assertIn("tuxindrive-sync-${FRAME}.svg", build_script)
+        self.assertIn("GLib.timeout_add", app)
+        self.assertIn("_stop_tray_animation", app)
+
     def test_nautilus_extension_is_packaged_with_safe_app_actions(self):
         control = Path("packaging/DEBIAN/control").read_text(encoding="utf-8")
         build_script = Path("scripts/build-deb.sh").read_text(encoding="utf-8")

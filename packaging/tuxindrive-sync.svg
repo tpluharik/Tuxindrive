@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
-  <title>TuxInDrive syncing</title>
-  <g transform="translate(2 2) scale(.84)">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 256">
+  <title>TuxInDrive with activity spinner next to the main icon</title>
+  <g transform="translate(8 20) scale(.84)">
     <circle cx="128" cy="128" r="112" fill="#fff"/>
     <path fill="#111" d="M48 211c-10-34-7-79 10-111 13-24 33-40 58-46-13 13-20 31-19 51 0 10-5 20-11 31-12 23-12 53-7 82Z"/>
     <path fill="#111" d="M80 91c5-30 31-50 58-47 18 2 32 13 49 17 10 3 20 4 31 4-19 7-33 18-43 36-8 15-16 21-30 18-26-5-45-16-65-28Z"/>
@@ -9,7 +9,7 @@
     <path fill="#e31b23" d="M106 121c0-5 4-7 8-4l14 10 14-10c4-3 8-1 8 4v17c0 5-4 7-8 4l-14-9-14 9c-4 3-8 1-8-4Z"/>
     <circle cx="128" cy="130" r="6" fill="#e31b23"/>
   </g>
-  <circle cx="202" cy="202" r="43" fill="#1976d2"/>
-  <path fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" d="M176 198a28 28 0 0 1 46-16m7 24a28 28 0 0 1-46 16"/>
-  <path fill="#fff" d="m216 169 12 14-19 2m-21 50-12-14 19-2"/>
+  <circle cx="282" cy="128" r="48" fill="#1976d2"/>
+  <path fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" d="M282 91a37 37 0 0 1 37 37"/>
+  <circle cx="282" cy="91" r="6" fill="#fff"/>
 </svg>

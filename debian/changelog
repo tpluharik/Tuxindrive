@@ -1,3 +1,10 @@
+tuxindrive (0.26.32-1) unstable; urgency=medium
+
+  * Animate synchronization activity beside the stable system tray icon.
+  * Display a larger adjacent error indicator and preserve aggregate job state.
+
+ -- Tomas Pluharik <tpluharik@gmail.com>  Sat, 05 Sep 2026 12:00:00 +0200
+
 tuxindrive (0.26.30-1) unstable; urgency=medium
 
   * Add opt-in bounded local content indexing and safe cloud-to-cloud copy.

@@ -88,6 +88,7 @@ from .nautilus_support import (
     verified_rules_after,
 )
 from .themes import THEMES, css_for_theme, normalize_theme, theme_by_key
+from .tray import SYNC_ANIMATION_INTERVAL_MS, TrayIconModel
 from .network_usage import NetworkUsageMeter, format_bytes
 from .bandwidth import GlobalBandwidthController, normalize_bandwidth_limit
 from .server_client import ServerClient, ServerClientError, normalize_server_url
@@ -5421,6 +5422,8 @@ class TuxInDriveApplication(Gtk.Application):
         )
         self.window: MainWindow | None = None
         self.indicator = None
+        self._tray_icon = TrayIconModel()
+        self._tray_animation_source = 0
         self._runtime_ready_once = False
         self._pending_nautilus_paths: list[str] = []
         self._pending_nautilus_online: list[str] = []
@@ -6030,15 +6033,16 @@ class TuxInDriveApplication(Gtk.Application):
             job.local_path,
         )
         self.audit.record("sync", "job started", "running", job_id=job.id, path=job.remote_path, detail=job.mode.label)
-        self._set_tray_state("syncing", job.name)
         self._last_started[job.id] = datetime.now(timezone.utc)
         self._nautilus_active_jobs.add(job.id)
+        self._set_tray_state("syncing", job.name)
         self._publish_nautilus_state()
         if self.window:
             self.window.refresh()
         started = self.engine.run_async(job, self._job_finished)
         if not started:
             self._nautilus_active_jobs.discard(job.id)
+            self._refresh_tray_from_jobs("The synchronization job could not be started")
             self._publish_nautilus_state()
         if not started and self.window and not quiet:
             self.window.message("The job could not be started.", Gtk.MessageType.WARNING)
@@ -6050,6 +6054,7 @@ class TuxInDriveApplication(Gtk.Application):
             self._nautilus_active_jobs.discard(job.id)
             self._offline_verified_paths.pop(job.id, None)
             job.last_status = "Stopped"
+            self._refresh_tray_from_jobs()
             self.audit.record("sync", "job stopped", "success", job_id=job.id, detail=job.name)
             self.save()
             if self.window:
@@ -6119,7 +6124,7 @@ class TuxInDriveApplication(Gtk.Application):
             # Every new mount must prove its persistent cache again.  A lost
             # mount must never leave stale green per-item badges behind.
             self._offline_verified_paths.pop(job.id, None)
-        self._set_tray_state("ready" if result.success else "error", result.message)
+        self._refresh_tray_from_jobs(result.message)
         LOGGER.info("Job %s finished: success=%s message=%s", job.id, result.success, result.message)
         account = next((item for item in self.config.accounts if item.remote == job.account_remote), None)
         result.network_sessions, result.payload_bytes = self.engine.finalize_traffic(
@@ -6319,6 +6324,7 @@ class TuxInDriveApplication(Gtk.Application):
             menu.append(item)
         menu.show_all()
         self.indicator.set_menu(menu)
+        self._apply_tray_icon()
         LOGGER.info("Tray indicator initialized")
         GLib.timeout_add_seconds(
             2,
@@ -6326,19 +6332,55 @@ class TuxInDriveApplication(Gtk.Application):
         )
 
     def _set_tray_state(self, state: str, detail: str = "") -> None:
+        self._tray_icon.set_state(state, detail)
+        if self._tray_icon.animated and not self._tray_animation_source:
+            self._tray_animation_source = GLib.timeout_add(
+                SYNC_ANIMATION_INTERVAL_MS,
+                self._advance_tray_animation,
+            )
+        elif not self._tray_icon.animated:
+            self._stop_tray_animation()
+        self._apply_tray_icon()
+
+    def _apply_tray_icon(self) -> None:
         if not self.indicator or AyatanaAppIndicator3 is None:
             return
-        icon = {
-            "ready": "tuxindrive",
-            "syncing": "tuxindrive-sync",
-            "error": "tuxindrive-error",
-        }.get(state, "tuxindrive")
-        self.indicator.set_icon_full(icon, f"TuxInDrive: {detail or state}")
+        self.indicator.set_icon_full(
+            self._tray_icon.icon_name,
+            self._tray_icon.accessible_label,
+        )
         self.indicator.set_status(
             AyatanaAppIndicator3.IndicatorStatus.ATTENTION
-            if state == "error"
+            if self._tray_icon.attention
             else AyatanaAppIndicator3.IndicatorStatus.ACTIVE
         )
+
+    def _advance_tray_animation(self) -> bool:
+        if not self._tray_icon.animated or not self.indicator:
+            self._tray_animation_source = 0
+            return False
+        self._tray_icon.advance()
+        self._apply_tray_icon()
+        return True
+
+    def _stop_tray_animation(self) -> None:
+        source = self._tray_animation_source
+        self._tray_animation_source = 0
+        if source:
+            try:
+                GLib.source_remove(source)
+            except (AttributeError, TypeError):
+                pass
+
+    def _refresh_tray_from_jobs(self, detail: str = "") -> None:
+        if self._nautilus_active_jobs:
+            self._set_tray_state("syncing", detail or "Synchronization in progress")
+            return
+        failed = next((job for job in self.config.jobs if job.last_error), None)
+        if failed:
+            self._set_tray_state("error", detail or failed.last_error)
+            return
+        self._set_tray_state("ready", detail)
 
     def save(self) -> None:
         self.store.save(self.config)
@@ -6506,6 +6548,7 @@ class TuxInDriveApplication(Gtk.Application):
 
     def do_shutdown(self) -> None:
         LOGGER.info("TuxInDrive shutting down")
+        self._stop_tray_animation()
         self.network_meter.save()
         self.peers.shutdown()
         self.engine.shutdown()
