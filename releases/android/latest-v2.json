@@ -1,8 +1,8 @@
 {
-  "version": "0.26.33",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.33/TuxInDrive-0.26.33-android.apk",
-  "sha256": "8381538263203def79460c791f0ac6c11a2558f5081bbfac4de18408142bd152",
-  "notes": "Triple-size animated tray activity indicator for clearer synchronization visibility",
-  "expires_at": "2026-12-04T09:35:09.063434+00:00",
-  "signature": "SaB4fHeQdhZh7LobbUyyJvg6mgfa1odJeXafZKXmiz/emt09tAoRwQq1FTRhxD4wQvK1tPOtOWCEhhcQgv4LAw=="
+  "version": "0.26.34",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.34/TuxInDrive-0.26.34-android.apk",
+  "sha256": "675606933b17308d1f1baa45013706e3beb2a5054e9545e5454d7efe897d0129",
+  "notes": "Circular adjacent tray activity and error indicators",
+  "expires_at": "2026-12-04T10:02:36.297430+00:00",
+  "signature": "NVSDxsQSnyK/fBirxbGqmD9r42QSKtrJU+3NswlQCBNk8TGtn/EGYwxt62Q2wrDjzx/FG6T39FT1mO14WsFqDg=="
 }

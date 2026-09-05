@@ -5,6 +5,6 @@ uploading them. Published binaries live permanently in the matching versioned
 GitHub Release; they are not committed to Git because they exceed normal
 repository file-size limits.
 
-For version 0.26.33, download the setup executable or portable ZIP from the
-[`v0.26.33` GitHub Release](https://github.com/tpluharik/Tuxindrive/releases/tag/v0.26.33).
+For version 0.26.34, download the setup executable or portable ZIP from the
+[`v0.26.34` GitHub Release](https://github.com/tpluharik/Tuxindrive/releases/tag/v0.26.34).
 See [the release process](../../../docs/RELEASES.md) for signing and updater rules.
