@@ -1,8 +1,8 @@
 {
-  "version": "0.26.30",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.30/tuxindrive_0.26.30_all.deb",
-  "sha256": "692d31ee72b5f241f6f95ce66f40e1e356d2531ce56906fa6f0cb5c65453cbf3",
-  "notes": "Managed policy, content search, cloud copy, and reliability improvements",
-  "expires_at": "2026-11-24T09:01:04.171349+00:00",
-  "signature": "FXRjFCAMDIOliyf717WVWdOutxJErjxeiqrIOaYGYybd7GsJ6jXmlEPH48tmPLJgZS3q2QtF8rwr4trji+W9Ag=="
+  "version": "0.26.32",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.32/tuxindrive_0.26.32_all.deb",
+  "sha256": "62b6777c2eb53df400c86ddceb43bd474d2ec5cdb993c46c4b4f41f5f6bea6e8",
+  "notes": "Animated tray activity, clearer error state, and aggregate synchronization status",
+  "expires_at": "2026-12-04T09:07:15.831141+00:00",
+  "signature": "niJ6r32VQOmx1gm9zhYT1gSmk9+Q3N8QoBTsxdrbj5Az1XgyrYdzIIeSNoVbTsMNyhrEs7EezDPIvc+PSB/YBg=="
 }

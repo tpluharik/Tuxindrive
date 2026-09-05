@@ -1,8 +1,8 @@
 {
-  "version": "0.26.30",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.30/TuxInDrive-0.26.30-windows-x64-setup.exe",
-  "sha256": "6b92d3428d24760be79e42bf539804837ae2c279b79fb652fd58a7f6cf5f09e3",
-  "notes": "Managed policy, content search, cloud copy, and reliability improvements",
-  "expires_at": "2026-11-24T09:01:04.336475+00:00",
-  "signature": "KK0KjPKpgYXfbiZ6D6Q6F66nxWIUTp/IxptWHvZmz1sG7kBEgi06Fm4mgbcGKZw8afQ9oZQ24So7jDoGlRlIAA=="
+  "version": "0.26.32",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.32/TuxInDrive-0.26.32-windows-x64-setup.exe",
+  "sha256": "b78d87c3bceb55d961a9a5f6c9dcddd443082ff398cfdbcc044c5f623c471121",
+  "notes": "Animated tray activity, clearer error state, and aggregate synchronization status",
+  "expires_at": "2026-12-04T09:07:15.904735+00:00",
+  "signature": "3Jcp0i5ZlkViJkcvN3Hb/qWt9BvETtFjcVBtiaLIvpIdprj/JbjfJ5dfndcVbQ5mympHQptrDoCb8YdZE9oWCg=="
 }
