@@ -1,8 +1,8 @@
 {
-  "version": "0.26.53",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.53/TuxInDrive-0.26.53-windows-x64-setup.exe",
-  "sha256": "ecd5b64491ee1afe7fc67ea7e77c5e3ba81a3a36ebe66c08e6847a93ade433ab",
-  "notes": "Transfer integrity fault isolation and checksum-failure pausing",
-  "expires_at": "2026-12-25T09:20:38.865644+00:00",
-  "signature": "N2IRST5cwEJAKnhdsSd+RHSYCxEOZlTiRKXWXMZqPX1t3CMgE0DCU8CxE9sgfCTNcFFa5EY2IKvcMva+4LqXBA=="
+  "version": "0.26.54",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.54/TuxInDrive-0.26.54-windows-x64-setup.exe",
+  "sha256": "a6f54ed6878842cc5122b4e9d3cccf504224baeb033bbb81ff23df6c0df3f4e5",
+  "notes": "Accurate provider checksum diagnostics and duplicate-path correlation",
+  "expires_at": "2026-12-25T17:46:40.357447+00:00",
+  "signature": "3v5EdLc/36ySoSbM/IHek9HTA29ZoZIsH2aW8RjCvDDtMp8UySNwbp00vxX6yksOCPrHd8h4Ykh4MWYo8jCkBw=="
 }

@@ -1,8 +1,8 @@
 {
-  "version": "0.26.53",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.53/TuxInDrive-0.26.53-macos-arm64.dmg",
-  "sha256": "8417fa1a9446380cb197ef86c7e070c91b48751caccb2240213e2a3958a1efdb",
-  "notes": "Transfer integrity fault isolation and checksum-failure pausing",
-  "expires_at": "2026-12-25T09:20:38.945319+00:00",
-  "signature": "KDFj0RijSDfOjbKxMZCWvfzMNr1YwgAJKyeprzOMlwyai+BugSghKF1McxiGBw+bH9mPoyBwc9tszRo+p8fBAA=="
+  "version": "0.26.54",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.54/TuxInDrive-0.26.54-macos-arm64.dmg",
+  "sha256": "06eefbe37f97c30731542d1dd2866c103c8f6a34b217331329fe593738e132ff",
+  "notes": "Accurate provider checksum diagnostics and duplicate-path correlation",
+  "expires_at": "2026-12-25T17:46:40.565255+00:00",
+  "signature": "xcCxs1h5FZPFhIb4mz57AZK8ftq1OIBHbas2B7hYCM0zJVeHyo8mIoS2UdyLNBpOUe/RyTW87WYL0D6s/UD5Cg=="
 }

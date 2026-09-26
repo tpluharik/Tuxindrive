@@ -1,8 +1,8 @@
 {
-  "version": "0.26.53",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.53/tuxindrive_0.26.53_all.deb",
-  "sha256": "9a28014de587210b0b42f91ebd6179f4646a2f49608b4fcb864aa36585f73afa",
-  "notes": "Transfer integrity fault isolation and checksum-failure pausing",
-  "expires_at": "2026-12-25T09:20:38.793737+00:00",
-  "signature": "y8ylvfnzKy5jzs3z6PlmStaHNlQkeyVN6adm4vAKqSo7LLfuJ2/IcpNa1bMia3JOMy19CwlLOp/7qqSZsJEqCw=="
+  "version": "0.26.54",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.54/tuxindrive_0.26.54_all.deb",
+  "sha256": "97e58dd0e98cedfa681bfdb45cccef314480d6e8c285fdccb6f35b0b5fac9354",
+  "notes": "Accurate provider checksum diagnostics and duplicate-path correlation",
+  "expires_at": "2026-12-25T17:46:40.157426+00:00",
+  "signature": "QWgGRdanySw75wfDBcpk711SRZH1jmnQNgxh6w4s+vPEcMaIfB3Td8G5dW6nLXL8s0KUabQSZAzzVSWRjqlfCg=="
 }
