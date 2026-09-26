@@ -2,6 +2,15 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.54 — accurate checksum diagnostics
+
+- Correlate cloud duplicate notices with checksum failures by exact provider
+  path instead of presenting unrelated duplicates as the likely cause.
+- Identify repeated, stable metadata/content mismatches as a provider-side
+  inconsistency and make clear that they do not imply a local file edit.
+- Keep unrelated duplicate paths visible as a separate issue while preserving
+  the immediate safety pause and removal of incomplete local copies.
+
 ## 0.26.53 — checksum-failure containment
 
 - Pause a job immediately after a failed transfer checksum instead of spending

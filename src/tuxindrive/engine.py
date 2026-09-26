@@ -739,14 +739,14 @@ class SyncEngine:
                 )
         except OSError:
             return None
-        checksum_paths = {
-            match.group(1).strip()
-            for match in re.finditer(
-                r"(?im)^.*?ERROR\s*:\s*(.+?)\.[0-9a-f]{8,}\.partial:\s*"
-                r"corrupted on transfer:\s*(?:md5|sha1|sha256) hashes differ\b",
-                text,
-            )
-        }
+        checksum_matches = list(re.finditer(
+            r"(?im)^.*?ERROR\s*:\s*(.+?)\.[0-9a-f]{8,}\.partial:\s*"
+            r"corrupted on transfer:\s*(?:md5|sha1|sha256) hashes differ\b"
+            r"(?:.*?src\([^\r\n]*?\)\s*[\"']?([0-9a-f]+)[\"']?\s+vs\s+"
+            r"dst\([^\r\n]*?\)\s*[\"']?([0-9a-f]+)[\"']?)?",
+            text,
+        ))
+        checksum_paths = {match.group(1).strip() for match in checksum_matches}
         if not checksum_paths:
             return None
         source = sorted(checksum_paths)[0]
@@ -765,12 +765,45 @@ class SyncEngine:
             f"{'file did' if count == 1 else 'files did'} not match the provider "
             "checksum. The incomplete local copies were removed."
         )
-        if duplicate_paths:
-            duplicate_count = len(duplicate_paths)
+        stable_mismatches: dict[str, set[tuple[str, str]]] = {}
+        attempts: dict[str, int] = {}
+        for match in checksum_matches:
+            path = match.group(1).strip()
+            attempts[path] = attempts.get(path, 0) + 1
+            if match.group(2) and match.group(3):
+                stable_mismatches.setdefault(path, set()).add(
+                    (match.group(2).lower(), match.group(3).lower())
+                )
+        correlated_duplicates = checksum_paths & duplicate_paths
+        if correlated_duplicates:
+            duplicate_count = len(correlated_duplicates)
+            subject = "path is also" if duplicate_count == 1 else "paths are also"
             message += (
-                f" The cloud listing also contains {duplicate_count} unresolved "
-                f"duplicate {'path' if duplicate_count == 1 else 'paths'}; no cloud "
-                "object was renamed while transfer integrity was uncertain."
+                f" {duplicate_count} affected {subject} "
+                "reported as duplicated by the cloud provider; no cloud object was "
+                "renamed while transfer integrity was uncertain."
+            )
+        repeated_stable = sum(
+            1 for path, pairs in stable_mismatches.items()
+            if path not in correlated_duplicates
+            and attempts.get(path, 0) > 1
+            and len(pairs) == 1
+        )
+        if repeated_stable:
+            message += (
+                f" The provider repeatedly returned the same different content "
+                f"for {repeated_stable} {'path' if repeated_stable == 1 else 'paths'}, "
+                "which indicates a provider metadata/content inconsistency rather "
+                "than a local edit."
+            )
+        unrelated_duplicates = duplicate_paths - checksum_paths
+        if unrelated_duplicates:
+            duplicate_count = len(unrelated_duplicates)
+            pronoun = "it is" if duplicate_count == 1 else "they are"
+            message += (
+                f" Separately, the cloud listing contains {duplicate_count} unrelated "
+                f"duplicate {'path' if duplicate_count == 1 else 'paths'}; {pronoun} not "
+                "identified as the cause of this failure."
             )
         return source, message
 

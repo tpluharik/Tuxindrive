@@ -186,7 +186,7 @@ class SyncEngineCommandTests(unittest.TestCase):
             issue = self.engine._successful_run_log_issue(log, offset)
         self.assertIsNone(issue)
 
-    def test_checksum_cluster_reports_clean_path_and_duplicate_count(self):
+    def test_checksum_cluster_does_not_blame_unrelated_duplicates(self):
         with tempfile.TemporaryDirectory() as temporary:
             log = Path(temporary) / "sync.log"
             log.write_text("ERROR : historical.txt: Failed to copy: old\n", encoding="utf-8")
@@ -206,8 +206,38 @@ class SyncEngineCommandTests(unittest.TestCase):
         self.assertEqual(source, "Google Photos/2016/IMG_0281.JPG")
         self.assertNotIn(".partial", source)
         self.assertIn("2 downloaded files", message)
-        self.assertIn("1 unresolved duplicate path", message)
+        self.assertIn("1 unrelated duplicate path", message)
+        self.assertIn("not identified as the cause", message)
         self.assertIn("incomplete local copies were removed", message)
+
+    def test_checksum_cluster_correlates_only_matching_duplicate_paths(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            log = Path(temporary) / "sync.log"
+            log.write_text(
+                "ERROR : Photos/image.jpg.1234abcd.partial: corrupted on transfer: "
+                "md5 hashes differ src x vs dst y\n"
+                "NOTICE: Photos/image.jpg: Duplicate object found in source - ignoring\n"
+                "NOTICE: Other/report.pdf: Duplicate object found in source - ignoring\n",
+                encoding="utf-8",
+            )
+            issue = self.engine._failed_run_integrity_issue(log, 0)
+        self.assertIsNotNone(issue)
+        self.assertIn("1 affected path is also reported as duplicated", issue[1])
+        self.assertNotIn("2 affected", issue[1])
+
+    def test_repeated_identical_checksum_mismatch_identifies_provider_inconsistency(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            log = Path(temporary) / "sync.log"
+            line = (
+                "ERROR : Photos/image.jpg.1234abcd.partial: corrupted on transfer: "
+                "md5 hashes differ src(Google drive) \"aaaaaaaa\" vs "
+                "dst(Local) \"bbbbbbbb\"\n"
+            )
+            log.write_text(line + line, encoding="utf-8")
+            issue = self.engine._failed_run_integrity_issue(log, 0)
+        self.assertIsNotNone(issue)
+        self.assertIn("provider metadata/content inconsistency", issue[1])
+        self.assertIn("rather than a local edit", issue[1])
 
     def test_historical_checksum_failure_does_not_poison_later_run(self):
         with tempfile.TemporaryDirectory() as temporary:
