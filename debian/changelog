@@ -1,3 +1,10 @@
+tuxindrive (0.26.62-1) unstable; urgency=medium
+
+  * Reclaim transfer slots when a cloud process hangs without producing output.
+  * Keep active provider scans under the existing payload-progress watchdog.
+
+ -- TuxInDrive Maintainers <maintainers@tuxindrive.invalid>  Fri, 02 Oct 2026 21:00:00 +0200
+
 tuxindrive (0.26.61-1) unstable; urgency=medium
 
   * Pin legacy Google AI backups to an explicit My Drive scope.

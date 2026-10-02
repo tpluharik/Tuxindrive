@@ -418,7 +418,7 @@ class SyncEngineCommandTests(unittest.TestCase):
             completed = []
             with patch("tuxindrive.engine.resolve_rclone", return_value="/usr/bin/rclone"), \
                  patch("tuxindrive.engine.subprocess.Popen", return_value=process), \
-                 patch("tuxindrive.engine.time.monotonic", side_effect=[0.0, 1900.0]), \
+                 patch("tuxindrive.engine.time.monotonic", side_effect=[0.0, 0.0, 1900.0]), \
                  patch("tuxindrive.engine.terminate_process") as terminate:
                 self.engine._run_worker(
                     job, Path(temporary) / "sync.log", completed.append, False
@@ -426,6 +426,39 @@ class SyncEngineCommandTests(unittest.TestCase):
             terminate.assert_called_once_with(process)
             self.assertFalse(completed[0].success)
             self.assertIn("30 minutes without payload progress", completed[0].message)
+
+    def test_silent_transfer_is_stopped_without_waiting_for_an_output_line(self):
+        class SilentPipe:
+            def fileno(self):
+                return 7
+
+            def readline(self):
+                raise AssertionError("readline must only run after the pipe is ready")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            local = Path(temporary) / "silent"
+            local.mkdir()
+            job = SyncJob("google", str(local), mode=SyncMode.DOWNLOAD_ONLY)
+            process = MagicMock()
+            process.stdout = SilentPipe()
+            process.poll.return_value = None
+            process.wait.return_value = -15
+            completed = []
+            selector = MagicMock()
+            selector.select.return_value = []
+            with patch("tuxindrive.engine.resolve_rclone", return_value="/usr/bin/rclone"), \
+                 patch("tuxindrive.engine.subprocess.Popen", return_value=process), \
+                 patch("tuxindrive.engine.selectors.DefaultSelector", return_value=selector), \
+                 patch("tuxindrive.engine.time.monotonic", side_effect=[0.0, 121.0]), \
+                 patch("tuxindrive.engine.terminate_process") as terminate:
+                self.engine._run_worker(
+                    job, Path(temporary) / "sync.log", completed.append, False
+                )
+            terminate.assert_called_once_with(process)
+            selector.close.assert_called_once()
+            self.assertFalse(completed[0].success)
+            self.assertIn("2 minutes without status output", completed[0].message)
+            self.assertIn("queue slot was recovered automatically", completed[0].message)
 
     def test_duplicate_destination_preserves_parent_and_extension(self):
         destination = self.engine._duplicate_destination(
@@ -704,14 +737,15 @@ class SyncEngineCommandTests(unittest.TestCase):
             process = MagicMock()
             process.wait.return_value = 0
 
-            def fail_preview(_command, **kwargs):
-                kwargs["stdout"].write(
+            def fail_preview(_command, preview_path):
+                preview_path.write_text(
                     "Bisync critical error: cannot find prior Path1 or Path2 listings\n"
+                    , encoding="utf-8"
                 )
-                return MagicMock(returncode=1)
+                return 1
 
             with patch("tuxindrive.engine.resolve_rclone", return_value="/usr/bin/rclone"), \
-                 patch("tuxindrive.engine.subprocess.run", side_effect=fail_preview), \
+                 patch.object(self.engine, "_run_safety_preview", side_effect=fail_preview), \
                  patch("tuxindrive.engine.subprocess.Popen", return_value=process) as popen:
                 self.engine._run_worker(
                     job, Path(temporary) / "sync.log", completed.append, False
@@ -735,12 +769,14 @@ class SyncEngineCommandTests(unittest.TestCase):
             (workdir / "sync.path2.lst").write_text("remote", encoding="utf-8")
             completed = []
 
-            def fail_preview(_command, **kwargs):
-                kwargs["stdout"].write("Failed to create file system: invalid_grant\n")
-                return MagicMock(returncode=1)
+            def fail_preview(_command, preview_path):
+                preview_path.write_text(
+                    "Failed to create file system: invalid_grant\n", encoding="utf-8"
+                )
+                return 1
 
             with patch("tuxindrive.engine.resolve_rclone", return_value="/usr/bin/rclone"), \
-                 patch("tuxindrive.engine.subprocess.run", side_effect=fail_preview), \
+                 patch.object(self.engine, "_run_safety_preview", side_effect=fail_preview), \
                  patch("tuxindrive.engine.subprocess.Popen") as popen:
                 self.engine._run_worker(
                     job, Path(temporary) / "sync.log", completed.append, False
@@ -748,6 +784,48 @@ class SyncEngineCommandTests(unittest.TestCase):
             popen.assert_not_called()
             self.assertFalse(completed[0].success)
             self.assertIn("safety preview could not be completed", completed[0].message)
+
+    def test_silent_safety_preview_is_stopped_and_releases_its_slot(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            process = MagicMock()
+            process.poll.return_value = None
+            process.wait.return_value = -15
+            preview = Path(temporary) / "preview.log"
+            self.engine._NO_OUTPUT_TIMEOUT_SECONDS = 0.001
+            with patch("tuxindrive.engine.subprocess.Popen", return_value=process), \
+                 patch("tuxindrive.engine.time.sleep"), \
+                 patch("tuxindrive.engine.time.monotonic", side_effect=[0.0, 1.0]), \
+                 patch("tuxindrive.engine.terminate_process") as terminate:
+                with self.assertRaisesRegex(RuntimeError, "queue slot was recovered"):
+                    self.engine._run_safety_preview(["rclone", "bisync"], preview)
+            terminate.assert_called_once_with(process)
+            self.assertIn("No provider output", preview.read_text(encoding="utf-8"))
+
+    def test_safety_preview_uses_verified_baseline_without_walking_local_tree(self):
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(
+            os.environ, {"XDG_DATA_HOME": f"{temporary}/data"},
+        ):
+            local = Path(temporary) / "local"
+            local.mkdir()
+            job = SyncJob("one", str(local), initialized=True)
+            workdir = self.engine._prepare_bisync_workdir(job)
+            (workdir / "sync.path1.lst").write_text("local", encoding="utf-8")
+            (workdir / "sync.path2.lst").write_text("remote", encoding="utf-8")
+            process = MagicMock()
+            process.stdout = io.StringIO("")
+            process.wait.return_value = 0
+            completed = []
+            with patch("tuxindrive.engine.resolve_rclone", return_value="/usr/bin/rclone"), \
+                 patch.object(self.engine, "_run_safety_preview", return_value=0), \
+                 patch.object(self.engine, "_bisync_local_snapshot", return_value={"one": MagicMock()}), \
+                 patch.object(Path, "rglob", side_effect=AssertionError("unbounded local walk")), \
+                 patch("tuxindrive.engine.subprocess.Popen", return_value=process), \
+                 patch.object(self.engine, "_post_sync_listing_issue", return_value=None), \
+                 patch.object(self.engine, "_verified_remote_snapshot", return_value={}):
+                self.engine._run_worker(
+                    job, Path(temporary) / "sync.log", completed.append, False
+                )
+            self.assertTrue(completed[0].success)
 
     def test_peer_lease_metadata_is_never_synchronized_as_user_content(self):
         job = SyncJob(account_remote="peer-team", local_path="/data/Team", peer_leases=True)

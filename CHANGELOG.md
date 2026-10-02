@@ -2,6 +2,14 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.62 — self-recovering transfer queue
+
+- Supervise active cloud processes independently of their log output so a
+  completely silent provider hang can no longer occupy a transfer slot forever.
+- Stop a silent transfer after two minutes, return its slot automatically, and
+  report a clear retryable failure while retaining the longer payload-progress
+  window for providers that are still reporting scan or check activity.
+
 ## 0.26.59 — optional manual-only AI backups
 
 - Allow new and existing AI-tool backups to operate in a manual-only mode that

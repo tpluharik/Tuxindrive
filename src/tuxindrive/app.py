@@ -6035,6 +6035,7 @@ class TuxInDriveApplication(Gtk.Application):
         self.managed_policy.apply(self.config.settings)
         self.bandwidth = GlobalBandwidthController(
             self.config.settings.global_bandwidth_limit,
+            max_active=SyncEngine._MAX_ACTIVE_TRANSFERS,
             automatic=self.config.settings.automatic_bandwidth_control,
             headroom_percent=self.config.settings.bandwidth_headroom_percent,
         )

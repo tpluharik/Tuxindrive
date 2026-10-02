@@ -89,6 +89,7 @@ def parse_rclone_progress(line: str) -> int | None:
 class SyncEngine:
     _MAX_ACTIVE_TRANSFERS = 2
     _QUEUE_TIMEOUT_SECONDS = 600.0
+    _NO_OUTPUT_TIMEOUT_SECONDS = 120.0
     _NO_PROGRESS_TIMEOUT_SECONDS = 1800.0
     _STALE_GOOGLE_ERROR_LIMIT = 10
     _MAX_DUPLICATE_RECOVERY_ATTEMPTS = 5
@@ -2436,19 +2437,33 @@ class SyncEngine:
             ):
                 preview_path = log_path.with_name(log_path.stem + "-safety-preview.log")
                 preview_command = self.command_for_job(job, dry_run=True)
-                with preview_path.open("w", encoding="utf-8") as preview:
-                    preview_process = subprocess.run(
-                        preview_command, stdout=preview, stderr=subprocess.STDOUT,
-                        text=True, timeout=3600, check=False,
-                    )
+                preview_returncode = self._run_safety_preview(
+                    preview_command, preview_path
+                )
                 self._record_network(job.id)
-                if preview_process.returncode != 0:
+                if preview_returncode != 0:
                     if self._missing_bisync_state(preview_path):
                         auto_reinitialize = True
                     else:
                         raise RuntimeError("the safety preview could not be completed; the real sync was not started")
                 else:
-                    total_files = sum(1 for item in job.local.rglob("*") if item.is_file())
+                    # Never recursively walk the live local tree while holding
+                    # a global transfer slot. A disconnected nested mount or
+                    # provider-backed folder can block stat/rglob forever. For
+                    # bisync, its verified path1 listing is the authoritative
+                    # pre-run file count. One-way jobs use a conservative
+                    # threshold-sized denominator; deletion-count and
+                    # suspicious-extension protections remain independent.
+                    baseline = (
+                        self._bisync_local_snapshot(job)
+                        if job.mode is SyncMode.TWO_WAY
+                        else None
+                    )
+                    total_files = (
+                        len(baseline)
+                        if baseline is not None
+                        else max(20, job.mass_change_limit)
+                    )
                     decision = MassChangeGuard.assess_log(job, preview_path, total_files)
                     if decision.blocked:
                         callback(JobResult(
@@ -2500,10 +2515,64 @@ class SyncEngine:
                 self._record_network(job.id)
                 assert process.stdout is not None
                 last_transfer_progress = time.monotonic()
+                last_process_output = last_transfer_progress
                 progress_marker: tuple[str, str] | None = None
                 stale_google_errors = 0
                 no_progress_timeout = False
-                for line in process.stdout:
+                stalled_reason = ""
+                # A plain ``for line in process.stdout`` blocks indefinitely
+                # when a provider hangs without writing another status line.
+                # Poll real process pipes so the inactivity watchdog remains
+                # independent of rclone output and can always release the
+                # global transfer slot.  StringIO-like streams are retained as
+                # a synchronous fallback for tests and embedded callers.
+                try:
+                    process.stdout.fileno()
+                except (AttributeError, OSError, ValueError):
+                    output_lines = iter(process.stdout)
+                    selector = None
+                else:
+                    selector = selectors.DefaultSelector()
+                    selector.register(process.stdout, selectors.EVENT_READ)
+                    output_lines = None
+                while True:
+                    if selector is None:
+                        try:
+                            line = next(output_lines)  # type: ignore[arg-type]
+                        except StopIteration:
+                            break
+                    else:
+                        ready = selector.select(0.5)
+                        if not ready:
+                            if process.poll() is not None:
+                                break
+                            if time.monotonic() - last_process_output >= self._NO_OUTPUT_TIMEOUT_SECONDS:
+                                no_progress_timeout = True
+                                stalled_reason = "2 minutes without status output"
+                                log.write(
+                                    "No provider output for 2 minutes; stopping the silent "
+                                    "transfer so the queue slot is recovered.\n"
+                                )
+                                log.flush()
+                                terminate_process(process)
+                                break
+                            if time.monotonic() - last_transfer_progress >= self._NO_PROGRESS_TIMEOUT_SECONDS:
+                                no_progress_timeout = True
+                                stalled_reason = "30 minutes without payload progress"
+                                log.write(
+                                    "No payload progress for 30 minutes; stopping the transfer "
+                                    "so it cannot remain active indefinitely.\n"
+                                )
+                                log.flush()
+                                terminate_process(process)
+                                break
+                            continue
+                        line = process.stdout.readline()
+                        if not line:
+                            if process.poll() is not None:
+                                break
+                            continue
+                    last_process_output = time.monotonic()
                     log.write(line)
                     progress = parse_rclone_progress(line)
                     if progress is not None:
@@ -2525,12 +2594,15 @@ class SyncEngine:
                             break
                     if time.monotonic() - last_transfer_progress >= self._NO_PROGRESS_TIMEOUT_SECONDS:
                         no_progress_timeout = True
+                        stalled_reason = "30 minutes without payload progress"
                         log.write(
                             "No payload progress for 30 minutes; stopping the transfer "
                             "so it cannot remain active indefinitely.\n"
                         )
                         terminate_process(process)
                         break
+                if selector is not None:
+                    selector.close()
                 return_code = process.wait()
                 cancelled = return_code in (-signal.SIGTERM, 143) and not no_progress_timeout
                 log.write(f"[{datetime.now(timezone.utc).isoformat()}] Exit {return_code}\n")
@@ -2648,8 +2720,9 @@ class SyncEngine:
                 if no_progress_timeout:
                     error_source = "account root"
                     message = (
-                        "Synchronization stopped after 30 minutes without payload "
-                        "progress; verify network and cloud destination, then retry"
+                        f"Synchronization stopped after {stalled_reason}; the transfer "
+                        "queue slot was recovered automatically. Verify network and "
+                        "cloud destination, then retry"
                     )
                 elif integrity_issue is not None:
                     error_source, message = integrity_issue
@@ -2673,6 +2746,44 @@ class SyncEngine:
             with self._lock:
                 self._processes.pop(job.id, None)
         callback(result)
+
+    def _run_safety_preview(self, command: list[str], log_path: Path) -> int:
+        """Run a dry-run preview without allowing silence to hold a slot.
+
+        The preview runs before the normal transfer supervisor.  It therefore
+        needs its own inactivity guard; a total-duration timeout would abort
+        legitimate large previews that continue to report scan progress.
+        """
+        prepare_private_file(log_path)
+        with log_path.open("w", encoding="utf-8") as preview:
+            process = subprocess.Popen(
+                command,
+                stdout=preview,
+                stderr=subprocess.STDOUT,
+                text=True,
+                **new_process_group(),
+            )
+            last_size = 0
+            last_output = time.monotonic()
+            while process.poll() is None:
+                size = os.fstat(preview.fileno()).st_size
+                if size != last_size:
+                    last_size = size
+                    last_output = time.monotonic()
+                elif time.monotonic() - last_output >= self._NO_OUTPUT_TIMEOUT_SECONDS:
+                    preview.write(
+                        "\nNo provider output for 2 minutes during the safety preview; "
+                        "stopping it so the transfer queue slot is recovered.\n"
+                    )
+                    preview.flush()
+                    terminate_process(process)
+                    process.wait()
+                    raise RuntimeError(
+                        "the safety preview stopped after 2 minutes without provider "
+                        "output; its queue slot was recovered automatically"
+                    )
+                time.sleep(0.5)
+            return process.wait()
 
     def _set_current_process(self, job_id: str, process: subprocess.Popen[str]) -> None:
         with self._lock:
