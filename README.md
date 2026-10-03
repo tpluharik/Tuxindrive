@@ -32,7 +32,10 @@ signing is restricted to verified GitHub-hosted builds and manual approval.
 
 The primary TuxInDrive identity is the penguin inside a white circle with a red bow tie. The artwork outside the source circle and its former wording are not part of the application brand. The same mark is embedded in the GTK header and dialogs, Linux icon theme, Windows executable and installer, macOS application bundle, Android adaptive/themed launcher icon, repository overview, and user documentation.
 
-Version 0.26.63 lets new and existing AI-tool backups run manually without
+Version 0.26.64 keeps active AI-tool backups running when compact rclone
+statistics omit the legacy transfer counter, and adds direct local/provider
+location actions to synchronized-folder search. New and existing AI-tool
+backups can also run manually without
 automatic scheduling. **Manual only** jobs stay enabled, remain incremental,
 and run exclusively through **Sync now**; the job card and editor show the
 selected mode clearly. The Google Drive stale-directory recovery introduced in
@@ -128,7 +131,7 @@ TuxInDrive is publicly readable. Direct repository writes remain restricted to m
 - [Contribution guide](CONTRIBUTING.md)
 - [Code of conduct](CODE_OF_CONDUCT.md)
 
-The current 0.26.63 desktop targets Ubuntu 24.04/26.04, Debian 12/13, Windows 10/11 x64 and macOS 12+; Android 8+ uses its native mobile interface. The main window remains freely resizable; settings and other dialogs open at a monitor-safe maximum and keep oversized controls reachable through local scrolling. **Nordic Glass**, **Bento Cloud**, and **Midnight Sync** are persistent visual designs. By default every layout follows the desktop dark-mode preference while retaining its layout; this can be disabled in Settings. Account and folder grouping/reordering changes only interface metadata, while explicit offline/online-only controls, streaming mounts, GitHub synchronization, searchable offline help, private cross-folder search with cancellable indexed queries, opt-in local content indexing and default-off previews, six-language localization and functional Nautilus badges preserve their established behavior.
+The current 0.26.64 desktop targets Ubuntu 24.04/26.04, Debian 12/13, Windows 10/11 x64 and macOS 12+; Android 8+ uses its native mobile interface. The main window remains freely resizable; settings and other dialogs open at a monitor-safe maximum and keep oversized controls reachable through local scrolling. **Nordic Glass**, **Bento Cloud**, and **Midnight Sync** are persistent visual designs. By default every layout follows the desktop dark-mode preference while retaining its layout; this can be disabled in Settings. Account and folder grouping/reordering changes only interface metadata, while explicit offline/online-only controls, streaming mounts, GitHub synchronization, searchable offline help, private cross-folder search with cancellable indexed queries, direct local/provider location actions, opt-in local content indexing and default-off previews, six-language localization and functional Nautilus badges preserve their established behavior.
 
 Idle and active traffic share one global controller. Event-driven local monitoring, adaptive remote backoff, bounded jitter, atomic incremental admission, unchanged-state write suppression, visibility-aware network/log rendering and conservative pin-aware cache limits reduce background work without weakening reconciliation, signed updates, mass-change protection, conflict handling or path confinement. A local collaboration host selects a folder and advertises it on the LAN; no file endpoint starts until the owner approves the requesting device fingerprint.
 
@@ -142,7 +145,7 @@ Proton Drive uses Proton's official browser-authenticated CLI on supported Linux
 - Android update downloads remain signature/digest bound, accept only explicit HTTPS GitHub release redirect origins, are installed from a durable atomic cache file, and request sideload permission only in the sideload build. The sideload app now checks automatically, respects network/battery constraints, and notifies the user before Android's mandatory installer approval.
 - The complete control inventory, upgrade procedure, credential migration behavior, residual risks, and operator checklist are in the [security-hardening guide](docs/SECURITY_HARDENING.md).
 
-The following controls are enforced in 0.26.63:
+The following controls are enforced in 0.26.64:
 
 - Signed and expiring update manifests are verified in both the desktop process and a fixed privileged helper. The helper stages the package in a root-only directory and rechecks its digest and Debian identity before APT executes it.
 - Tor-only/no-public-IP shares bind SFTP to loopback, and protocol-v5 invitations carry an explicit transport allowlist so direct-only and no-relay policies cannot silently fall back.
@@ -281,12 +284,12 @@ TuxInDrive Profile links the application to an existing Google Drive, OneDrive, 
 
 | Platform | Package | Notes |
 | --- | --- | --- |
-| Ubuntu/Debian | `tuxindrive_0.26.63_all.deb` | Signed in-app Debian updates remain supported. |
-| Ubuntu/Debian Server | `tuxindrive-server_0.26.63_all.deb` | Separate preview service; explicit enablement, bearer token, and TLS for remote access. |
+| Ubuntu/Debian | `tuxindrive_0.26.64_all.deb` | Signed in-app Debian updates remain supported. |
+| Ubuntu/Debian Server | `tuxindrive-server_0.26.64_all.deb` | Separate preview service; explicit enablement, bearer token, and TLS for remote access. |
 | Ubuntu/Debian Network Lab | `tuxindrive-network-lab_0.26.31+lab5_all.deb` | Separate local release with 19 functional scenarios, visual topology and real multi-address loopback traffic. |
-| Windows 10/11 x64 | `TuxInDrive-0.26.63-windows-x64-setup.exe` | Same GTK desktop UI; install WinFsp for streaming drives. |
-| macOS 12+ | `TuxInDrive-0.26.63-macos-*.dmg` | Same GTK desktop UI; install macFUSE for streaming drives. |
-| Android 8+ | `TuxInDrive-0.26.63-android.apk` | Native phone/tablet UI, SAF folder access and OS-managed background sync. |
+| Windows 10/11 x64 | `TuxInDrive-0.26.64-windows-x64-setup.exe` | Same GTK desktop UI; install WinFsp for streaming drives. |
+| macOS 12+ | `TuxInDrive-0.26.64-macos-*.dmg` | Same GTK desktop UI; install macFUSE for streaming drives. |
+| Android 8+ | `TuxInDrive-0.26.64-android.apk` | Native phone/tablet UI, SAF folder access and OS-managed background sync. |
 
 ### Ubuntu and Debian
 
@@ -305,7 +308,7 @@ commands are named TuxInDrive. Alternatively, download the release `.deb` and
 run:
 
 ```bash
-sudo apt install ./tuxindrive_0.26.63_all.deb
+sudo apt install ./tuxindrive_0.26.64_all.deb
 ```
 
 Open **TuxInDrive** from the application menu. Choose **Connect account**, select a provider, and complete its guided authorization. Then add a local synchronized folder or virtual drive. The same visual cloud tree and multi-folder selection are used for supported storage providers; GitHub uses a dedicated repository/branch/local-folder dialog.
@@ -315,7 +318,7 @@ and keep the required `./` local-file prefix:
 
 ```bash
 cd ~/Downloads
-sudo apt install ./tuxindrive-server_0.26.63_all.deb
+sudo apt install ./tuxindrive-server_0.26.64_all.deb
 ```
 
 Continue with the bootstrap token, service start, local health check, TLS rules,
@@ -340,7 +343,7 @@ Maintainers can produce a signed Launchpad source upload with
 Launchpad receives source packages and builds the final binaries inside the
 matching Ubuntu series.
 
-The Debian installers are written to `dist/tuxindrive_0.26.63_all.deb` and `dist/tuxindrive-server_0.26.63_all.deb`. The independently versioned Network Lab build writes `dist/tuxindrive-network-lab_0.26.31+lab5_all.deb`. Windows, macOS and Android artifacts are built by `.github/workflows/platform-packages.yml` on their native build hosts. Durable product packages are attached to the matching GitHub Release; the lab uses its own `network-lab-v*` release. Dedicated signed client channel manifests and package-location pointers live under [`releases/`](releases/README.md).
+The Debian installers are written to `dist/tuxindrive_0.26.64_all.deb` and `dist/tuxindrive-server_0.26.64_all.deb`. The independently versioned Network Lab build writes `dist/tuxindrive-network-lab_0.26.31+lab5_all.deb`. Windows, macOS and Android artifacts are built by `.github/workflows/platform-packages.yml` on their native build hosts. Durable product packages are attached to the matching GitHub Release; the lab uses its own `network-lab-v*` release. Dedicated signed client channel manifests and package-location pointers live under [`releases/`](releases/README.md).
 
 ### Local-first collaborative documents
 

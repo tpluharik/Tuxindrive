@@ -7,7 +7,15 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.61
+## Current baseline: 0.26.64
+
+### Completed in 0.26.64: reliable backup progress and search locations
+
+- Treat changing compact rclone byte counters as real payload progress even
+  when the legacy transfer-count suffix is absent.
+- Keep idle zero-byte mount telemetry distinct from an active transfer.
+- Open either the validated local containing folder or the matching provider
+  location directly from synchronized-folder search results.
 
 ### Completed in 0.26.61: bounded Google AI backup recovery
 

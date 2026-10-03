@@ -3210,10 +3210,26 @@ class SyncEngine:
     @staticmethod
     def _transfer_progress_marker(line: str) -> tuple[str, str] | None:
         match = re.search(
-            r"([0-9]+(?:\.[0-9]+)?)\s+[KMGTPE]?i?B\s*/.*?\(xfr#(\d+)",
+            r"([0-9]+(?:\.[0-9]+)?)\s+([KMGTPE]?i?B)\s*/\s*"
+            r"([0-9]+(?:\.[0-9]+)?)\s+([KMGTPE]?i?B)",
             line,
         )
-        return match.groups() if match else None
+        if not match:
+            return None
+        transferred, transferred_unit, total, total_unit = match.groups()
+        transfer_match = re.search(r"\(xfr#(\d+)", line)
+        transfer_count = transfer_match.group(1) if transfer_match else None
+        # An idle mount emits ``0 B / 0 B`` forever and a queued transfer can
+        # emit ``0 B / <total>``.  Neither is payload progress.  Current rclone
+        # releases omit the older ``(xfr#N/...)`` suffix from compact one-line
+        # stats, so use the byte counter itself as the primary monotonic marker
+        # and retain the transfer counter (or total) only as a discriminator.
+        if float(transferred) == 0:
+            return ("0", "0")
+        return (
+            f"{transferred} {transferred_unit}",
+            transfer_count or f"{total} {total_unit}",
+        )
 
     @staticmethod
     def _blocked_google_path(log_path: Path) -> str:

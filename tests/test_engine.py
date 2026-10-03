@@ -427,6 +427,35 @@ class SyncEngineCommandTests(unittest.TestCase):
             self.assertFalse(completed[0].success)
             self.assertIn("30 minutes without payload progress", completed[0].message)
 
+    def test_compact_rclone_stats_without_transfer_counter_record_progress(self):
+        first = self.engine._transfer_progress_marker(
+            "2026/10/03 13:09:23 INFO  : 1.287 GiB / 6.102 GiB, "
+            "21%, 681.383 KiB/s, ETA 2h3m30s"
+        )
+        second = self.engine._transfer_progress_marker(
+            "2026/10/03 13:09:28 INFO  : 1.290 GiB / 6.102 GiB, "
+            "21%, 682.442 KiB/s, ETA 2h3m14s"
+        )
+        self.assertIsNotNone(first)
+        self.assertIsNotNone(second)
+        self.assertNotEqual(first, second)
+
+    def test_idle_mount_stats_are_not_payload_progress(self):
+        self.assertEqual(
+            self.engine._transfer_progress_marker(
+                "2026/10/03 13:17:08 INFO  : 0 B / 0 B, -, 0 B/s, ETA -"
+            ),
+            ("0", "0"),
+        )
+
+    def test_legacy_transfer_counter_remains_part_of_progress_marker(self):
+        self.assertEqual(
+            self.engine._transfer_progress_marker(
+                "INFO : 12 MiB / 48 MiB, 25%, 2 MiB/s (xfr#3/9)"
+            ),
+            ("12 MiB", "3"),
+        )
+
     def test_silent_transfer_is_stopped_without_waiting_for_an_output_line(self):
         class SilentPipe:
             def fileno(self):

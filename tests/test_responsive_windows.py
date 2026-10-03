@@ -55,6 +55,10 @@ class ResponsiveWindowTests(unittest.TestCase):
         self.assertIn("if self.preview_enabled.get_active()", dialog)
         self.assertIn("self._resolved_result(result)", dialog)
         self.assertIn("result.local_path.resolve(strict=True)", dialog)
+        self.assertIn('Gtk.Button(label="Open local location")', dialog)
+        self.assertIn('Gtk.Button(label="Open online location")', dialog)
+        self.assertIn("location = target if result.is_directory else target.parent", dialog)
+        self.assertIn("self.controller._open_online_path(str(target))", dialog)
         self.assertIn('"edit-find-symbolic"', source)
 
     def test_job_error_details_do_not_open_the_conflict_scanner(self) -> None:

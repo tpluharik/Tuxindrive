@@ -2,6 +2,14 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.64 — reliable backup progress and searchable locations
+
+- Keep active AI backups alive when current compact rclone statistics omit the
+  legacy transfer counter, while continuing to reject idle `0 B / 0 B` output
+  as payload progress.
+- Add **Open local location** and **Open online location** actions to private
+  synchronized-folder search results, with synchronized-root path validation.
+
 ## 0.26.63 — clear and cancellable scheduling
 
 - Present pending work as scheduled rather than failed or stuck, including its

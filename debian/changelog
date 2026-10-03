@@ -1,3 +1,10 @@
+tuxindrive (0.26.64-1) unstable; urgency=medium
+
+  * Recognize payload progress in compact rclone output without xfr counters.
+  * Open local and provider locations directly from synchronized-folder search.
+
+ -- TuxInDrive Maintainers <maintainers@tuxindrive.invalid>  Sat, 03 Oct 2026 14:00:00 +0200
+
 tuxindrive (0.26.63-1) unstable; urgency=medium
 
   * Replace ambiguous queue waiting with scheduled transfer states.

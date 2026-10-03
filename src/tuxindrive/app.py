@@ -3619,6 +3619,22 @@ class FolderSearchDialog(ResponsiveDialog):
         open_button = Gtk.Button(label="Open selected")
         open_button.connect("clicked", lambda _button: self._open_selected())
         footer.pack_end(open_button, False, False, 0)
+        online_location = Gtk.Button(label="Open online location")
+        online_location.set_tooltip_text(
+            "Open the matching file or folder in the storage provider"
+        )
+        online_location.connect(
+            "clicked", lambda _button: self._open_selected_online_location()
+        )
+        footer.pack_end(online_location, False, False, 0)
+        local_location = Gtk.Button(label="Open local location")
+        local_location.set_tooltip_text(
+            "Open the containing local folder without reading the file"
+        )
+        local_location.connect(
+            "clicked", lambda _button: self._open_selected_local_location()
+        )
+        footer.pack_end(local_location, False, False, 0)
         content.pack_start(footer, False, False, 0)
         self.status.set_text(f"{self.controller.search_index.count()} indexed items. Type to search.")
         self.show_all()
@@ -3845,6 +3861,35 @@ class FolderSearchDialog(ResponsiveDialog):
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
+
+    def _open_selected_local_location(self) -> None:
+        result = self._selected_result()
+        if result is None:
+            self.status.set_text("Select a result first.")
+            return
+        try:
+            target = self._resolved_result(result)
+        except (OSError, ValueError) as exc:
+            self.status.set_text(f"This item is no longer available locally: {exc}")
+            return
+        location = target if result.is_directory else target.parent
+        subprocess.Popen(
+            _desktop_open_command(str(location)),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+    def _open_selected_online_location(self) -> None:
+        result = self._selected_result()
+        if result is None:
+            self.status.set_text("Select a result first.")
+            return
+        try:
+            target = self._resolved_result(result)
+        except (OSError, ValueError) as exc:
+            self.status.set_text(f"This item is no longer available locally: {exc}")
+            return
+        self.controller._open_online_path(str(target))
 
 
 class CloudTransferDialog(ResponsiveDialog):
