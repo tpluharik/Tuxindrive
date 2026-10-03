@@ -1,8 +1,8 @@
 {
-  "version": "0.26.61",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.61/TuxInDrive-0.26.61-android.apk",
-  "sha256": "ac632c676039604cee5ee92fa3a6d0947eb0cbd982b18765f2039b79db3c1434",
-  "notes": "Google AI backup destination recovery and bounded no-progress protection",
-  "expires_at": "2026-12-28T07:52:52.087724+00:00",
-  "signature": "sUhNSj28dFFG145Hpi6ur9Iz07cl6pSnrkIE65Yy1GPWF2iFgZ9Gl5NR4bOp769ynFFAKBeCdHZ2a+M7iCamDg=="
+  "version": "0.26.63",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.63/TuxInDrive-0.26.63-android.apk",
+  "sha256": "879fcda0fe575275f25246d20e0839013a9ac6d44697991458ccac68b03232aa",
+  "notes": "Clear cancellable scheduling with manual priority and reliable queue recovery",
+  "expires_at": "2027-01-01T08:34:34.669463+00:00",
+  "signature": "n42IqrJevZTbfGOn5aO/jW8fkSNXBXuZr2bXWB9bJMr2T8I+eincYFKRZVkfGRWq95m4M2+Kw0KGjO25sxHdAA=="
 }

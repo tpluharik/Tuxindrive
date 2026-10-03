@@ -1,8 +1,8 @@
 {
-  "version": "0.26.61",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.61/TuxInDrive-0.26.61-windows-x64-setup.exe",
-  "sha256": "d347d9a8a40b0d998111a99b7942470e1ab36c87a11faf7ae1cdc9cc7a2e675b",
-  "notes": "Google AI backup destination recovery and bounded no-progress protection",
-  "expires_at": "2026-12-28T07:52:51.759955+00:00",
-  "signature": "jSBkKVh7d2AOj6CgSNYh4QbnX1wMTVyxrlBH8kS+5165dIp9ZSn9UXNBwbW/y77RioSkKYSJ8ud52+QkFjS5CA=="
+  "version": "0.26.63",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.63/TuxInDrive-0.26.63-windows-x64-setup.exe",
+  "sha256": "1ad5ae7c7304a401a65ebf384aca24b0bbbdea6d52b8d02739ef9bff61904095",
+  "notes": "Clear cancellable scheduling with manual priority and reliable queue recovery",
+  "expires_at": "2027-01-01T08:34:34.340249+00:00",
+  "signature": "ZF6c9ZYsVs1dOAo8ot3qtN2i4SZ19pYtxwEr6HWAwekQyrQynAZUwMjvgwNjh++X9pkeYmugq46mjdMTnruXBg=="
 }
