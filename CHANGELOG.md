@@ -2,6 +2,15 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.63 — clear and cancellable scheduling
+
+- Present pending work as scheduled rather than failed or stuck, including its
+  position and the names of active transfers.
+- Give manual **Sync now** requests priority, allow scheduled requests to be
+  cancelled, and keep them pending safely instead of failing after ten minutes.
+- Start automatic work gradually and expose distinct checking, transferring,
+  verifying and completion states while streaming mounts remain independent.
+
 ## 0.26.62 — self-recovering transfer queue
 
 - Supervise active cloud processes independently of their log output so a

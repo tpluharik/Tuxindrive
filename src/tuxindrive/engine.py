@@ -88,7 +88,6 @@ def parse_rclone_progress(line: str) -> int | None:
 
 class SyncEngine:
     _MAX_ACTIVE_TRANSFERS = 2
-    _QUEUE_TIMEOUT_SECONDS = 600.0
     _NO_OUTPUT_TIMEOUT_SECONDS = 120.0
     _NO_PROGRESS_TIMEOUT_SECONDS = 1800.0
     _STALE_GOOGLE_ERROR_LIMIT = 10
@@ -110,6 +109,7 @@ class SyncEngine:
         self.rclone_path = rclone_path
         self._processes: dict[str, subprocess.Popen[str]] = {}
         self._active_jobs: set[str] = set()
+        self._admitted_jobs: set[str] = set()
         self._waiting_jobs: set[str] = set()
         self._waiting_order: list[str] = []
         self._waiting_since: dict[str, float] = {}
@@ -136,6 +136,7 @@ class SyncEngine:
         self._callback_baselines: dict[str, dict[str, FileState]] = {}
         self._traffic_totals: dict[str, tuple[int, int]] = {}
         self._job_progress: dict[str, int] = {}
+        self._job_phases: dict[str, str] = {}
         self._streaming_refresh_mode = "balanced"
         self._cache_watchers: dict[str, InotifyTreeMonitor] = {}
         self._cache_cleanup_state: dict[str, tuple[int, int, bool, int]] = {}
@@ -180,6 +181,15 @@ class SyncEngine:
                 position = 1
             waited = int(max(0.0, time.monotonic() - self._waiting_since.get(job_id, time.monotonic())))
             return position, waited
+
+    def job_phase(self, job_id: str) -> str | None:
+        with self._lock:
+            return self._job_phases.get(job_id)
+
+    @property
+    def active_transfer_jobs(self) -> set[str]:
+        with self._lock:
+            return set(self._admitted_jobs) | set(self._incremental_jobs)
 
     def finalize_traffic(self, job_id: str, log_path: Path) -> tuple[int, int]:
         """Accumulate rclone's final payload counter without logging secrets."""
@@ -1537,6 +1547,7 @@ class SyncEngine:
         job: SyncJob,
         callback: Callable[[JobResult], None],
         dry_run: bool = False,
+        priority: int = 1,
     ) -> bool:
         if self._job_backends.get(job.id) == "proton_cli" and job.mode is SyncMode.VIRTUAL_DRIVE:
             callback(JobResult(
@@ -1575,7 +1586,8 @@ class SyncEngine:
             self._waiting_jobs.add(job.id)
             self._waiting_order.append(job.id)
             self._waiting_since[job.id] = time.monotonic()
-            self._waiting_priority[job.id] = 0 if job.is_ai_backup else 1
+            self._waiting_priority[job.id] = max(0, int(priority))
+            self._job_phases[job.id] = "scheduled"
             self._cancelled_queued_jobs.discard(job.id)
         log_path = self._log_path(job)
         thread = threading.Thread(
@@ -1623,8 +1635,8 @@ class SyncEngine:
             )
             with self.bandwidth.guard(
                 exclusive=exclusive,
-                priority=0 if job.is_ai_backup else 1,
-                timeout=self._QUEUE_TIMEOUT_SECONDS,
+                priority=self._waiting_priority.get(job.id, 1),
+                cancelled=lambda: job.id in self._cancelled_queued_jobs,
             ):
                 with self._lock:
                     self._waiting_jobs.discard(job.id)
@@ -1634,25 +1646,27 @@ class SyncEngine:
                     self._waiting_priority.pop(job.id, None)
                     cancelled = job.id in self._cancelled_queued_jobs
                     self._cancelled_queued_jobs.discard(job.id)
+                    self._admitted_jobs.add(job.id)
+                    self._job_phases[job.id] = "checking"
                 if cancelled:
                     callback(JobResult(job.id, False, "Synchronization cancelled", log_path, True))
                     return
                 self._run_worker(job, log_path, callback, dry_run)
-        except TimeoutError:
+        except InterruptedError:
             callback(JobResult(
-                job.id, False,
-                "Synchronization could not start because the transfer queue was busy for 10 minutes; the slot was released and the job can be retried.",
-                log_path,
+                job.id, False, "Scheduled synchronization cancelled", log_path, True,
             ))
         finally:
             with self._lock:
                 self._active_jobs.discard(job.id)
+                self._admitted_jobs.discard(job.id)
                 self._waiting_jobs.discard(job.id)
                 if job.id in self._waiting_order:
                     self._waiting_order.remove(job.id)
                 self._waiting_since.pop(job.id, None)
                 self._waiting_priority.pop(job.id, None)
                 self._cancelled_queued_jobs.discard(job.id)
+                self._job_phases.pop(job.id, None)
 
     def cancel(self, job_id: str) -> bool:
         with self._lock:
@@ -2512,6 +2526,7 @@ class SyncEngine:
                 with self._lock:
                     self._processes[job.id] = process
                     self._job_progress[job.id] = 0
+                    self._job_phases[job.id] = "transferring"
                 self._record_network(job.id)
                 assert process.stdout is not None
                 last_transfer_progress = time.monotonic()
@@ -2607,6 +2622,8 @@ class SyncEngine:
                 cancelled = return_code in (-signal.SIGTERM, 143) and not no_progress_timeout
                 log.write(f"[{datetime.now(timezone.utc).isoformat()}] Exit {return_code}\n")
             if return_code == 0:
+                with self._lock:
+                    self._job_phases[job.id] = "verifying"
                 with log_path.open("a", encoding="utf-8") as history_log:
                     self._prune_remote_history(job, history_log)
                 with self._lock:
@@ -2788,6 +2805,7 @@ class SyncEngine:
     def _set_current_process(self, job_id: str, process: subprocess.Popen[str]) -> None:
         with self._lock:
             self._processes[job_id] = process
+            self._job_phases[job_id] = "transferring"
 
     def _run_git_sync(self, job: SyncJob, log_path: Path, dry_run: bool) -> JobResult:
         """Synchronize a GitHub working tree without storing access tokens."""

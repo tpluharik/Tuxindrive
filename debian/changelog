@@ -1,3 +1,11 @@
+tuxindrive (0.26.63-1) unstable; urgency=medium
+
+  * Replace ambiguous queue waiting with scheduled transfer states.
+  * Prioritize manual work, support cancellation, and stagger automatic jobs.
+  * Keep scheduled requests pending instead of failing after ten minutes.
+
+ -- TuxInDrive Maintainers <maintainers@tuxindrive.invalid>  Sat, 03 Oct 2026 09:00:00 +0200
+
 tuxindrive (0.26.62-1) unstable; urgency=medium
 
   * Reclaim transfer slots when a cloud process hangs without producing output.

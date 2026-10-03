@@ -8,6 +8,7 @@ import re
 import threading
 import time
 from collections.abc import Iterator
+from collections.abc import Callable
 
 
 _RATE = re.compile(r"^(?P<value>\d+(?:\.\d+)?)(?P<unit>[BKMGTP]?)$", re.IGNORECASE)
@@ -184,6 +185,7 @@ class GlobalBandwidthController:
     def guard(
         self, *, exclusive: bool = False, priority: int = 1,
         timeout: float | None = None,
+        cancelled: Callable[[], bool] | None = None,
     ) -> Iterator[None]:
         count = self.max_active if exclusive else 1
         token = object()
@@ -191,6 +193,12 @@ class GlobalBandwidthController:
         with self._admission:
             self._waiters.append((token, max(0, int(priority)), count))
             while True:
+                if cancelled is not None and cancelled():
+                    self._waiters = collections.deque(
+                        item for item in self._waiters if item[0] is not token
+                    )
+                    self._admission.notify_all()
+                    raise InterruptedError("transfer request cancelled while scheduled")
                 eligible = sorted(self._waiters, key=lambda item: item[1])[0]
                 if eligible[0] is token and self._available_slots >= count:
                     self._waiters.remove(eligible)
@@ -203,7 +211,9 @@ class GlobalBandwidthController:
                     )
                     self._admission.notify_all()
                     raise TimeoutError("timed out waiting for a transfer slot")
-                self._admission.wait(remaining)
+                self._admission.wait(
+                    min(0.5, remaining) if remaining is not None else 0.5
+                )
         try:
             yield
         finally:

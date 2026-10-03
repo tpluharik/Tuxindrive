@@ -4697,7 +4697,13 @@ class MainWindow(Gtk.ApplicationWindow):
             ),
         )
         cancel = Gtk.Button(
-            label=tr("disconnect") if job.mode is SyncMode.VIRTUAL_DRIVE else tr("stop")
+            label=(
+                tr("disconnect")
+                if job.mode is SyncMode.VIRTUAL_DRIVE
+                else "Cancel request"
+                if self.controller.engine.job_queue_status(job.id) is not None
+                else tr("stop")
+            )
         )
         cancel.connect("clicked", lambda _button: self.controller.stop_job(job))
         availability_button = None
@@ -6751,9 +6757,7 @@ class TuxInDriveApplication(Gtk.Application):
         job.last_status = (
             "Connecting files-on-demand drive…"
             if job.mode is SyncMode.VIRTUAL_DRIVE
-            else "Backing up incrementally… 0%"
-            if job.is_ai_backup
-            else "Synchronizing… 0%"
+            else "Scheduled — starts when a transfer slot is free"
         )
         LOGGER.info(
             "Starting job %s (%s): %s -> %s",
@@ -6769,7 +6773,11 @@ class TuxInDriveApplication(Gtk.Application):
         self._publish_nautilus_state()
         if self.window:
             self.window.refresh()
-        started = self.engine.run_async(job, self._job_finished)
+        started = self.engine.run_async(
+            job,
+            self._job_finished,
+            priority=1 if quiet else 0,
+        )
         if started and job.mode is not SyncMode.VIRTUAL_DRIVE:
             GLib.timeout_add_seconds(1, self._refresh_job_progress, job.id)
         if not started:
@@ -6786,15 +6794,30 @@ class TuxInDriveApplication(Gtk.Application):
         progress = self.engine.job_progress(job_id)
         queued = self.engine.job_queue_status(job_id)
         if queued is not None:
-            position, waited = queued
-            job.last_status = f"Waiting in transfer queue · position {position} · {waited // 60}:{waited % 60:02d}"
+            position, _waited = queued
+            active_ids = self.engine.active_transfer_jobs
+            active_names = [
+                item.name for item in self.config.jobs if item.id in active_ids
+            ]
+            active = (
+                f"{len(active_names)} transfer{'s' if len(active_names) != 1 else ''} active"
+                + (f" ({', '.join(active_names[:2])})" if active_names else "")
+                if active_names
+                else "transfer slot is being prepared"
+            )
+            job.last_status = f"Scheduled · {active} · position {position}"
             if self.window:
                 self.window.refresh()
-        elif progress is not None:
+        else:
+            phase = self.engine.job_phase(job_id)
             job.last_status = (
-                f"Backing up incrementally… {progress}%"
+                "Checking provider changes…"
+                if phase == "checking"
+                else "Verifying synchronized state…"
+                if phase == "verifying"
+                else f"Backing up incrementally… {progress or 0}%"
                 if job.is_ai_backup
-                else f"Synchronizing… {progress}%"
+                else f"Transferring… {progress or 0}%"
             )
             if self.window:
                 self.window.refresh()
@@ -6856,12 +6879,12 @@ class TuxInDriveApplication(Gtk.Application):
         now = datetime.now(timezone.utc)
         job.last_run = now.isoformat()
         job.last_status = result.message
-        job.last_error = "" if result.success else result.message
-        job.last_error_at = "" if result.success else now.isoformat()
-        job.last_error_source = "" if result.success else (
+        job.last_error = "" if result.success or result.cancelled else result.message
+        job.last_error_at = "" if result.success or result.cancelled else now.isoformat()
+        job.last_error_source = "" if result.success or result.cancelled else (
             result.error_source or result.blocked_path
         )
-        job.last_error_log = "" if result.success else str(result.log_path)
+        job.last_error_log = "" if result.success or result.cancelled else str(result.log_path)
         failure_count = 0
         if result.success:
             job.clear_failures()
@@ -6966,12 +6989,12 @@ class TuxInDriveApplication(Gtk.Application):
                 GLib.timeout_add_seconds(delay, self._retry_mount, job.id)
         if self.window:
             self.window.refresh()
-            if not result.success:
+            if not result.success and not result.cancelled:
                 if result.blocked_path:
                     self.window.prompt_blocked_google_file(job, result.blocked_path)
                 else:
                     self.window.message(f"{job.name}: {job.last_status}", Gtk.MessageType.ERROR)
-        if not result.incremental or not result.success:
+        if (not result.incremental or not result.success) and not result.cancelled:
             self.notify(job.name, result.message)
         return False
 
@@ -7059,6 +7082,10 @@ class TuxInDriveApplication(Gtk.Application):
                 if policy_decision is None:
                     policy_decision = TransferPolicy(self.config.settings).evaluate()
                 self.run_job(job, quiet=True, decision=policy_decision)
+                # Admit automatic work gradually instead of flooding the
+                # visible queue. Manual Sync now requests remain immediate and
+                # receive higher admission priority.
+                break
         return True
 
     def _cache_maintenance_ready(self, results, error: Exception | None) -> bool:

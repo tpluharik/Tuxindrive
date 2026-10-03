@@ -20,14 +20,16 @@ The longer-term product direction is a **“Signal for files and cooperation”*
 - Terminate a transfer after thirty minutes without payload progress so a
   provider failure cannot leave the backup active indefinitely.
 
-### Completed in 0.26.60: reliable AI backup admission and scanning
+### Completed in 0.26.63: clear and cancellable transfer scheduling
 
-- Prioritize AI backups in the bounded transfer queue while preserving FIFO
-  order within each priority class.
-- Display queue position and wait time instead of presenting queued work as an
-  active zero-percent upload.
-- Fail and release a transfer request after ten minutes so a stuck admission
-  cannot remain permanently active.
+- Prioritize explicit **Sync now** requests while preserving FIFO order within
+  each priority class.
+- Display scheduled position and active job names instead of presenting queued
+  work as an active zero-percent upload.
+- Keep requests scheduled until a slot becomes available and allow immediate
+  cancellation without disabling the job.
+- Stagger automatic admissions and show checking, transferring and verifying
+  as distinct phases.
 - Exclude regenerable Codex dependency, virtual-environment, build and cache
   trees from both newly created and existing backup jobs.
 

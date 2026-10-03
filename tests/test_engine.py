@@ -1594,6 +1594,28 @@ class SyncEngineCommandTests(unittest.TestCase):
         self.assertEqual(len(completed), 3)
         self.assertEqual(maximum, 2)
 
+    def test_scheduled_job_can_be_cancelled_before_admission(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            engine = SyncEngine(
+                "/usr/bin/rclone",
+                bandwidth=GlobalBandwidthController(max_active=1),
+            )
+            job = SyncJob("google", temporary)
+            completed = []
+            with engine.bandwidth.guard():
+                self.assertTrue(engine.run_async(job, completed.append, priority=0))
+                deadline = time.monotonic() + 1
+                while engine.job_queue_status(job.id) is None and time.monotonic() < deadline:
+                    time.sleep(0.01)
+                self.assertIsNotNone(engine.job_queue_status(job.id))
+                self.assertTrue(engine.cancel(job.id))
+                deadline = time.monotonic() + 2
+                while not completed and time.monotonic() < deadline:
+                    time.sleep(0.01)
+            self.assertTrue(completed[0].cancelled)
+            self.assertEqual(completed[0].message, "Scheduled synchronization cancelled")
+            self.assertNotIn(job.id, engine.running_jobs)
+
     def test_virtual_mount_start_does_not_block_the_caller(self):
         job = SyncJob("google", "/data/stream", mode=SyncMode.VIRTUAL_DRIVE)
         entered = threading.Event()

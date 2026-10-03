@@ -481,6 +481,15 @@ Each job offers:
 - **Trash button** — remove the job configuration without deleting local or cloud files.
 - **Switch** — enable or pause automatic operation.
 
+Manual **Sync now** requests take priority over scheduled work. When both
+bounded transfer slots are occupied, the card shows **Scheduled**, its queue
+position, and the active job names. A scheduled request remains pending until a
+slot is free instead of failing after a fixed wait; use **Cancel request** to
+remove it without disabling the job. Once admitted, the status advances through
+**Checking provider changes**, **Transferring**, and **Verifying synchronized
+state**. Automatic jobs are introduced gradually, while streaming mounts remain
+connected independently of this transfer queue.
+
 Status icons and labels change for idle/connected, synchronizing, paused, and error states. The account icon summarizes all jobs belonging to that account.
 
 ### Sync health dashboard
@@ -807,7 +816,7 @@ Reinstall the current package with `sudo apt install ./tuxindrive_0.26.61_all.de
 - Do not point multiple normal jobs at overlapping local folders.
 - Removing a TuxInDrive job does not delete its local or cloud files.
 
-### Security upgrade checklist for 0.26.61
+### Security upgrade checklist for 0.26.63
 
 1. Install `tuxindrive_0.26.61_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
 2. Confirm **Settings → Check for updates** reports 0.26.61 and no signature or expiry error.

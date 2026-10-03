@@ -144,6 +144,27 @@ class GlobalBandwidthControllerTests(unittest.TestCase):
         with controller.guard(timeout=0.1):
             pass
 
+    def test_scheduled_request_can_be_cancelled_without_waiting_for_a_slot(self):
+        controller = GlobalBandwidthController(max_active=1)
+        cancelled = threading.Event()
+        finished = threading.Event()
+
+        def wait() -> None:
+            with self.assertRaises(InterruptedError):
+                with controller.guard(cancelled=cancelled.is_set):
+                    pass
+            finished.set()
+
+        with controller.guard():
+            worker = threading.Thread(target=wait)
+            worker.start()
+            time.sleep(0.02)
+            cancelled.set()
+            self.assertTrue(finished.wait(1))
+        worker.join(1)
+        with controller.guard(timeout=0.1):
+            pass
+
     def test_control_plane_request_is_not_starved_by_active_transfer(self):
         controller = GlobalBandwidthController("1M", max_active=1)
         transfer_entered = threading.Event()
