@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+import fnmatch
 import hashlib
+import os
 from pathlib import Path
 import time
 from typing import Any
@@ -422,6 +424,7 @@ class SyncJob:
     interval_minutes: int = 5
     conflict_policy: ConflictPolicy = ConflictPolicy.KEEP_BOTH
     exclude_patterns: list[str] = field(default_factory=lambda: [".Trash-*/**", "*.part", "~$*"])
+    include_patterns: list[str] = field(default_factory=list)
     selective_extensions: list[str] = field(default_factory=list)
     selective_max_size_mb: int = 0
     selective_max_age_days: int = 0
@@ -448,6 +451,7 @@ class SyncJob:
     git_author_name: str = ""
     git_author_email: str = ""
     ai_connector: str = ""
+    ai_backup_content: str = "all"
     manual_only: bool = False
     id: str = field(default_factory=lambda: uuid4().hex)
     initialized: bool = False
@@ -493,6 +497,9 @@ class SyncJob:
     def selective_args(self) -> list[str]:
         """Return deterministic rclone selection flags without shell parsing."""
         args: list[str] = []
+        for pattern in dict.fromkeys(self.include_patterns):
+            if pattern.strip():
+                args.extend(["--include", pattern.strip()])
         extensions = []
         for raw in self.selective_extensions:
             value = raw.strip().lower().lstrip("*.")
@@ -513,6 +520,14 @@ class SyncJob:
         size: int | None = None,
         modified_timestamp: float | None = None,
     ) -> bool:
+        normalized = relative_path.replace(os.sep, "/")
+        if self.include_patterns and not any(
+            fnmatch.fnmatchcase(normalized, pattern)
+            or fnmatch.fnmatchcase(f"/{normalized}", pattern)
+            or fnmatch.fnmatchcase(Path(normalized).name, pattern)
+            for pattern in self.include_patterns
+        ):
+            return False
         extensions = set()
         for raw in self.selective_extensions:
             value = raw.strip().lower().lstrip("*.")

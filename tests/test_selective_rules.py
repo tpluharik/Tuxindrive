@@ -31,6 +31,16 @@ class SelectiveRuleTests(unittest.TestCase):
         job = SyncJob(account_remote="cloud", local_path="/tmp/files")
         self.assertEqual(job.selective_args(), [])
 
+    def test_root_anchored_includes_do_not_match_nested_namesakes(self):
+        job = SyncJob(
+            account_remote="cloud", local_path="/tmp/files",
+            include_patterns=["/sessions/**", "/session_index.jsonl"],
+        )
+        self.assertTrue(job.selected_by_rules("sessions/2026/chat.jsonl"))
+        self.assertTrue(job.selected_by_rules("session_index.jsonl"))
+        self.assertFalse(job.selected_by_rules("browser/sessions/private.toml"))
+        self.assertFalse(job.selected_by_rules("auth.json"))
+
     def test_named_presets_and_local_preview_use_metadata_only(self):
         self.assertIn("pdf", preset_by_key("documents").extensions)
         with tempfile.TemporaryDirectory() as temporary:

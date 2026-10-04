@@ -55,6 +55,13 @@ class RulePreview:
 def _excluded(job: SyncJob, relative: str) -> bool:
     value = relative.replace(os.sep, "/")
     name = Path(value).name
+    if job.include_patterns and not any(
+        fnmatch.fnmatchcase(value, pattern)
+        or fnmatch.fnmatchcase(f"/{value}", pattern)
+        or fnmatch.fnmatchcase(name, pattern)
+        for pattern in job.include_patterns
+    ):
+        return True
     return any(
         fnmatch.fnmatchcase(value, pattern) or fnmatch.fnmatchcase(name, pattern)
         for pattern in job.exclude_patterns

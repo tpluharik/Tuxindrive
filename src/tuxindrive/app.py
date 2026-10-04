@@ -993,11 +993,21 @@ class AIBackupDialog(ResponsiveDialog):
         self.manual_only.connect(
             "toggled", lambda button: self.interval.set_sensitive(not button.get_active())
         )
+        self.codex_chats_only = Gtk.CheckButton(
+            label="Codex: back up chats only"
+        )
+        self.codex_chats_only.set_tooltip_text(
+            "Back up Codex conversation records only; skip attachments, skills, memories, workspace metadata and other files."
+        )
+        self.codex_chats_only.set_sensitive(
+            bool(self.checks.get("codex") and self.checks["codex"].get_sensitive())
+        )
         for index, (label, widget) in enumerate((
             ("Cloud account", self.account),
             ("Cloud backup folder", self.remote_base),
             ("Backup interval (minutes)", self.interval),
             ("Automatic scheduling", self.manual_only),
+            ("Backup content", self.codex_chats_only),
         )):
             grid.attach(Gtk.Label(label=label, xalign=0), 0, index, 1, 1)
             grid.attach(widget, 1, index, 1, 1)
@@ -1028,6 +1038,7 @@ class AIBackupDialog(ResponsiveDialog):
             remote_base=self.remote_base.get_text(),
             interval_minutes=self.interval.get_value_as_int(),
             manual_only=self.manual_only.get_active(),
+            codex_chats_only=self.codex_chats_only.get_active(),
         )
 
     def validation_error(self, message: str) -> None:
@@ -1328,6 +1339,8 @@ class SyncJobDialog(ResponsiveDialog):
             value.peer_role = self.existing.peer_role
             value.one_time_drop_id = self.existing.one_time_drop_id
             value.ai_connector = self.existing.ai_connector
+            value.ai_backup_content = self.existing.ai_backup_content
+            value.include_patterns = list(self.existing.include_patterns)
             value.manual_only = self.manual_only.get_active() if value.ai_connector else False
             return [value]
         return values

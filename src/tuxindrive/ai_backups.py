@@ -52,6 +52,16 @@ SECRET_EXCLUDES = (
     ".git/**",
 )
 
+# Codex stores conversation payloads below these paths.  A chat-only backup
+# keeps those records while excluding credentials, caches, attachments,
+# workspace mirrors, skills and other local application state.
+CODEX_CHAT_ONLY_INCLUDES = (
+    "/sessions/**",
+    "/archived_sessions/**",
+    "/session_index.jsonl",
+    "/transcription-history.jsonl",
+)
+
 
 @dataclass(frozen=True, slots=True)
 class AIBackupConnector:
@@ -152,6 +162,7 @@ def build_backup_jobs(
     remote_base: str = "AI Backups",
     interval_minutes: int = 60,
     manual_only: bool = False,
+    codex_chats_only: bool = False,
     hostname: str | None = None,
 ) -> list[SyncJob]:
     if not account_remote.strip():
@@ -167,6 +178,7 @@ def build_backup_jobs(
         for index, source in enumerate(connector.available_paths, start=1):
             suffix = "" if len(connector.available_paths) == 1 else f"-{index}"
             remote = f"{base}/{machine}/{connector.key}{suffix}"
+            connector_excludes = (*SECRET_EXCLUDES, *connector.excludes)
             jobs.append(SyncJob(
                 name=f"{connector.name} {'manual' if manual_only else 'automatic'} backup",
                 account_remote=account_remote.strip(),
@@ -176,13 +188,20 @@ def build_backup_jobs(
                 mode=SyncMode.UPLOAD_ONLY,
                 interval_minutes=interval,
                 conflict_policy=ConflictPolicy.LOCAL_WINS,
-                exclude_patterns=list(dict.fromkeys((*SECRET_EXCLUDES, *connector.excludes))),
+                exclude_patterns=list(dict.fromkeys(connector_excludes)),
+                include_patterns=(
+                    list(CODEX_CHAT_ONLY_INCLUDES)
+                    if connector.key == "codex" and codex_chats_only else []
+                ),
                 realtime_sync=False,
                 version_history=True,
                 version_retention_days=7,
                 ransomware_protection=True,
                 max_delete=25,
                 ai_connector=connector.key,
+                ai_backup_content=(
+                    "chats" if connector.key == "codex" and codex_chats_only else "all"
+                ),
                 manual_only=manual_only,
                 last_status=(
                     "Manual backup ready — use Sync now"

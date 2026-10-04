@@ -2,6 +2,15 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.65 — focused Codex chat backups
+
+- Add **Codex: back up chats only** to the AI Backup wizard so users can keep
+  active and archived conversations without uploading attachments, skills,
+  memories, workspace metadata or unrelated application state.
+- Store root-anchored allow rules with the backup job, preserve them when the
+  job is edited, and apply the same selection to rclone and local previews.
+- Keep existing AI backups on the full-profile scope for backward compatibility.
+
 ## 0.26.64 — reliable backup progress and searchable locations
 
 - Keep active AI backups alive when current compact rclone statistics omit the

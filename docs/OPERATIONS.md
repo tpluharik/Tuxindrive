@@ -178,6 +178,8 @@ Codex, Claude Code, Gemini CLI, Cursor and Continue data. Subsequent runs send
 only changed content and show live completion percentage on the job row. A
 successful run removes connector-specific remote versions older than seven
 days; a failed run keeps existing history, and ordinary jobs are not affected.
+For Codex, the optional chat-only scope backs up conversation records and
+session indexes without attachments, skills, memories or workspace metadata.
 
 Treat the generated exclusions as a conservative baseline, not a guarantee for
 future third-party extensions. Review them when a tool adds custom credential

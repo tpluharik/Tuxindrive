@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from tuxindrive.ai_backups import (
+    CODEX_CHAT_ONLY_INCLUDES,
     SECRET_EXCLUDES,
     build_backup_jobs,
     connector_by_key,
@@ -71,6 +72,20 @@ class AIBackupTests(unittest.TestCase):
             )[0]
             self.assertEqual(job.remote_scope, scope)
             self.assertTrue(job.remote_spec.startswith(f"{scope}:"))
+
+    def test_codex_chat_only_backup_excludes_non_chat_state(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            (home / ".codex").mkdir()
+            codex = connector_by_key("codex", home=home, system="Linux", environment={})
+            job = build_backup_jobs(
+                [codex], account_remote="drive", codex_chats_only=True,
+            )[0]
+            self.assertEqual(job.ai_backup_content, "chats")
+            self.assertEqual(job.include_patterns, list(CODEX_CHAT_ONLY_INCLUDES))
+
+            restored = AppConfig.from_dict(AppConfig(jobs=[job]).to_dict()).jobs[0]
+            self.assertEqual(restored.ai_backup_content, "chats")
 
     def test_missing_tools_and_invalid_account_create_no_unsafe_job(self):
         with tempfile.TemporaryDirectory() as directory:

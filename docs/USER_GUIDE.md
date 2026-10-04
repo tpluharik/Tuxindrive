@@ -74,7 +74,11 @@ Connect a cloud storage account, select **AI backups**, and choose any detected
 Codex, Claude Code, Gemini CLI, Cursor, or Continue installation. Select the
 cloud destination and interval. To prevent all scheduled runs, enable **Manual
 only — run backups with Sync now**, then choose **Enable backups**. TuxInDrive
-creates one upload-only job per tool. Automatic jobs start immediately and use
+can also enable **Codex: back up chats only**. This limits that connector to
+active and archived conversation records plus the local session indexes; it
+does not upload attachments, skills, memories, workspace metadata or other
+Codex profile files. TuxInDrive creates one upload-only job per tool. Automatic
+jobs start immediately and use
 the normal scheduler; manual-only jobs remain ready until you select **Sync
 now**. The job card explicitly shows **Manual only**, and **Edit** can switch an
 existing AI backup between automatic and manual operation without disabling it.
@@ -816,10 +820,10 @@ Reinstall the current package with `sudo apt install ./tuxindrive_0.26.61_all.de
 - Do not point multiple normal jobs at overlapping local folders.
 - Removing a TuxInDrive job does not delete its local or cloud files.
 
-### Security upgrade checklist for 0.26.64
+### Security upgrade checklist for 0.26.65
 
-1. Install `tuxindrive_0.26.64_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
-2. Confirm **Settings → Check for updates** reports 0.26.64 and no signature or expiry error.
+1. Install `tuxindrive_0.26.65_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
+2. Confirm **Settings → Check for updates** reports 0.26.65 and no signature or expiry error.
 3. Reconnect each provider once and verify that `~/.config/rclone/rclone.conf` is encrypted and mode `0600`; do not print or upload it.
 4. Confirm the `TuxInDrive rclone configuration` entry exists in GNOME Passwords and Keys/Secret Service. Do not delete it without an export/recovery plan.
 5. Review peer invitations, revoke unused device and Onion credentials, and exchange replacements through an authenticated channel when compromise is suspected.

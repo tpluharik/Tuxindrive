@@ -18,13 +18,13 @@ The dependency-install step is required when using an isolated Python environmen
 
 CI pins third-party actions by immutable commit, runs high-severity Bandit checks and `pip-audit`, and publishes a CycloneDX dependency SBOM with the package.
 
-The TuxInDrive development suite contains **543 automated tests: 530 Python tests and 13 Android JVM tests**. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes automatic and manual-only AI-tool backups, protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing, animated aggregate tray state and historical upgrades. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
+The TuxInDrive development suite contains **560 automated tests: 547 Python tests and 13 Android JVM tests**. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes automatic, manual-only and Codex chat-only AI-tool backups, protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing, animated aggregate tray state and historical upgrades. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
 
 ## Test groups
 
 | Test module | Tests | What it verifies |
 |---|---:|---|
-| `test_ai_backups.py` | 9 | Local Codex, Claude Code, Gemini CLI, Cursor and Continue discovery; override handling; secret exclusions; automatic and manual-only upload scheduling; connector persistence; seven-day retention migration; safe remote components and symlink rejection. |
+| `test_ai_backups.py` | 13 | Local Codex, Claude Code, Gemini CLI, Cursor and Continue discovery; override handling; secret exclusions; automatic, manual-only and Codex chat-only upload scheduling; connector persistence; seven-day retention migration; safe remote components and symlink rejection. |
 | `test_audit.py` | 4 | Private audit persistence, filtering, bounded newest-first reads across chunk boundaries, malformed historical-line handling and private CSV/JSONL export. |
 | `test_bandwidth.py` | 13 | Directional syntax and invalid values, stricter global/job limits, automatic headroom/fair division, independent upload/download clocks, network-slot admission and release, update byte clock and bounded scan jitter. |
 | `test_bootstrap.py` | 7 | Linux/macOS transfer-engine selection, rejection and identity-cached revalidation of incompatible/replaced rclone versions, supported CPU architectures, and pinned release checksums. |

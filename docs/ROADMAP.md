@@ -7,7 +7,15 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.64
+## Current baseline: 0.26.65
+
+### Completed in 0.26.65: focused Codex chat backups
+
+- Let users restrict a Codex AI backup to active and archived conversation
+  records plus local session indexes.
+- Exclude attachments, skills, memories, workspace metadata and unrelated
+  profile state from chat-only jobs with root-anchored allow rules.
+- Preserve the selected content scope when an existing AI backup is edited.
 
 ### Completed in 0.26.64: reliable backup progress and search locations
 

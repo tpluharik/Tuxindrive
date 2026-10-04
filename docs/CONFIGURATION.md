@@ -189,6 +189,10 @@ automatically remove older remote versions after a successful run, and are
 marked by `ai_connector`.
 They never authenticate to or scrape an AI service.
 
+For Codex, **Codex: back up chats only** stores `ai_backup_content: chats` and
+adds root-anchored allow rules for active sessions, archived sessions and the
+local session indexes. The default remains `all` for backward compatibility.
+
 Credential files, private-key extensions, environment files, sockets, locks,
 logs, temporary data, and caches are excluded from every generated job.
 Tool-specific credential/configuration files are excluded as well. Because a
