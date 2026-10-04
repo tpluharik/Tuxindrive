@@ -1,8 +1,8 @@
 {
-  "version": "0.26.64",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.64/tuxindrive_0.26.64_all.deb",
-  "sha256": "0a886d6d34c13eec4d9ba6f3ba21233da851bf7140291d1727472878b7fec376",
-  "notes": "Reliable AI backup progress and direct local or online search locations",
-  "expires_at": "2027-01-01T20:43:48.617629+00:00",
-  "signature": "oDB7hhVPRYKmzk3KHR83wu74E07bJhlt0BzsUm/ryL+9I8SRyWcUGNI09PYzNbB9iD5G9v8gsQHyPBu/kVPuDg=="
+  "version": "0.26.65",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.65/tuxindrive_0.26.65_all.deb",
+  "sha256": "08cfb4dacb0deaf6cf4116d2fd12baf1492e9e0ccac3b1ef2c220b1e45151d6a",
+  "notes": "Focused Codex chat-only backups with persistent root-anchored selection",
+  "expires_at": "2027-01-02T15:36:31.688242+00:00",
+  "signature": "vBgrhXcxRGbFwmhCyPkrntriKh7edXzlOkxjik/VNEa4dFxlFEL1KcGdFxSGyfKqUu2RM+FOphpIe6BxEk4RDg=="
 }

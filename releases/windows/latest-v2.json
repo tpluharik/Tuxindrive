@@ -1,8 +1,8 @@
 {
-  "version": "0.26.64",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.64/TuxInDrive-0.26.64-windows-x64-setup.exe",
-  "sha256": "9614b681d536a7a68a1987820d8c21c877690a90c2eb185528957fc5f1d5d6bc",
-  "notes": "Reliable AI backup progress and direct local or online search locations",
-  "expires_at": "2027-01-01T20:43:48.745870+00:00",
-  "signature": "2HoCiKaP5Y4iOz7wCjPMXBQUKmrrQkaYZ0u8soVbAbQFOUDrhQbAl8De9osg37yiK3QIZ81rVWVP/3xThj+IAA=="
+  "version": "0.26.65",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.65/TuxInDrive-0.26.65-windows-x64-setup.exe",
+  "sha256": "729aff564884d1102fbf201de53f0b20a9eb646f8279554219d3edee547ee539",
+  "notes": "Focused Codex chat-only backups with persistent root-anchored selection",
+  "expires_at": "2027-01-02T15:36:31.760770+00:00",
+  "signature": "eEnBgKa3K+UYn0KXhlDIv+dfU4H7U7nIsg5qAlLS3POR1wxDoi1E7bmysCeCtAHM0gE5Wkep4ilahrqBOQ4yDg=="
 }

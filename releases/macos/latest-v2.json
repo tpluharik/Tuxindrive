@@ -1,8 +1,8 @@
 {
-  "version": "0.26.64",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.64/TuxInDrive-0.26.64-macos-arm64.dmg",
-  "sha256": "25610a8a1bd801515a2508f73c792029eea24d01520b6afdd8f7d487c4224281",
-  "notes": "Reliable AI backup progress and direct local or online search locations",
-  "expires_at": "2027-01-01T20:43:48.880320+00:00",
-  "signature": "+uEmtyqDxaIiQqw8iY8UCZsiQD5V0hXeEDKc+3deUu1sDt3gsubKEZck0VZ1roLgARQmVvahb1EMPTGFlps2Dw=="
+  "version": "0.26.65",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.65/TuxInDrive-0.26.65-macos-arm64.dmg",
+  "sha256": "a800e36dd83adc7a4b571fa83418689f8492bf3a5fb7540809f0e77598f3b6a8",
+  "notes": "Focused Codex chat-only backups with persistent root-anchored selection",
+  "expires_at": "2027-01-02T15:36:31.843687+00:00",
+  "signature": "1+YVUo2Mseoyn9iYqHbeLp6H5797pRykZ59SPFRTdWFY24wrP8vflZSrCBzAEOsNRGzeCr2lD8J4uEKrImVDDw=="
 }

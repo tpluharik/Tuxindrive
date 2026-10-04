@@ -1,8 +1,8 @@
 {
-  "version": "0.26.64",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.64/TuxInDrive-0.26.64-android.apk",
-  "sha256": "443016cc4dca69546b80f5a0273c61b14d4cee61685658e057dcf331c56ab8fc",
-  "notes": "Reliable AI backup progress and direct local or online search locations",
-  "expires_at": "2027-01-01T20:43:49.303351+00:00",
-  "signature": "utORSQ35QB1ZFh1JqqNtMI5RN6WVDmLajebHtyjbB3jNEkKAAFSE/Zmsc+qmInExtRTa79oVloqFpSVsT2VcCg=="
+  "version": "0.26.65",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.65/TuxInDrive-0.26.65-android.apk",
+  "sha256": "8dc26280972aba94d3bf3687dd5e7b637403e8c9d976296e5af32936a8f38aad",
+  "notes": "Focused Codex chat-only backups with persistent root-anchored selection",
+  "expires_at": "2027-01-02T15:36:32.095575+00:00",
+  "signature": "B9UkU1IQYvJNTYscKkR9m1lf9lKZWYO5l61p19CB3I+fgoEPlc05wsEH3cLGdXiSYJfL2usLE9qceEXTaWktCg=="
 }
