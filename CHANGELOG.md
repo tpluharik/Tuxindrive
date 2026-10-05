@@ -2,6 +2,14 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.66 — reliable cloud-account reconnection
+
+- Open the visible OAuth authorization wizard when **Reconnect / refresh
+  credentials** is selected for pCloud instead of starting a background
+  command that cannot complete the browser flow.
+- Use the same explicit repair path for every browser-authenticated provider
+  while preserving the existing account key and synchronized-folder jobs.
+
 ## 0.26.65 — focused Codex chat backups
 
 - Add **Codex: back up chats only** to the AI Backup wizard so users can keep

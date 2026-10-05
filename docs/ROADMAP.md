@@ -7,7 +7,14 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.65
+## Current baseline: 0.26.66
+
+### Completed in 0.26.66: visible OAuth reconnection
+
+- Route pCloud and every browser-authenticated provider through the visible
+  OAuth wizard when credentials are refreshed.
+- Preserve the account key and its synchronized-folder definitions while the
+  provider grants a replacement token.
 
 ### Completed in 0.26.65: focused Codex chat backups
 

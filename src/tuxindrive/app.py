@@ -5390,7 +5390,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 existing=account,
             )
             return
-        if account.provider is Provider.GOOGLE_DRIVE:
+        if account.provider.browser_oauth:
             OAuthWizard(
                 self, self.controller.rclone, account.provider,
                 self.controller.add_account, existing=account,

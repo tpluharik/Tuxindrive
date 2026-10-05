@@ -1,3 +1,10 @@
+tuxindrive (0.26.66-1) unstable; urgency=medium
+
+  * Open the visible OAuth authorization wizard when reconnecting pCloud.
+  * Apply the same repair path to all browser-authenticated cloud providers.
+
+ -- TuxInDrive Maintainers <maintainers@tuxindrive.invalid>  Mon, 05 Oct 2026 11:00:00 +0200
+
 tuxindrive (0.26.65-1) unstable; urgency=medium
 
   * Add an optional Codex chat-only AI backup scope.

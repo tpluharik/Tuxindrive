@@ -78,6 +78,21 @@ class ResponsiveWindowTests(unittest.TestCase):
         self.assertIn("updated.enabled = False", edit_job)
         self.assertIn("Synchronization paused because an endpoint changed", edit_job)
 
+    def test_browser_oauth_reconnect_uses_the_visible_authorization_wizard(self) -> None:
+        source = (REPOSITORY / "src/tuxindrive/app.py").read_text(encoding="utf-8")
+        reconnect = source[
+            source.index("    def _reconnect("):
+            source.index("    def _reconnect_done(")
+        ]
+
+        self.assertIn("if account.provider.browser_oauth:", reconnect)
+        self.assertIn("OAuthWizard(", reconnect)
+        self.assertIn("existing=account", reconnect)
+        self.assertLess(
+            reconnect.index("if account.provider.browser_oauth:"),
+            reconnect.index("self.controller.rclone.reconnect"),
+        )
+
     def test_persisted_live_log_setting_starts_refresh_lifecycle(self) -> None:
         source = (REPOSITORY / "src/tuxindrive/app.py").read_text(encoding="utf-8")
         window = source[source.index("class MainWindow"):]
