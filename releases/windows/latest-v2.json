@@ -1,8 +1,8 @@
 {
-  "version": "0.26.66",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.66/TuxInDrive-0.26.66-windows-x64-setup.exe",
-  "sha256": "3829267263cd59aae50a3fe7d496ac5333ce2d19965a25ed58de9e063792f026",
-  "notes": "Visible OAuth reconnection for pCloud and browser-authenticated providers",
-  "expires_at": "2027-01-03T09:43:15.781360+00:00",
-  "signature": "5e/EdU1vP4tn2vU++4gdcHbB2+14Xkl8Vn1jjqyOXmuOkX1nZ+8P+ZVtlotVmKCTaCEf1V55+LJjVj561byxAg=="
+  "version": "0.26.67",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.67/TuxInDrive-0.26.67-windows-x64-setup.exe",
+  "sha256": "722e135724d1bb41833430e4d31a24d368a13c9fa8733c2ceba1816d53bd5a9f",
+  "notes": "Actionable pCloud OAuth recovery and safety-preview diagnostics",
+  "expires_at": "2027-01-03T10:37:09.581399+00:00",
+  "signature": "4NZovS/sD6Ndz8DdaZjNAv+OTP5ekVm0KeUPKd8eWfeGN2OJD3fl9rw+hO9I3gNT8qagD/dfo7gsyfO8RpYHCQ=="
 }

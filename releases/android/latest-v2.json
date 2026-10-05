@@ -1,8 +1,8 @@
 {
-  "version": "0.26.66",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.66/TuxInDrive-0.26.66-android.apk",
-  "sha256": "901248bf39b190e920cc31d415500391212af7d54fec6819150b4e45d38abaee",
-  "notes": "Visible OAuth reconnection for pCloud and browser-authenticated providers",
-  "expires_at": "2027-01-03T09:43:16.147785+00:00",
-  "signature": "SmJjB9xeYPnaR0AN3ALxg4N27un0C/81vTrCu3Ck0i2LNVxSr5q8bfGPIIHp/kIqirZYPrgA7sJajYS9LNTOBQ=="
+  "version": "0.26.67",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.67/TuxInDrive-0.26.67-android.apk",
+  "sha256": "6b79b9b33c6cb1491104c5eee3b560a9faa2e98849651e11c2c5e245b2602776",
+  "notes": "Actionable pCloud OAuth recovery and safety-preview diagnostics",
+  "expires_at": "2027-01-03T10:37:09.937936+00:00",
+  "signature": "m+g9Sk8Fq5VxTgt9sjiJvMVTHi9BIMrGgyXq3tk3mmaktgm3M1s4Ad1g5cGinNz0qy3L8QKLnIgNpHp2cKyfAw=="
 }

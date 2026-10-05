@@ -1,8 +1,8 @@
 {
-  "version": "0.26.66",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.66/tuxindrive_0.26.66_all.deb",
-  "sha256": "d364278cdb1342a6be7ec6d1328e26cbe3beb56a08115f46e6814816211cef0b",
-  "notes": "Visible OAuth reconnection for pCloud and browser-authenticated providers",
-  "expires_at": "2027-01-03T09:43:15.703563+00:00",
-  "signature": "8NuoYMgIF3PR0xPvuAN2Bz4RUYdYtMpbTWZOSv37dzxXiPjlE78S0CInBRnd1Gm9Shov4tXY4vfbEoPExXfqDg=="
+  "version": "0.26.67",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.67/tuxindrive_0.26.67_all.deb",
+  "sha256": "ce22622529f7788b774888c56817a214baf7e91132bcd1d6e197fe1db77ef970",
+  "notes": "Actionable pCloud OAuth recovery and safety-preview diagnostics",
+  "expires_at": "2027-01-03T10:37:09.509534+00:00",
+  "signature": "vCYwiOa8Xy+vzeDGzG1S7S2gZWt5sXN4VKdcId/wECwRcSoMmx4uNMx+3lRkuxZSGSBP8d1GoUEp3j+WqQkjCg=="
 }

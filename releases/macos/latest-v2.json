@@ -1,8 +1,8 @@
 {
-  "version": "0.26.66",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.66/TuxInDrive-0.26.66-macos-arm64.dmg",
-  "sha256": "fe6b03f40fd7a885edf96dc3c8e6df6f47ab051f3a1f1dcec1489e1a7b20ab5b",
-  "notes": "Visible OAuth reconnection for pCloud and browser-authenticated providers",
-  "expires_at": "2027-01-03T09:43:15.869340+00:00",
-  "signature": "TqWLDZxwt8fMOZCtC2DV4nxi5A5uMXrd/UinvEe63gOyYJk0roplcvRo5efhIEOcEzrUQ8B1Ka0+FdqJRjpxDA=="
+  "version": "0.26.67",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.67/TuxInDrive-0.26.67-macos-arm64.dmg",
+  "sha256": "fbf04915f41694ba23ea04c7e6f1b5b3f3ecd312a977ac4e8ff6788ac57d7d48",
+  "notes": "Actionable pCloud OAuth recovery and safety-preview diagnostics",
+  "expires_at": "2027-01-03T10:37:09.663083+00:00",
+  "signature": "cUJ/tS7DecUSFnzoVbbCFmkKxGJi2tTemiXHi7jTrM8jkFB8TJNR1LTfbC3C8KH5JP44bXKFI5tTCpvl/hknCQ=="
 }
