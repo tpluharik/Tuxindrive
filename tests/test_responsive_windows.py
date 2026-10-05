@@ -93,6 +93,21 @@ class ResponsiveWindowTests(unittest.TestCase):
             reconnect.index("self.controller.rclone.reconnect"),
         )
 
+    def test_pcloud_reconnect_requires_an_approved_oauth_application(self) -> None:
+        source = (REPOSITORY / "src/tuxindrive/app.py").read_text(encoding="utf-8")
+        wizard = source[
+            source.index("class OAuthWizard"):
+            source.index("class ProtonAuthDialog")
+        ]
+
+        self.assertIn("Provider.PCLOUD", wizard)
+        self.assertIn("pCloud revoked rclone's shared OAuth application", wizard)
+        self.assertIn("https://docs.pcloud.com/my_apps/", wizard)
+        self.assertIn(
+            "self.provider in {Provider.GOOGLE_DRIVE, Provider.PCLOUD}",
+            wizard,
+        )
+
     def test_persisted_live_log_setting_starts_refresh_lifecycle(self) -> None:
         source = (REPOSITORY / "src/tuxindrive/app.py").read_text(encoding="utf-8")
         window = source[source.index("class MainWindow"):]

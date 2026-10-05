@@ -1,3 +1,11 @@
+tuxindrive (0.26.67-1) unstable; urgency=medium
+
+  * Stop pCloud reconnect before using its revoked shared OAuth application.
+  * Guide users to approved pCloud application credentials.
+  * Attach safety-preview output to job error details.
+
+ -- TuxInDrive Maintainers <maintainers@tuxindrive.invalid>  Mon, 05 Oct 2026 12:10:00 +0200
+
 tuxindrive (0.26.66-1) unstable; urgency=medium
 
   * Open the visible OAuth authorization wizard when reconnecting pCloud.

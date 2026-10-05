@@ -7,7 +7,14 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.66
+## Current baseline: 0.26.67
+
+### Completed in 0.26.67: actionable pCloud OAuth recovery
+
+- Require an approved pCloud OAuth application after pCloud revoked rclone's
+  shared identifier, avoiding a browser page that can only fail.
+- Retain safety-preview output as the job-specific error log for immediate,
+  actionable diagnostics.
 
 ### Completed in 0.26.66: visible OAuth reconnection
 

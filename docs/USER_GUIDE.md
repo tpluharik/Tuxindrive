@@ -820,11 +820,11 @@ Reinstall the current package with `sudo apt install ./tuxindrive_0.26.61_all.de
 - Do not point multiple normal jobs at overlapping local folders.
 - Removing a TuxInDrive job does not delete its local or cloud files.
 
-### Security upgrade checklist for 0.26.66
+### Security upgrade checklist for 0.26.67
 
-1. Install `tuxindrive_0.26.66_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
-2. Confirm **Settings → Check for updates** reports 0.26.66 and no signature or expiry error.
-3. Reconnect each provider once. Browser-authenticated providers, including pCloud, must open the visible OAuth wizard. Verify that `~/.config/rclone/rclone.conf` is encrypted and mode `0600`; do not print or upload it.
+1. Install `tuxindrive_0.26.67_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
+2. Confirm **Settings → Check for updates** reports 0.26.67 and no signature or expiry error.
+3. Reconnect each provider once. pCloud requires the Client ID and secret of an approved pCloud application because its shared rclone OAuth application was revoked. Verify that `~/.config/rclone/rclone.conf` is encrypted and mode `0600`; do not print or upload it.
 4. Confirm the `TuxInDrive rclone configuration` entry exists in GNOME Passwords and Keys/Secret Service. Do not delete it without an export/recovery plan.
 5. Review peer invitations, revoke unused device and Onion credentials, and exchange replacements through an authenticated channel when compromise is suspected.
 6. Run **Verify** on important jobs, inspect the health dashboard, and test recovery using a non-critical file.

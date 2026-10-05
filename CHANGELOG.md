@@ -2,6 +2,15 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.67 — actionable pCloud OAuth recovery
+
+- Stop before opening pCloud's rejected shared rclone OAuth application and
+  require credentials belonging to an approved pCloud application.
+- Link directly to pCloud's application-management page from the reconnect
+  wizard.
+- Preserve the safety-preview log as the job's failure log so **Error details**
+  shows the provider error instead of an empty or older transfer log.
+
 ## 0.26.66 — reliable cloud-account reconnection
 
 - Open the visible OAuth authorization wizard when **Reconnect / refresh

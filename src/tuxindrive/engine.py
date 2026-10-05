@@ -2419,6 +2419,7 @@ class SyncEngine:
         auto_reinitialize = False
         recovered_locks: list[str] = []
         cleared_incomplete_state: list[str] = []
+        failure_log_path = log_path
         try:
             resolved = resolve_rclone(self.rclone_path)
             if resolved is None:
@@ -2451,6 +2452,7 @@ class SyncEngine:
             ):
                 preview_path = log_path.with_name(log_path.stem + "-safety-preview.log")
                 preview_command = self.command_for_job(job, dry_run=True)
+                failure_log_path = preview_path
                 preview_returncode = self._run_safety_preview(
                     preview_command, preview_path
                 )
@@ -2458,9 +2460,11 @@ class SyncEngine:
                 if preview_returncode != 0:
                     if self._missing_bisync_state(preview_path):
                         auto_reinitialize = True
+                        failure_log_path = log_path
                     else:
                         raise RuntimeError("the safety preview could not be completed; the real sync was not started")
                 else:
+                    failure_log_path = log_path
                     # Never recursively walk the live local tree while holding
                     # a global transfer slot. A disconnected nested mount or
                     # provider-backed folder can block stat/rglob forever. For
@@ -2758,7 +2762,12 @@ class SyncEngine:
                     integrity_blocked=integrity_issue is not None,
                 )
         except (OSError, RuntimeError) as exc:
-            result = JobResult(job.id, False, f"Synchronization could not start: {exc}", log_path)
+            result = JobResult(
+                job.id,
+                False,
+                f"Synchronization could not start: {exc}",
+                failure_log_path,
+            )
         finally:
             with self._lock:
                 self._processes.pop(job.id, None)

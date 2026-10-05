@@ -813,6 +813,14 @@ class SyncEngineCommandTests(unittest.TestCase):
             popen.assert_not_called()
             self.assertFalse(completed[0].success)
             self.assertIn("safety preview could not be completed", completed[0].message)
+            self.assertEqual(
+                completed[0].log_path,
+                Path(temporary) / "sync-safety-preview.log",
+            )
+            self.assertIn(
+                "invalid_grant",
+                completed[0].log_path.read_text(encoding="utf-8"),
+            )
 
     def test_silent_safety_preview_is_stopped_and_releases_its_slot(self):
         with tempfile.TemporaryDirectory() as temporary:

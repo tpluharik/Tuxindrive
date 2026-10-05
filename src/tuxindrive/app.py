@@ -326,7 +326,11 @@ class OAuthWizard(ResponsiveDialog):
         grid.attach(Gtk.Label(label="Display name", xalign=0), 0, 1, 1, 1)
         grid.attach(self.display_entry, 1, 1, 1, 1)
         if provider.browser_oauth:
-            required = "" if provider is Provider.GOOGLE_DRIVE else " (optional)"
+            required = (
+                ""
+                if provider in {Provider.GOOGLE_DRIVE, Provider.PCLOUD}
+                else " (optional)"
+            )
             grid.attach(Gtk.Label(label=f"OAuth client ID{required}", xalign=0), 0, 2, 1, 1)
             grid.attach(self.client_id, 1, 2, 1, 1)
             grid.attach(Gtk.Label(label=f"OAuth client secret{required}", xalign=0), 0, 3, 1, 1)
@@ -354,6 +358,26 @@ class OAuthWizard(ResponsiveDialog):
             google_notice.set_line_wrap(True)
             google_notice.get_style_context().add_class("dim-label")
             content.pack_start(google_notice, False, False, 0)
+        elif provider is Provider.PCLOUD:
+            pcloud_notice = Gtk.Label(
+                label=(
+                    "pCloud revoked rclone's shared OAuth application. Enter the "
+                    "Client ID and client secret of an approved pCloud application; "
+                    "the revoked shared identifier cannot authorize this account."
+                ),
+                xalign=0,
+            )
+            pcloud_notice.set_line_wrap(True)
+            pcloud_notice.get_style_context().add_class("dim-label")
+            content.pack_start(pcloud_notice, False, False, 0)
+            content.pack_start(
+                Gtk.LinkButton.new_with_label(
+                    "https://docs.pcloud.com/my_apps/", "Open pCloud My Apps"
+                ),
+                False,
+                False,
+                0,
+            )
 
         self.question_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         self.help_label = Gtk.Label(xalign=0)
@@ -393,13 +417,19 @@ class OAuthWizard(ResponsiveDialog):
             self.remote = remote
             client_id = self.client_id.get_text().strip()
             client_secret = self.client_secret.get_text().strip()
-            if self.provider is Provider.GOOGLE_DRIVE and (
+            if self.provider in {Provider.GOOGLE_DRIVE, Provider.PCLOUD} and (
                 not client_id or not client_secret
             ):
-                self._set_error(
-                    "Google Drive requires your own Desktop OAuth client ID and "
-                    "secret because the shared rclone client is being retired."
-                )
+                if self.provider is Provider.PCLOUD:
+                    self._set_error(
+                        "pCloud revoked rclone's shared OAuth application. Enter "
+                        "the Client ID and client secret of an approved pCloud app."
+                    )
+                else:
+                    self._set_error(
+                        "Google Drive requires your own Desktop OAuth client ID and "
+                        "secret because the shared rclone client is being retired."
+                    )
                 return
             credentials = {
                 key: entry.get_text().strip()
