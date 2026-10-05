@@ -1,8 +1,8 @@
 {
-  "version": "0.26.65",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.65/TuxInDrive-0.26.65-android.apk",
-  "sha256": "8dc26280972aba94d3bf3687dd5e7b637403e8c9d976296e5af32936a8f38aad",
-  "notes": "Focused Codex chat-only backups with persistent root-anchored selection",
-  "expires_at": "2027-01-02T15:36:32.095575+00:00",
-  "signature": "B9UkU1IQYvJNTYscKkR9m1lf9lKZWYO5l61p19CB3I+fgoEPlc05wsEH3cLGdXiSYJfL2usLE9qceEXTaWktCg=="
+  "version": "0.26.66",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.66/TuxInDrive-0.26.66-android.apk",
+  "sha256": "901248bf39b190e920cc31d415500391212af7d54fec6819150b4e45d38abaee",
+  "notes": "Visible OAuth reconnection for pCloud and browser-authenticated providers",
+  "expires_at": "2027-01-03T09:43:16.147785+00:00",
+  "signature": "SmJjB9xeYPnaR0AN3ALxg4N27un0C/81vTrCu3Ck0i2LNVxSr5q8bfGPIIHp/kIqirZYPrgA7sJajYS9LNTOBQ=="
 }

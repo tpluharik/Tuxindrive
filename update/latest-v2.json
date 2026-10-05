@@ -1,8 +1,8 @@
 {
-  "version": "0.26.65",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.65/tuxindrive_0.26.65_all.deb",
-  "sha256": "08cfb4dacb0deaf6cf4116d2fd12baf1492e9e0ccac3b1ef2c220b1e45151d6a",
-  "notes": "Focused Codex chat-only backups with persistent root-anchored selection",
-  "expires_at": "2027-01-02T15:36:31.688242+00:00",
-  "signature": "vBgrhXcxRGbFwmhCyPkrntriKh7edXzlOkxjik/VNEa4dFxlFEL1KcGdFxSGyfKqUu2RM+FOphpIe6BxEk4RDg=="
+  "version": "0.26.66",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.66/tuxindrive_0.26.66_all.deb",
+  "sha256": "d364278cdb1342a6be7ec6d1328e26cbe3beb56a08115f46e6814816211cef0b",
+  "notes": "Visible OAuth reconnection for pCloud and browser-authenticated providers",
+  "expires_at": "2027-01-03T09:43:15.703563+00:00",
+  "signature": "8NuoYMgIF3PR0xPvuAN2Bz4RUYdYtMpbTWZOSv37dzxXiPjlE78S0CInBRnd1Gm9Shov4tXY4vfbEoPExXfqDg=="
 }

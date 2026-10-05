@@ -1,8 +1,8 @@
 {
-  "version": "0.26.65",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.65/TuxInDrive-0.26.65-windows-x64-setup.exe",
-  "sha256": "729aff564884d1102fbf201de53f0b20a9eb646f8279554219d3edee547ee539",
-  "notes": "Focused Codex chat-only backups with persistent root-anchored selection",
-  "expires_at": "2027-01-02T15:36:31.760770+00:00",
-  "signature": "eEnBgKa3K+UYn0KXhlDIv+dfU4H7U7nIsg5qAlLS3POR1wxDoi1E7bmysCeCtAHM0gE5Wkep4ilahrqBOQ4yDg=="
+  "version": "0.26.66",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.66/TuxInDrive-0.26.66-windows-x64-setup.exe",
+  "sha256": "3829267263cd59aae50a3fe7d496ac5333ce2d19965a25ed58de9e063792f026",
+  "notes": "Visible OAuth reconnection for pCloud and browser-authenticated providers",
+  "expires_at": "2027-01-03T09:43:15.781360+00:00",
+  "signature": "5e/EdU1vP4tn2vU++4gdcHbB2+14Xkl8Vn1jjqyOXmuOkX1nZ+8P+ZVtlotVmKCTaCEf1V55+LJjVj561byxAg=="
 }
