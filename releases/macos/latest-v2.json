@@ -1,8 +1,8 @@
 {
-  "version": "0.26.67",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.67/TuxInDrive-0.26.67-macos-arm64.dmg",
-  "sha256": "fbf04915f41694ba23ea04c7e6f1b5b3f3ecd312a977ac4e8ff6788ac57d7d48",
-  "notes": "Actionable pCloud OAuth recovery and safety-preview diagnostics",
-  "expires_at": "2027-01-03T10:37:09.663083+00:00",
-  "signature": "cUJ/tS7DecUSFnzoVbbCFmkKxGJi2tTemiXHi7jTrM8jkFB8TJNR1LTfbC3C8KH5JP44bXKFI5tTCpvl/hknCQ=="
+  "version": "0.26.68",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.68/TuxInDrive-0.26.68-macos-arm64.dmg",
+  "sha256": "d19cda00e8d99e83fef70df1ec723192c684786bdad4d934ff3d5bc607db5d5b",
+  "notes": "Tray alert summaries with direct folder error details",
+  "expires_at": "2027-01-04T19:23:56.617732+00:00",
+  "signature": "w76wn/nK/z0YB1A1YqbwfIcQsZzxIKC93fxCxHxJaALWjd/R3/gHZfCH65f8nuIeD7RF0xYPQJyVXIpKFgSEAA=="
 }
