@@ -1,3 +1,12 @@
+tuxindrive (0.26.68-1) unstable; urgency=medium
+
+  * Show affected-folder error summaries in both tray menus.
+  * Open the selected folder's Error details directly from its alert.
+  * Preserve outstanding alerts during other transfers and refresh resolved errors.
+  * Include runtime errors, bounded redacted messages and additional-alert submenus.
+
+ -- TuxInDrive Maintainers <maintainers@tuxindrive.invalid>  Tue, 06 Oct 2026 21:09:00 +0200
+
 tuxindrive (0.26.67-1) unstable; urgency=medium
 
   * Stop pCloud reconnect before using its revoked shared OAuth application.

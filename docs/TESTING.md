@@ -18,7 +18,19 @@ The dependency-install step is required when using an isolated Python environmen
 
 CI pins third-party actions by immutable commit, runs high-severity Bandit checks and `pip-audit`, and publishes a CycloneDX dependency SBOM with the package.
 
-The TuxInDrive development suite contains **560 automated tests: 547 Python tests and 13 Android JVM tests**. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes automatic, manual-only and Codex chat-only AI-tool backups, protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing, animated aggregate tray state and historical upgrades. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
+The TuxInDrive development suite contains **571 automated tests: 558 Python tests and 13 Android JVM tests**. Four Python checks require an isolated GTK display and are skipped during the normal headless suite. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes automatic, manual-only and Codex chat-only AI-tool backups, protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing, aggregate tray state and error summaries, and historical upgrades. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
+
+Run the real GTK tray-menu checks separately on Linux with GTK 3, PyGObject,
+Xvfb and xauth installed:
+
+```bash
+PYTHONPATH=src TUXINDRIVE_GTK_TESTS=1 xvfb-run -a python3 -m unittest tests.test_tray_gtk -v
+```
+
+These checks build the actual GTK menus on a virtual display, verify both
+menus and overflow entries, activate the selected error row, and check that
+resolved errors disappear. Application configuration and logs use temporary
+directories; cloud synchronization is never started.
 
 ## Test groups
 
@@ -38,6 +50,8 @@ The TuxInDrive development suite contains **560 automated tests: 547 Python test
 | `test_github_sync.py` | 6 | Credential-free GitHub URL/branch/item safety, redirect migration, global admission and guarded commit/fetch/rebase/push orchestration. |
 | `test_folder_layout.py` | 11 | Persistent selection during asynchronous cloud-tree loading, safe account-switch defaults, before/after drag ordering, cross-group moves, group-header append, Ungrouped fallback, self-drop handling, endpoint-path preservation, GTK text-payload round-trip and malformed-payload rejection. |
 | `test_i18n_help.py` | 3 | Six-language UI fallback, Arabic/Hebrew RTL detection, complete localized in-app help topics and localized drag/collapse guidance. |
+| `test_tray.py` | 8 | Animation frames, paused-job alerts, credential redaction, bounded summaries, runtime failures, and unresolved-error priority over successful or active transfers. |
+| `test_tray_gtk.py` | 4 | Opt-in real GTK summaries in both menus, overflow activation, direct Error details routing, rename/resolution refresh and runtime failures. |
 | `test_migration.py` | 9 | AES-GCM profile round trips, wrong-password/tamper rejection, visible and legacy cloud discovery/migration, complete unlock-key handoff, compact mobile export, secret opt-in, private permissions and validation. |
 | `test_offline_action.py` | 9 | Mounted-drive fast dispatch, cold-start queuing, both supported command-line availability option forms, lexical file routing without FUSE resolution, sibling-prefix rejection, exact file-rule isolation, nested offline/online-only precedence, and green-state publication only for locally verified rules. |
 | `test_nautilus_extension.py` | 12 | Exact path/menu isolation, cached/coalesced badge refresh, URI lifecycle, Nautilus 4.1 construction, sensitivity and verified offline transitions. |

@@ -63,6 +63,8 @@ _STRINGS = {
         "documentation": "TuxInDrive User Documentation", "documentation_intro": "Functions, safe operating guidance, and practical how-to instructions",
         "search_help": "Search documentation…", "all_topics": "All topics", "close": "Close",
         "preparing": "Preparing the cloud transfer engine…", "loaded": "TuxInDrive loaded and is running in the tray.",
+        "tray_alert_summary": "Needs attention ({count})", "tray_no_alerts": "No outstanding alerts",
+        "tray_more_alerts": "More alerts ({count})", "tray_alert_details_hint": "Click to open Error details for this folder.",
     },
     "de": {
         "subtitle": "Cloud-Synchronisierung, Streaming und verschlüsselte Peer-Freigabe",
@@ -100,6 +102,8 @@ _STRINGS = {
         "documentation": "TuxInDrive-Benutzerdokumentation", "documentation_intro": "Funktionen, sicherer Betrieb und praktische Anleitungen",
         "search_help": "Dokumentation durchsuchen…", "all_topics": "Alle Themen", "close": "Schließen",
         "preparing": "Cloud-Übertragungsmodul wird vorbereitet…", "loaded": "TuxInDrive läuft im Infobereich.",
+        "tray_alert_summary": "Aktion erforderlich ({count})", "tray_no_alerts": "Keine offenen Warnungen",
+        "tray_more_alerts": "Weitere Warnungen ({count})", "tray_alert_details_hint": "Klicken, um die Fehlerdetails dieses Ordners zu öffnen.",
     },
     "fr": {
         "subtitle": "Synchronisation cloud, streaming et partage pair-à-pair chiffré",
@@ -137,6 +141,8 @@ _STRINGS = {
         "documentation": "Documentation utilisateur TuxInDrive", "documentation_intro": "Fonctions, conseils de sécurité et guides pratiques",
         "search_help": "Rechercher dans la documentation…", "all_topics": "Tous les sujets", "close": "Fermer",
         "preparing": "Préparation du moteur de transfert…", "loaded": "TuxInDrive fonctionne dans la zone de notification.",
+        "tray_alert_summary": "Intervention nécessaire ({count})", "tray_no_alerts": "Aucune alerte en cours",
+        "tray_more_alerts": "Autres alertes ({count})", "tray_alert_details_hint": "Cliquez pour afficher les détails de l’erreur de ce dossier.",
     },
     "es": {
         "subtitle": "Sincronización cloud, streaming y uso compartido cifrado entre pares",
@@ -174,6 +180,8 @@ _STRINGS = {
         "documentation": "Documentación de usuario de TuxInDrive", "documentation_intro": "Funciones, uso seguro y guías prácticas",
         "search_help": "Buscar en la documentación…", "all_topics": "Todos los temas", "close": "Cerrar",
         "preparing": "Preparando el motor de transferencia…", "loaded": "TuxInDrive se está ejecutando en la bandeja.",
+        "tray_alert_summary": "Requiere atención ({count})", "tray_no_alerts": "No hay alertas pendientes",
+        "tray_more_alerts": "Más alertas ({count})", "tray_alert_details_hint": "Haga clic para abrir los detalles del error de esta carpeta.",
     },
     "ar": {
         "subtitle": "مزامنة سحابية وبث ملفات ومشاركة مشفرة بين الأجهزة",
@@ -211,6 +219,8 @@ _STRINGS = {
         "documentation": "دليل مستخدم TuxInDrive", "documentation_intro": "الوظائف وإرشادات التشغيل الآمن والخطوات العملية",
         "search_help": "البحث في الدليل…", "all_topics": "جميع المواضيع", "close": "إغلاق",
         "preparing": "جارٍ إعداد محرك النقل السحابي…", "loaded": "يعمل TuxInDrive الآن في شريط النظام.",
+        "tray_alert_summary": "يتطلب الانتباه ({count})", "tray_no_alerts": "لا توجد تنبيهات معلقة",
+        "tray_more_alerts": "تنبيهات أخرى ({count})", "tray_alert_details_hint": "انقر لفتح تفاصيل الخطأ لهذا المجلد.",
     },
     "he": {
         "subtitle": "סנכרון ענן, הזרמת קבצים ושיתוף עמיתים מוצפן",
@@ -248,6 +258,8 @@ _STRINGS = {
         "documentation": "תיעוד המשתמש של TuxInDrive", "documentation_intro": "תכונות, הנחיות להפעלה בטוחה ומדריכים מעשיים",
         "search_help": "חיפוש בתיעוד…", "all_topics": "כל הנושאים", "close": "סגירה",
         "preparing": "מכין את מנוע העברת הענן…", "loaded": "TuxInDrive פועל באזור ההודעות.",
+        "tray_alert_summary": "נדרשת תשומת לב ({count})", "tray_no_alerts": "אין התראות ממתינות",
+        "tray_more_alerts": "התראות נוספות ({count})", "tray_alert_details_hint": "לחצו לפתיחת פרטי השגיאה של תיקייה זו.",
     },
 }
 

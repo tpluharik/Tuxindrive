@@ -92,7 +92,10 @@ from .nautilus_support import (
     verified_rules_after,
 )
 from .themes import THEMES, css_for_theme, normalize_theme, theme_by_key
-from .tray import SYNC_ANIMATION_INTERVAL_MS, TrayIconModel
+from .tray import (
+    MAX_VISIBLE_TRAY_ALERTS, SYNC_ANIMATION_INTERVAL_MS, TrayIconModel,
+    alerts_for_jobs, compact_tray_text, tray_state_for_jobs,
+)
 from .network_usage import NetworkUsageMeter, format_bytes
 from .bandwidth import GlobalBandwidthController, normalize_bandwidth_limit
 from .server_client import ServerClient, ServerClientError, normalize_server_url
@@ -6169,6 +6172,9 @@ class TuxInDriveApplication(Gtk.Application):
         self.activity_indicator = None
         self._tray_icon = TrayIconModel()
         self._tray_animation_source = 0
+        self._tray_menu_sections: list[tuple[Gtk.Menu, list[Gtk.MenuItem]]] = []
+        self._tray_menu_signature = None
+        self._tray_runtime_error = ""
         self._runtime_ready_once = False
         self._pending_nautilus_paths: list[str] = []
         self._pending_nautilus_online: list[str] = []
@@ -6199,6 +6205,7 @@ class TuxInDriveApplication(Gtk.Application):
             previous.destroy()
         self.window.show_all()
         self.window.present()
+        self._refresh_tray_menus()
         LOGGER.info("UI language changed to %s", code)
 
     def apply_visual_theme(self, key: str) -> None:
@@ -6857,7 +6864,7 @@ class TuxInDriveApplication(Gtk.Application):
         self.audit.record("sync", "job started", "running", job_id=job.id, path=job.remote_path, detail=job.mode.label)
         self._last_started[job.id] = datetime.now(timezone.utc)
         self._nautilus_active_jobs.add(job.id)
-        self._set_tray_state("syncing", job.name)
+        self._refresh_tray_from_jobs(job.name)
         self._publish_nautilus_state()
         if self.window:
             self.window.refresh()
@@ -7231,6 +7238,7 @@ class TuxInDriveApplication(Gtk.Application):
             menu.append(item)
         menu.show_all()
         self.indicator.set_menu(menu)
+        self._tray_menu_sections.append((menu, []))
 
         # AppIndicator forces each icon into a square panel slot.  A wide
         # composite logo is therefore distorted by GNOME into an oval.  Keep
@@ -7259,7 +7267,8 @@ class TuxInDriveApplication(Gtk.Application):
         activity_menu.append(activity_show)
         activity_menu.show_all()
         self.activity_indicator.set_menu(activity_menu)
-        self._apply_tray_icon()
+        self._tray_menu_sections.append((activity_menu, []))
+        self._refresh_tray_from_jobs()
         LOGGER.info("Stable tray and separate activity indicators initialized")
         GLib.timeout_add_seconds(
             2,
@@ -7276,6 +7285,66 @@ class TuxInDriveApplication(Gtk.Application):
         elif not self._tray_icon.animated:
             self._stop_tray_animation()
         self._apply_tray_icon()
+        self._refresh_tray_menus()
+
+    def _refresh_tray_menus(self) -> None:
+        if not self._tray_menu_sections:
+            return
+        alerts = alerts_for_jobs(self.config.jobs, self._tray_runtime_error)
+        signature = (alerts, self._tray_icon.state, self._tray_icon.detail, get_language())
+        if signature == self._tray_menu_signature:
+            return
+        self._tray_menu_signature = signature
+        for menu, previous in self._tray_menu_sections:
+            for item in previous:
+                menu.remove(item)
+                item.destroy()
+            previous.clear()
+            heading = Gtk.MenuItem(label=(
+                tr("tray_alert_summary", count=len(alerts)) if alerts else
+                f"{tr('synchronizing')} · {compact_tray_text(self._tray_icon.detail)}"
+                if self._tray_icon.animated else tr("tray_no_alerts")
+            ))
+            heading.set_sensitive(False)
+            previous.append(heading)
+
+            def alert_item(alert):
+                item = Gtk.MenuItem(label=alert.menu_label)
+                item.set_tooltip_text(f"{alert.tooltip}\n{tr('tray_alert_details_hint')}")
+                item.connect("activate", self._open_tray_alert, alert.job_id)
+                return item
+
+            for alert in alerts[:MAX_VISIBLE_TRAY_ALERTS]:
+                previous.append(alert_item(alert))
+            remaining = alerts[MAX_VISIBLE_TRAY_ALERTS:]
+            if remaining:
+                more = Gtk.MenuItem(label=tr("tray_more_alerts", count=len(remaining)))
+                submenu = Gtk.Menu()
+                for alert in remaining:
+                    submenu.append(alert_item(alert))
+                more.set_submenu(submenu)
+                previous.append(more)
+            previous.append(Gtk.SeparatorMenuItem())
+            for index, item in enumerate(previous):
+                menu.insert(item, index)
+            menu.show_all()
+
+    def _open_tray_alert(self, _item: Gtk.MenuItem, job_id: str | None) -> None:
+        job = next((item for item in self.config.jobs if item.id == job_id), None)
+        if job_id is not None and (job is None or not job.last_error):
+            self._refresh_tray_from_jobs()
+            return
+        self.background = False
+        self.activate()
+        if self.window is not None:
+            self.window.show_all()
+            self.window.present()
+            if job is not None:
+                ErrorDetailsDialog(self.window, job)
+            elif self._tray_runtime_error:
+                self.window.message(
+                    compact_tray_text(self._tray_runtime_error, 2000), Gtk.MessageType.ERROR
+                )
 
     def _apply_tray_icon(self) -> None:
         if (
@@ -7289,6 +7358,9 @@ class TuxInDriveApplication(Gtk.Application):
         self.activity_indicator.set_icon_full(
             self._tray_icon.icon_name,
             self._tray_icon.accessible_label,
+        )
+        self.activity_indicator.set_attention_icon_full(
+            "tuxindrive-error", self._tray_icon.accessible_label
         )
         self.activity_indicator.set_status(
             AyatanaAppIndicator3.IndicatorStatus.ATTENTION
@@ -7318,18 +7390,15 @@ class TuxInDriveApplication(Gtk.Application):
                 pass
 
     def _refresh_tray_from_jobs(self, detail: str = "") -> None:
-        if self._nautilus_active_jobs:
-            self._set_tray_state("syncing", detail or "Synchronization in progress")
-            return
-        failed = next((job for job in self.config.jobs if job.last_error), None)
-        if failed:
-            self._set_tray_state("error", detail or failed.last_error)
-            return
-        self._set_tray_state("ready", detail)
+        state, description = tray_state_for_jobs(
+            self.config.jobs, self._nautilus_active_jobs, detail, self._tray_runtime_error
+        )
+        self._set_tray_state(state, description)
 
     def save(self) -> None:
         self.store.save(self.config)
         self._publish_nautilus_state()
+        self._refresh_tray_from_jobs()
 
     def notify(self, title: str, body: str) -> None:
         if not self.config.settings.notifications:
@@ -7401,13 +7470,15 @@ class TuxInDriveApplication(Gtk.Application):
                 "Runtime initialization failed",
                 exc_info=(type(error), error, error.__traceback__),
             )
-            self._set_tray_state("error", "Runtime initialization failed")
+            self._tray_runtime_error = f"Runtime preparation failed: {error}"
+            self._refresh_tray_from_jobs()
             if self.window:
                 self.window.message(
                     f"Runtime preparation failed: {error}. Logs: {crash_log_path()}",
                     Gtk.MessageType.ERROR,
                 )
             return False
+        self._tray_runtime_error = ""
         existing = existing or {}
         known = {account.remote for account in self.config.accounts}
         for remote, provider in existing.items():
@@ -7445,7 +7516,7 @@ class TuxInDriveApplication(Gtk.Application):
             preferred = self.config.settings.profile_remote
             account = next((item for item in profile_accounts if item.remote == preferred), profile_accounts[0])
             _run_thread(self.profiles.available, self._profile_checked, account.remote)
-        self._set_tray_state("ready", "Loaded")
+        self._refresh_tray_from_jobs("Loaded")
         if not self._runtime_ready_once:
             self._runtime_ready_once = True
             for share in self.config.peer_shares:

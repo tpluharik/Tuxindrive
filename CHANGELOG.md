@@ -2,6 +2,15 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.68 — tray alert summaries
+
+- Show the affected folder and a concise error summary in both tray menus,
+  with direct access to that folder's **Error details**.
+- Keep unresolved alerts visible during other transfers and after successful
+  jobs; refresh summaries when errors are resolved, renamed, or removed.
+- Include saved and runtime-startup failures, redact credentials, and put
+  additional errors in **More alerts** after five visible summaries.
+
 ## 0.26.67 — actionable pCloud OAuth recovery
 
 - Stop before opening pCloud's rejected shared rclone OAuth application and

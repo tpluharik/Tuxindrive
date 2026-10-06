@@ -1,6 +1,10 @@
 import unittest
 
-from tuxindrive.tray import SYNC_ANIMATION_ICONS, TrayIconModel
+from tuxindrive.models import SyncJob
+from tuxindrive.tray import (
+    SYNC_ANIMATION_ICONS, TrayAlert, TrayIconModel, alerts_for_jobs,
+    compact_tray_text, tray_state_for_jobs,
+)
 
 
 class TrayIconModelTests(unittest.TestCase):
@@ -31,6 +35,52 @@ class TrayIconModelTests(unittest.TestCase):
         self.assertEqual(model.state, "ready")
         self.assertEqual(model.frame, 0)
         self.assertEqual(model.accessible_label, "TuxInDrive: ready")
+
+
+class TrayAlertTests(unittest.TestCase):
+    def test_menu_keeps_each_failed_folder_including_automatically_paused_jobs(self):
+        failed = SyncJob("drive", "/tmp/cloud", name="Documents", last_error="Access denied")
+        paused = SyncJob("backup", "/tmp/backup", name="Codex backup", enabled=False,
+                         last_error="Automatic sync paused after 3 identical failures")
+        healthy = SyncJob("other", "/tmp/healthy", name="Photos", last_status="Synchronized")
+        alerts = alerts_for_jobs([healthy, failed, paused])
+        self.assertEqual([alert.job_id for alert in alerts], [failed.id, paused.id])
+        self.assertEqual(alerts[0].menu_label, "Documents — Access denied")
+
+    def test_success_or_another_active_transfer_cannot_replace_an_unresolved_error(self):
+        failed = SyncJob("drive", "/tmp/cloud", name="Documents", last_error="Login expired")
+        active = SyncJob("other", "/tmp/other", name="Photos")
+        state, detail = tray_state_for_jobs([failed, active], {active.id}, "Photos synchronized")
+        self.assertEqual(state, "error")
+        self.assertEqual(detail, "Documents — Login expired")
+
+    def test_resolving_or_removing_last_error_restores_activity_then_ready_state(self):
+        failed = SyncJob("drive", "/tmp/cloud", last_error="Access denied")
+        failed.last_error = ""
+        self.assertEqual(alerts_for_jobs([failed]), ())
+        self.assertEqual(tray_state_for_jobs([failed], {failed.id}, "Documents"),
+                         ("syncing", "Documents"))
+        self.assertEqual(tray_state_for_jobs([], set()), ("ready", ""))
+
+    def test_long_multiline_error_is_bounded_but_tooltip_keeps_redacted_details(self):
+        reason = "Authorization: Bearer header-secret\n" + "Provider unavailable " * 30
+        alert = TrayAlert("id", "Name_" * 20, reason)
+        self.assertLessEqual(len(alert.menu_label), 153)
+        self.assertNotIn("\n", alert.menu_label)
+        self.assertNotIn("header-secret", alert.menu_label + alert.tooltip)
+        self.assertIn("[redacted]", alert.tooltip)
+        self.assertIn("…", alert.menu_label)
+        self.assertGreater(len(alert.tooltip), len(alert.menu_label))
+        self.assertNotIn("query-secret", compact_tray_text(
+            "Failed: https://user:password@example.test/?access_token=query-secret"))
+
+    def test_runtime_failure_has_its_own_summary_without_any_jobs(self):
+        reason = "Runtime preparation failed: cloud engine not found"
+        alert, = alerts_for_jobs([], reason)
+        self.assertIsNone(alert.job_id)
+        self.assertIn("cloud engine not found", alert.menu_label)
+        self.assertEqual(tray_state_for_jobs([], set(), "Loaded", reason),
+                         ("error", alert.menu_label))
 
 
 if __name__ == "__main__":

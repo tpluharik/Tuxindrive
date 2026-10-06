@@ -698,16 +698,24 @@ The gate runs before manual, callback and scheduled jobs. Deferred jobs show the
 
 The tray menu contains:
 
+- **Needs attention (count)** and affected-folder error summaries when alerts exist;
 - **Open TuxInDrive**
 - **Synchronize all now**
 - **Pause all synchronization**
 - **Open diagnostic logs**
 - **Quit**
 
-The tray icon summarizes all jobs, not only the last one to finish. It keeps
-animating while any job is active and keeps the red alert visible while any
-configured job retains an unresolved error. Open the application to see the
-affected folder and its error details.
+Both the main tray menu and the adjacent red alert menu show the affected
+folder and a short error summary immediately. Click a summary to open that
+folder's **Error details** directly. Long messages are shortened in the menu;
+the tooltip includes more detail, with credentials redacted. Up to five alerts
+are shown directly, with any others accessible under **More alerts**.
+
+The tray icon summarizes all jobs, not only the last one to finish. An
+unresolved error keeps the red alert visible even while another job is running
+or completes successfully. When the last error is resolved or its job removed,
+the indicator returns to synchronization activity or disappears when idle.
+Saved errors and application-startup failures also appear in the menu.
 
 Settings control:
 
@@ -820,10 +828,10 @@ Reinstall the current package with `sudo apt install ./tuxindrive_0.26.61_all.de
 - Do not point multiple normal jobs at overlapping local folders.
 - Removing a TuxInDrive job does not delete its local or cloud files.
 
-### Security upgrade checklist for 0.26.67
+### Security upgrade checklist for 0.26.68
 
-1. Install `tuxindrive_0.26.67_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
-2. Confirm **Settings → Check for updates** reports 0.26.67 and no signature or expiry error.
+1. Install `tuxindrive_0.26.68_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
+2. Confirm **Settings → Check for updates** reports 0.26.68 and no signature or expiry error.
 3. Reconnect each provider once. pCloud requires the Client ID and secret of an approved pCloud application because its shared rclone OAuth application was revoked. Verify that `~/.config/rclone/rclone.conf` is encrypted and mode `0600`; do not print or upload it.
 4. Confirm the `TuxInDrive rclone configuration` entry exists in GNOME Passwords and Keys/Secret Service. Do not delete it without an export/recovery plan.
 5. Review peer invitations, revoke unused device and Onion credentials, and exchange replacements through an authenticated channel when compromise is suspected.
