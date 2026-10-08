@@ -6,6 +6,13 @@ TuxInDrive treats synchronization, deletion propagation, authentication, mountin
 
 From the repository root:
 
+The ordinary unit suite installs a fail-closed signal guard **before importing
+application code**. Real `kill`, `killpg`, pidfd, thread-signal and Windows
+termination calls are blocked; only exact positive-PID `kill(pid, 0)` probes
+are allowed. Signal assertions must mock the endpoint. There is no environment
+variable that disables this guard. Every test module imports it explicitly,
+including when discovered with `unittest discover -s tests`.
+
 ```bash
 python3 -m pip install .
 PYTHONPATH=src python3 -m unittest discover -s tests -v
@@ -18,7 +25,44 @@ The dependency-install step is required when using an isolated Python environmen
 
 CI pins third-party actions by immutable commit, runs high-severity Bandit checks and `pip-audit`, and publishes a CycloneDX dependency SBOM with the package.
 
-The TuxInDrive development suite contains **585 automated tests: 572 Python tests and 13 Android JVM tests**. Four Python checks require an isolated GTK display and are skipped during the normal headless suite. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes automatic, manual-only and Codex chat-only AI-tool backups, protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing, aggregate tray state and error summaries, and historical upgrades. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
+The source defines **608 unit checks: 595 Python tests and 13 Android JVM tests**, plus three separate isolated process-lifecycle checks. These counts describe test definitions, not evidence that a particular revision has passed CI. Four Python checks require an isolated GTK display and are skipped during the normal headless suite. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes automatic, manual-only and Codex chat-only AI-tool backups, protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing, aggregate tray state and error summaries, and historical upgrades. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
+
+The credential/backup regressions use synthetic data and cover mocked timeout
+cleanup, no key replacement on credential-store failure,
+deny-first chat filters, excluded incoming deletions and filter-free incremental
+manifests. The real local rclone copy check skips when rclone is unavailable;
+provide `TUXINDRIVE_TEST_RCLONE=/absolute/path/to/rclone` to run it explicitly:
+
+```bash
+PYTHONPATH=src TUXINDRIVE_TEST_RCLONE=/absolute/path/to/rclone \
+  python3 -m unittest tests.test_backup_regressions -v
+```
+
+No live cloud account or personal chat files are used by these regressions.
+
+### Real process lifecycle: isolated CI only
+
+Real process-group checks were moved to `integration_tests/test_process_groups.py`
+and are **not** part of ordinary unit discovery. They require both explicit
+`TUXINDRIVE_ISOLATED_PROCESS_TESTS=1` opt-in and a Linux container marker, with
+no graphical desktop environment. The dedicated `isolated-process-lifecycle`
+CI job uses a disposable container, a process-count limit and a five-minute
+job timeout. Do not run these checks directly in a developer desktop session.
+The in-process unit guard is never disabled for integration checks; they run
+in a separate interpreter/container instead.
+
+Application cancellation and Tor reload share the same ownership gateway.
+Only native `Popen` instances created through `spawn_process` are registered;
+mock objects, coerced/bool/invalid PIDs and unregistered processes are rejected.
+On Linux, verified session members are pinned with pidfds and birth identities,
+so escalation after leader reaping cannot signal a reused PID. On systems
+without pidfds, group signals require an unreaped isolated leader and hold its
+wait/poll lock without blocking cancellation; after reaping or while the lock
+is busy they fail closed. Portable background waiters use short bounded waits
+so they cannot monopolize that lock. Timeout helpers never enter Popen's
+context manager with its unbounded exit wait. Unknown/unverifiable descendants
+are never adopted by numeric PID alone. Debian upgrades use exact launcher
+arguments and pidfds, and skip automatic process shutdown without pidfd support.
 
 Run the real GTK tray-menu checks separately on Linux with GTK 3, PyGObject,
 Xvfb and xauth installed:
@@ -45,7 +89,7 @@ directories; cloud synchronization is never started.
 | `test_delta.py` | 1 | Rolling BLAKE2 block signatures identify only modified ranges and calculate transferred bytes. |
 | `test_diagnostics.py` | 1 | Startup failures are written before GTK imports, allowing diagnosis when the graphical runtime cannot start. |
 | `test_platform_support.py` | 5 | Safe distribution parsing, Linux/macOS/Windows machine-readable capabilities and unsupported-architecture blocking. |
-| `test_engine.py` | 60 | Full and incremental modes, atomic reservation, non-blocking mount startup, aggregate streaming budgets, global rates/admission, jitter/backoff, deletion/conflict safety, streaming/mount recovery, offline hydration, marker confinement, symlink rejection and engine replacement. |
+| `test_engine.py` | 97 | Full and incremental modes, atomic reservation, non-blocking mount startup, aggregate streaming budgets, global rates/admission, jitter/backoff, deletion/conflict safety, streaming/mount recovery, owned mount shutdown, offline hydration, marker confinement, symlink rejection and engine replacement. |
 | `test_file_preview.py` | 13 | Default-local bounded text/image/document previews, no-follow reads, folder non-enumeration, UTF handling, archive traversal/ZIP-bomb rejection, and shell-free page/time-limited PDF extraction. |
 | `test_github_sync.py` | 6 | Credential-free GitHub URL/branch/item safety, redirect migration, global admission and guarded commit/fetch/rebase/push orchestration. |
 | `test_folder_layout.py` | 11 | Persistent selection during asynchronous cloud-tree loading, safe account-switch defaults, before/after drag ordering, cross-group moves, group-header append, Ungrouped fallback, self-drop handling, endpoint-path preservation, GTK text-payload round-trip and malformed-payload rejection. |
@@ -60,7 +104,9 @@ directories; cloud synchronization is never started.
 | `test_password_helper.py` | 8 | Private credential-helper input/output, packaged Secret Service fallback, migration-key storage and rejection behavior. |
 | `test_profile_qr.py` | 3 | Stable desktop/Android QR protocol, multi-frame ordering/deduplication, bounds and incomplete/mixed/tampered transfer rejection. |
 | `test_performance.py` | 16 | Inotify delivery/startup race, remote retry, shared scans, interruptible monitor shutdown, overflow reconciliation, monitor safety, cache protection, fail-closed markers and performance hooks. |
-| `test_process_control.py` | 4 | Portable process creation, cancellation, process-group cleanup and timeout behavior. |
+| `test_process_control.py` | 21 | Mock/PID spoofing rejection, registered ownership, birth identities, pidfd cleanup after reaping, PID/session reuse rejection, native Windows handles, non-blocking POSIX lock checks, bounded waits and mocked timeout behavior; all signal endpoints intercepted. |
+| `test_signal_safety.py` | 3 | Fail-closed Python signal endpoints, audit protection for cached aliases and exact positive-PID zero-signal probes. |
+| `test_upgrade_processes.py` | 5 | Exact launcher matching, invalid-PID rejection, pidfd escalation, raced process identity and clean-exit handling; no installer execution. |
 | `test_proton.py` | 30 | Official CLI install/login/session, Secret Service, redaction/confinement, backend migration, safety previews, global admission and fail-closed routing. |
 | `test_collaboration.py` | 11 | Offline CRDT convergence, iterative deep-chain handling, immutable/bounded operation state, checkpoints, review/presence, deterministic ODT/ODS round trips, ZIP-bomb rejection, unsafe XML rejection and binary fallback. |
 | `test_peer.py` | 27 | Invitation compatibility, approval-based LAN requests/advertisements, roles/drops/transports, signed atomic deltas, isolated device roots, authorization/revocation, host-key pinning, leases and private identities. |

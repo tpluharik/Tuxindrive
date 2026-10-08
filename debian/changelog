@@ -1,3 +1,13 @@
+tuxindrive (0.26.70-1) unstable; urgency=high
+
+  * Validate native owned processes for cancellation and Tor reload.
+  * Pin Linux cleanup targets with stable process descriptors.
+  * Bound portable waiters, mount shutdown and timed-out helper cleanup.
+  * Stop old application instances through exact argv and stable handles.
+  * Guard unit-test signal endpoints and gate releases on isolated CI checks.
+
+ -- TuxInDrive Maintainers <maintainers@tuxindrive.invalid>  Thu, 08 Oct 2026 11:49:00 +0200
+
 tuxindrive (0.26.69-1) unstable; urgency=high
 
   * Bound packaged credential lookups and preserve existing keys on failure.

@@ -1,7 +1,7 @@
 # TuxInDrive release process
 
 This document defines the release and signed update-channel workflow for
-TuxInDrive 0.26.69. It is intended for maintainers. Users should use
+TuxInDrive 0.26.70. It is intended for maintainers. Users should use
 the installation and update instructions in the [user guide](USER_GUIDE.md).
 
 ## Release outputs
@@ -107,7 +107,10 @@ builds the GTK application and DMG. The Android job builds a pinned rclone
 gomobile library, then runs release tests and lint and produces both the signed
 sideload APK and the self-update-disabled Play Store AAB. The publication job
 derives package-manager definitions and checksums from those exact files.
-Publishing waits for all four jobs; a failed platform blocks the
+Publishing also requires the `safety-gate` job: the guarded unit suite and real
+process-lifecycle checks run in a disposable Linux container, in separate
+interpreters. Never run the real signal checks in a developer desktop session.
+Publishing waits for the safety gate and all four platform jobs; a failure blocks the
 release rather than publishing a partial channel.
 
 ## Manifest publication

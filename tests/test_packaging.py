@@ -1,3 +1,5 @@
+from tests import signal_safety as _signal_safety  # noqa: F401
+
 import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -19,10 +21,12 @@ class PackagingTests(unittest.TestCase):
     def test_upgrade_stops_only_the_exact_old_tuxindrive_application(self):
         postinst = Path("packaging/DEBIAN/postinst").read_text(encoding="utf-8")
         self.assertIn('if [ "${1:-}" = "configure" ] && [ -n "${2:-}" ]', postinst)
-        self.assertIn('runpy.run_module("tuxindrive.app",run_name="__main__")', postinst)
-        self.assertIn('runpy.run_module("tuxdrive.app",run_name="__main__")', postinst)
-        self.assertIn('kill -INT "$tuxindrive_pid"', postinst)
-        self.assertIn('kill -TERM "$tuxindrive_pid"', postinst)
+        self.assertIn('from tuxindrive.upgrade_processes import stop_previous_applications', postinst)
+        self.assertIn('/usr/bin/python3 -I -c', postinst)
+        self.assertNotIn('kill -', postinst)
+        source_postinst = Path("debian/tuxdrive.postinst").read_text(encoding="utf-8")
+        self.assertIn('from tuxindrive.upgrade_processes import stop_previous_applications', source_postinst)
+        self.assertNotIn('kill -', source_postinst)
 
     def test_build_has_installed_layout_import_smoke_test(self):
         build_script = Path("scripts/build-deb.sh").read_text(encoding="utf-8")

@@ -22,6 +22,30 @@ on:
       - ".github/workflows/platform-packages.yml"
 
 jobs:
+  safety-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    container:
+      image: ubuntu:24.04
+      options: --pids-limit 256
+    steps:
+      - name: Install disposable test runtime
+        run: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y git ca-certificates python3-venv
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - name: Install pinned test dependencies
+        run: |
+          python3 -m venv .venv-ci
+          .venv-ci/bin/python -m pip install -c requirements-release.txt .
+          .venv-ci/bin/python -m pip install -r requirements-ci.txt
+      - name: Run signal-guarded unit suite
+        run: PYTHONPATH=src .venv-ci/bin/python -m unittest discover -s tests -v
+      - name: Run real lifecycle checks in disposable PID namespace
+        run: PYTHONPATH=src TUXINDRIVE_ISOLATED_PROCESS_TESTS=1 .venv-ci/bin/python -m unittest discover -s integration_tests -v
+
   linux:
     runs-on: ubuntu-latest
     steps:
@@ -203,7 +227,7 @@ jobs:
 
   publish-release:
     if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main'
-    needs: [linux, windows, macos, android]
+    needs: [safety-gate, linux, windows, macos, android]
     runs-on: ubuntu-latest
     environment: release
     permissions:

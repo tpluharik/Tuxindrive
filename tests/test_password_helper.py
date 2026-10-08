@@ -1,3 +1,5 @@
+from tests import signal_safety as _signal_safety  # noqa: F401
+
 import unittest
 import subprocess
 from unittest.mock import MagicMock, patch

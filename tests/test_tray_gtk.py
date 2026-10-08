@@ -1,5 +1,7 @@
 """Opt-in real GTK menu checks: TUXINDRIVE_GTK_TESTS=1 xvfb-run ..."""
 
+from tests import signal_safety as _signal_safety  # noqa: F401
+
 import os
 import tempfile
 from types import SimpleNamespace

@@ -26,7 +26,7 @@ from .audit import AuditTimeline
 from .models import AuthorizedPeer, OneTimeDrop, PeerRole, PeerShare, PeerTransportPolicy, SyncJob
 from .tor import ONION_V3, TorError, TorServiceManager, enforce_transport_policy
 from .security import confined_path, confined_parent, ensure_private_directory, prepare_private_file, verify_signed_json
-from .process_control import new_process_group, terminate_process
+from .process_control import new_process_group, spawn_process, terminate_process, wait_process
 from .callbacks import InotifyTreeMonitor
 
 
@@ -664,7 +664,7 @@ class PeerManager:
                 if read_only:
                     command.append("--read-only")
                 try:
-                    process = subprocess.Popen(
+                    process = spawn_process(
                         command, stdout=log, stderr=subprocess.STDOUT, text=True,
                         **new_process_group(),
                     )
@@ -782,7 +782,7 @@ class PeerManager:
         for endpoint_port in endpoint_ports:
             command.extend(("-R", f"{self._relay_port(share, endpoint_port)}:127.0.0.1:{validate_port(endpoint_port)}"))
         command.append(f"{share.relay_user}@{validate_host(share.relay_host)}")
-        process = subprocess.Popen(
+        process = spawn_process(
             command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             **new_process_group(),
         )
@@ -1000,7 +1000,7 @@ class PeerManager:
         return private, public
 
     def _watch(self, share_id: str, process: subprocess.Popen[str]) -> None:
-        process.wait()
+        wait_process(process)
         self._close_log(share_id)
 
     def _delta_watch(self, share: PeerShare, process: subprocess.Popen[str]) -> None:

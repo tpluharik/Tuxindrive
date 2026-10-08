@@ -16,7 +16,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 
 from .models import AuthorizedPeer, PeerShare, PeerTransportPolicy
-from .process_control import new_process_group, reload_process, terminate_process
+from .process_control import new_process_group, spawn_process, reload_process, terminate_process
 
 
 ONION_V3 = re.compile(r"^[a-z2-7]{56}\.onion$")
@@ -107,7 +107,7 @@ class TorServiceManager:
             lines.extend(f"Bridge {self._safe_profile(value)}" for value in share.tor_bridge_lines)
             lines.extend(f"ClientTransportPlugin {self._safe_transport_plugin(value)}" for value in share.tor_pluggable_transports)
         self._private_write(config, "\n".join(lines) + "\n")
-        process = subprocess.Popen(
+        process = spawn_process(
             [binary, "-f", str(config)], stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL, text=True, **new_process_group(),
         )
@@ -146,7 +146,7 @@ class TorServiceManager:
             f"DataDirectory {data}", f"SocksPort 127.0.0.1:{port}", "AvoidDiskWrites 1",
             f"ClientOnionAuthDir {self.root / 'client-auth'}",
         )) + "\n")
-        process = subprocess.Popen(
+        process = spawn_process(
             [binary, "-f", str(torrc)], stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL, text=True, **new_process_group(),
         )

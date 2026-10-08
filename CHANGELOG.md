@@ -2,6 +2,22 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.70 — owned-process safety and isolated lifecycle testing
+
+- Route cancellation and Tor reload through one ownership gateway. Reject
+  mocked, coerced, reserved and unregistered process IDs before sending signals.
+- Pin verified Linux session members with stable process descriptors so forced
+  cleanup after leader exit cannot target a reused PID. Portable group signals
+  require an unreaped isolated leader and a non-blocking wait-lock check.
+- Use bounded portable waiters, remove unbounded context-manager waits after
+  timeouts, and route mount shutdown through the owned cleanup helper.
+- Replace upgrade-script substring/PID signalling with exact launcher matching
+  and stable descriptors. Unsupported systems skip automatic shutdown safely.
+- Block real Python/native Windows signal endpoints in every unit-test module;
+  move real process lifecycle checks into an explicitly opted-in container job.
+- Require the guarded unit suite and isolated lifecycle checks to pass before
+  the platform workflow can publish a release.
+
 ## 0.26.69 — bounded credential recovery and safe backup filters
 
 - Bound Linux credential-store requests to ten seconds and preserve the

@@ -7,7 +7,17 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.69
+## Current baseline: 0.26.70
+
+### Completed in 0.26.70: owned-process safety and isolated release gates
+
+- Share validated native-process ownership between cancellation and Tor reload.
+- Pin Linux group members with stable descriptors; reject PID/session reuse and
+  fail closed when portable ownership cannot be established.
+- Bound mount/helper cleanup and portable waiters without blocking cancellation.
+- Use exact launch arguments and stable descriptors for upgrade shutdown.
+- Guard unit-test signal endpoints and isolate real lifecycle tests in CI.
+- Block package publication until those safety checks pass.
 
 ### Completed in 0.26.69: bounded keyring waits and ordered backup filters
 

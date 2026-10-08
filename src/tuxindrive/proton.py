@@ -24,7 +24,7 @@ from typing import Callable, Iterable
 from .config import data_root
 from .models import ConflictPolicy, SyncJob, SyncMode
 from .security import ensure_private_directory
-from .process_control import new_process_group, terminate_process
+from .process_control import new_process_group, spawn_process, terminate_process
 from .file_permissions import private_descriptor
 
 
@@ -330,7 +330,7 @@ class ProtonDriveClient:
         with self._login_lock:
             if self._login_process and self._login_process.poll() is None:
                 raise ProtonDriveError("A Proton browser authorization is already in progress")
-            process = subprocess.Popen(
+            process = spawn_process(
                 [executable, "auth", "login"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -649,7 +649,7 @@ class ProtonDriveClient:
         if job_id and job_id in self._cancelled_jobs:
             self._cancelled_jobs.discard(job_id)
             raise ProtonDriveError("Proton synchronization was cancelled")
-        process = subprocess.Popen(
+        process = spawn_process(
             [executable, *args],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

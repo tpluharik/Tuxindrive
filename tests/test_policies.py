@@ -1,3 +1,5 @@
+from tests import signal_safety as _signal_safety  # noqa: F401
+
 import unittest
 from datetime import datetime
 from unittest.mock import patch

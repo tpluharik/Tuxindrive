@@ -1,6 +1,9 @@
+from tests import signal_safety as _signal_safety  # noqa: F401
+
 import json
 import io
 import os
+import subprocess
 import tempfile
 import threading
 import time
@@ -1273,13 +1276,13 @@ class SyncEngineCommandTests(unittest.TestCase):
             processes = [StalledProcess(), StalledProcess()]
             with patch("tuxindrive.engine.subprocess.Popen", side_effect=processes) as popen, \
                  patch("tuxindrive.engine.selectors.DefaultSelector") as selector_type, \
-                 patch("tuxindrive.engine.os.killpg") as killpg:
+                 patch("tuxindrive.engine.terminate_process") as terminate:
                 selector = selector_type.return_value
                 selector.select.return_value = []
                 with self.assertRaisesRegex(RuntimeError, "cancelled the stalled download"):
                     self.engine._hydrate_file(source, "stalled.pdf")
             self.assertEqual(popen.call_count, 2)
-            self.assertEqual(killpg.call_count, 2)
+            self.assertEqual(terminate.call_count, 2)
 
     def test_hydration_timeout_rolls_back_file_rule(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -1528,10 +1531,21 @@ class SyncEngineCommandTests(unittest.TestCase):
         process.poll.return_value = None
         self.engine._mounts[job.id] = process
         self.engine._mount_paths[job.id] = job.local
-        with patch("tuxindrive.engine.os.killpg"), \
+        with patch("tuxindrive.engine.terminate_process"), \
              patch.object(self.engine, "_unmount_path", return_value=True) as unmount:
             self.engine.shutdown()
         unmount.assert_called_once_with(job.local)
+
+    def test_mount_stop_timeout_never_bypasses_owned_process_gateway(self):
+        job = SyncJob(account_remote="google", local_path="/data/stream", mode=SyncMode.VIRTUAL_DRIVE)
+        process = MagicMock(pid=1234)
+        process.poll.return_value = None
+        self.engine._mounts[job.id] = process
+        with patch("tuxindrive.engine.stop_process", side_effect=subprocess.TimeoutExpired("mount", 5)) as stop, \
+             patch.object(self.engine, "_unmount_path", return_value=False):
+            self.assertFalse(self.engine.stop_mount(job))
+        stop.assert_called_once_with(process, grace=5)
+        process.kill.assert_not_called()
 
     def test_failure_summary_surfaces_fatal_detail(self):
         with tempfile.TemporaryDirectory() as temporary:

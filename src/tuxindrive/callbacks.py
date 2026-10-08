@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Callable, ContextManager
 
 from .models import SyncJob, SyncMode
-from .process_control import new_process_group, terminate_process
+from .process_control import new_process_group, spawn_process, terminate_process
 
 
 TRANSIENT_PATTERNS = (
@@ -334,7 +334,7 @@ class ChangeMonitor:
     def _run_command(self, command: list[str], timeout: float) -> subprocess.CompletedProcess[str]:
         if self.stop_event.is_set():
             raise RuntimeError("Cloud monitor stopped")
-        process = subprocess.Popen(
+        process = spawn_process(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

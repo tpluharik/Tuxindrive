@@ -35,7 +35,7 @@ from .security import UnsafePathError, confined_path, ensure_private_directory, 
 from .nautilus_support import is_available_offline
 from .cache_manager import CacheCleanupResult, StreamingCacheManager
 from .proton import ProtonDriveClient, ProtonDriveError
-from .process_control import new_process_group, stop_process, terminate_process
+from .process_control import new_process_group, spawn_process, stop_process, terminate_process, wait_process
 from .file_permissions import private_descriptor
 from .bandwidth import GlobalBandwidthController
 from .error_details import redact_error_text
@@ -1200,7 +1200,7 @@ class SyncEngine:
         )
         failure = "the cloud provider stopped responding"
         for attempt in range(self._OFFLINE_READ_ATTEMPTS):
-            process = subprocess.Popen(
+            process = spawn_process(
                 [sys.executable, "-I", "-c", helper, str(item)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -1767,7 +1767,7 @@ class SyncEngine:
         )
         log_handle.flush()
         try:
-            process = subprocess.Popen(
+            process = spawn_process(
                 self.mount_command(job),
                 stdout=log_handle,
                 stderr=subprocess.STDOUT,
@@ -1864,14 +1864,13 @@ class SyncEngine:
             self._mount_paths.pop(job.id, None)
             if process and process.poll() is None:
                 self._intentional_unmounts.add(job.id)
-        if process and process.poll() is None:
+        if process is not None:
             try:
-                terminate_process(process)
-                process.wait(timeout=5)
+                stop_process(process, grace=5)
                 stopped_process = True
             except (ProcessLookupError, subprocess.TimeoutExpired):
-                process.kill()
-                stopped_process = True
+                # Never bypass ownership checks with a raw Popen.kill().
+                stopped_process = process.poll() is not None
         stopped = self._unmount_path(job.local) or stopped_process
         self._set_mount_lifecycle(
             job.id, "stopped" if stopped else "failed",
@@ -1913,7 +1912,7 @@ class SyncEngine:
         log_path: Path,
         callback: Callable[[JobResult], None],
     ) -> None:
-        return_code = process.wait()
+        return_code = wait_process(process)
         with self._lock:
             if self._mounts.get(job.id) is process:
                 self._mounts.pop(job.id, None)
@@ -2193,7 +2192,7 @@ class SyncEngine:
                         command[3] = str(staged_download)
                     try:
                         phase = "transfer"
-                        process = subprocess.Popen(
+                        process = spawn_process(
                             command,
                             stdout=log,
                             stderr=subprocess.STDOUT,
@@ -2203,7 +2202,7 @@ class SyncEngine:
                         with self._lock:
                             self._processes[job.id] = process
                         self._record_network(job.id)
-                        code = process.wait()
+                        code = wait_process(process)
                     finally:
                         if lease:
                             self.leases.release(job, lease)
@@ -2333,7 +2332,7 @@ class SyncEngine:
                         with os.fdopen(descriptor, "w", encoding="utf-8") as manifest:
                             for relative in paths:
                                 manifest.write(relative + "\n")
-                        process = subprocess.Popen(
+                        process = spawn_process(
                             command + ["--files-from-raw", manifest_name, "--no-traverse",
                                        "--stats", "1s", "--stats-one-line"]
                             # The manifest is already selected above. Rclone
@@ -2345,7 +2344,7 @@ class SyncEngine:
                         with self._lock:
                             self._processes[job.id] = process
                         self._record_network(job.id)
-                        code = process.wait()
+                        code = wait_process(process)
                         if code:
                             raise RuntimeError(
                                 f"batched incremental transfer failed (rclone exit {code})"
@@ -2521,7 +2520,7 @@ class SyncEngine:
                         "Removed a verified orphaned Bisync lock after its owner "
                         "process exited; continuing without rebuilding sync state.\n"
                     )
-                process = subprocess.Popen(
+                process = spawn_process(
                     command,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
@@ -2627,7 +2626,7 @@ class SyncEngine:
                 return_code = (
                     stop_process(process)
                     if no_progress_timeout or stale_google_errors >= self._STALE_GOOGLE_ERROR_LIMIT
-                    else process.wait()
+                    else wait_process(process)
                 )
                 cancelled = return_code in (-signal.SIGTERM, 143) and not no_progress_timeout
                 log.write(f"[{datetime.now(timezone.utc).isoformat()}] Exit {return_code}\n")
@@ -2788,7 +2787,7 @@ class SyncEngine:
         """
         prepare_private_file(log_path)
         with log_path.open("w", encoding="utf-8") as preview:
-            process = subprocess.Popen(
+            process = spawn_process(
                 command,
                 stdout=preview,
                 stderr=subprocess.STDOUT,
@@ -2814,7 +2813,7 @@ class SyncEngine:
                         "output; its queue slot was recovered automatically"
                     )
                 time.sleep(0.5)
-            return process.wait()
+            return wait_process(process)
 
     def _set_current_process(self, job_id: str, process: subprocess.Popen[str]) -> None:
         with self._lock:
@@ -3037,7 +3036,7 @@ class SyncEngine:
     def _run_git_process(
         self, job: SyncJob, command: list[str], cwd: Path, log, environment: dict[str, str]
     ) -> int:
-        process = subprocess.Popen(
+        process = spawn_process(
             command,
             cwd=cwd,
             env=environment,
@@ -3048,7 +3047,7 @@ class SyncEngine:
         )
         with self._lock:
             self._processes[job.id] = process
-        return process.wait()
+        return wait_process(process)
 
     @staticmethod
     def _git_output(command: list[str], environment: dict[str, str]) -> str:

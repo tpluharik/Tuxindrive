@@ -1,3 +1,5 @@
+from tests import signal_safety as _signal_safety  # noqa: F401
+
 import unittest
 from pathlib import Path
 from unittest.mock import patch

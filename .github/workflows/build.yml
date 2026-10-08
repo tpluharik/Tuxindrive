@@ -43,6 +43,22 @@ jobs:
           name: tuxindrive-deb
           path: release-artifacts/
 
+  isolated-process-lifecycle:
+    # Real signal tests must never run in the developer's desktop session.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    container:
+      image: ubuntu:24.04
+      options: --pids-limit 256
+    steps:
+      - name: Install isolated test prerequisites
+        run: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y git python3 ca-certificates
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Verify owned process lifecycle in disposable PID namespace
+        run: PYTHONPATH=src TUXINDRIVE_ISOLATED_PROCESS_TESTS=1 python3 -m unittest discover -s integration_tests -v
+
   debian-core-matrix:
     strategy:
       fail-fast: false

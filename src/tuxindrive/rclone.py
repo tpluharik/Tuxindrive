@@ -20,7 +20,7 @@ from typing import Any, Iterable
 
 from .models import Provider
 from .bootstrap import install_rclone, resolve_rclone
-from .process_control import new_process_group, run_process, terminate_process
+from .process_control import new_process_group, spawn_process, run_process, terminate_process
 
 
 class RcloneError(RuntimeError):
@@ -622,7 +622,7 @@ class RcloneClient:
         with self._oauth_guard:
             if self._oauth_process is not None and self._oauth_process.poll() is None:
                 raise RcloneError("Another cloud authorization is already in progress.")
-            process = subprocess.Popen(
+            process = spawn_process(
                 [self.executable, *args],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
