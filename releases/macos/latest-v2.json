@@ -1,8 +1,8 @@
 {
-  "version": "0.26.72",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.72/TuxInDrive-0.26.72-macos-arm64.dmg",
-  "sha256": "3aeffe09153aabcff79ce8d17a724c744f7ed1316d0bb7c6075bd867c51ccefa",
-  "notes": "0.26.72: easier desktop mail setup with the registered read-only Microsoft app, clearer Gmail setup and consent limits. Live mailbox testing remains pending. Android mailbox indexing is not implemented.",
-  "expires_at": "2027-01-06T17:09:05.410877+00:00",
-  "signature": "V/oMvyXeLsduIwUAf0NP3TEDhE+eoSyp3sVVfIT80lVN7WH4+ugHrWeK19JYq1dwf+ZdOIVDFT/GBwBWFDt6Aw=="
+  "version": "0.26.73",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.73/TuxInDrive-0.26.73-macos-arm64.dmg",
+  "sha256": "68c53fb96fab8086c218942d380d030ed5df88ea32e416139a1b4743f6e964d3",
+  "notes": "Quota-safe Gmail attachment indexing, bounded rate-limit recovery, and preserved read-only mailbox connections.",
+  "expires_at": "2027-01-06T18:12:33.227233+00:00",
+  "signature": "E/jKzx6d90vJkVSPilpWJaj2PQ7/k8gRYU9EtKNERUMho84eM2ieRmbTKfTUQ6ZrJmffgtNXmZ80JkoQvQ6hAA=="
 }

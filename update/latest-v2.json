@@ -1,8 +1,8 @@
 {
-  "version": "0.26.72",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.72/tuxindrive_0.26.72_all.deb",
-  "sha256": "01eda22a09dbe9d51850e4e89a551d92b655226dd42f0843cc9b3184488568ad",
-  "notes": "0.26.72: easier desktop mail setup with the registered read-only Microsoft app, clearer Gmail setup and consent limits. Live mailbox testing remains pending. Android mailbox indexing is not implemented.",
-  "expires_at": "2027-01-06T17:09:04.289487+00:00",
-  "signature": "ue1htPkiXZD8LjKheWwjJIKCZZLL8YoHu08zlFaQqUBwKTXRn05eM1VA6n/IaseIc7WR31shpEgqqCsfbWsdBA=="
+  "version": "0.26.73",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.73/tuxindrive_0.26.73_all.deb",
+  "sha256": "150f84da25a7ff36ff998c46f9ce7d6843e71a972878abaae286353e3a8acbf3",
+  "notes": "Quota-safe Gmail attachment indexing, bounded rate-limit recovery, and preserved read-only mailbox connections.",
+  "expires_at": "2027-01-06T18:12:31.247532+00:00",
+  "signature": "+KLnsQsw2eP7vR0+xVIgtU1Vo0k+w2NQ4rrHRVUCZQLzdsf8FTtRhmdecdYkqmf2ykY+LUijb7LyNsens12LBA=="
 }
