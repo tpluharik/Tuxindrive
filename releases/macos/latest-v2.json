@@ -1,8 +1,8 @@
 {
-  "version": "0.26.71",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.71/TuxInDrive-0.26.71-macos-arm64.dmg",
-  "sha256": "c91bc2e4541cff2ac602ddca9c69fb7deb2c1a342ff73deb8ced2e3295c4734c",
-  "notes": "Gmail and Microsoft 365 attachment search: offline metadata, opt-in bounded text, manual refresh; OAuth app setup required",
-  "expires_at": "2027-01-06T15:56:45.880853+00:00",
-  "signature": "CxpQoYZiBXgaGah/G26OISWfvixnNyb3jKRCYSd/lMqKt0xPuG6p7Ju/jstmax2XErR2OyPJSpqnYdmhI2+nBQ=="
+  "version": "0.26.72",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.72/TuxInDrive-0.26.72-macos-arm64.dmg",
+  "sha256": "3aeffe09153aabcff79ce8d17a724c744f7ed1316d0bb7c6075bd867c51ccefa",
+  "notes": "0.26.72: easier desktop mail setup with the registered read-only Microsoft app, clearer Gmail setup and consent limits. Live mailbox testing remains pending. Android mailbox indexing is not implemented.",
+  "expires_at": "2027-01-06T17:09:05.410877+00:00",
+  "signature": "V/oMvyXeLsduIwUAf0NP3TEDhE+eoSyp3sVVfIT80lVN7WH4+ugHrWeK19JYq1dwf+ZdOIVDFT/GBwBWFDt6Aw=="
 }

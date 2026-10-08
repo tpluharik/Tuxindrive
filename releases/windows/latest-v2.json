@@ -1,8 +1,8 @@
 {
-  "version": "0.26.71",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.71/TuxInDrive-0.26.71-windows-x64-setup.exe",
-  "sha256": "5adf3d6b96da893c174d8e0f525c63fedf759438af1ea446b789f5ea31b99c19",
-  "notes": "Gmail and Microsoft 365 attachment search: offline metadata, opt-in bounded text, manual refresh; OAuth app setup required",
-  "expires_at": "2027-01-06T15:56:45.291258+00:00",
-  "signature": "nai5LWLJqTiN5qXL+WQJThj/GFWTIvWAKgY9R7jF6P7CdN74RJ3Q+vMHyW/oZojmWn8F8I2uCzZzmh4B7jYpAw=="
+  "version": "0.26.72",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.72/TuxInDrive-0.26.72-windows-x64-setup.exe",
+  "sha256": "09d990d2561314144869a95256b31b665f3f7ba7912f9b90c73eba0fe66162de",
+  "notes": "0.26.72: easier desktop mail setup with the registered read-only Microsoft app, clearer Gmail setup and consent limits. Live mailbox testing remains pending. Android mailbox indexing is not implemented.",
+  "expires_at": "2027-01-06T17:09:04.825970+00:00",
+  "signature": "yKXwK8EXn14vXPyCIrtjrWrFzq/aSCaK+WYuZu5RVdwSiJ9JsID7ZV186MYXbg7JwnwyU3KG5ZSjankpgc/XCw=="
 }

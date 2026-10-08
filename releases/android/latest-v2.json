@@ -1,8 +1,8 @@
 {
-  "version": "0.26.71",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.71/TuxInDrive-0.26.71-android.apk",
-  "sha256": "c796a8c3276b01a42af24e47dae9f0d336b0b7d80a8acfeb6f542af435081f57",
-  "notes": "Mobile compatibility release; Gmail and Microsoft 365 attachment indexing is desktop-only",
-  "expires_at": "2027-01-06T15:56:47.660418+00:00",
-  "signature": "jPSuaXJdKhMPQIm7hPAffKdC5DrXEnCEHV8sHz5eDfwrmkbBVUdqkK4ua89DEmQm9hswKhqY1WY6+TLA9bE3DQ=="
+  "version": "0.26.72",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.72/TuxInDrive-0.26.72-android.apk",
+  "sha256": "f7f2f6bec10458099f45b9ef64366846646d583747b3c925ec7aea357a288f34",
+  "notes": "0.26.72: easier desktop mail setup with the registered read-only Microsoft app, clearer Gmail setup and consent limits. Live mailbox testing remains pending. Android mailbox indexing is not implemented.",
+  "expires_at": "2027-01-06T17:09:07.229713+00:00",
+  "signature": "bsbuU/AKI355jADaQZul6ZeRPw212FdC1O4dbQ+9ANgPdNX11IdFuAO2pJBY7+CR6X1B2GPb03gMbmoXnvemCA=="
 }
