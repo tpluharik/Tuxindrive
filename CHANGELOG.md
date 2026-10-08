@@ -2,6 +2,18 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.73 — quota-safe Gmail indexing
+
+- Pace Gmail requests conservatively for the lower per-user quotas of new
+  Google Cloud projects, including attachment-content requests.
+- Recognize Gmail's HTTP 403 rate-limit responses separately from genuine
+  permission failures; use bounded, cancellable recovery waits.
+- Keep OAuth credentials and the previous index intact when quota recovery
+  is exhausted. Explain daily quotas without suggesting reconnection.
+- Add six offline regressions for quota classification, cancellation and
+  provider-specific request pacing. A live Gmail setup exposed the original
+  rate-limit failure; Microsoft mailbox validation remains pending.
+
 ## 0.26.72 — registered Microsoft mail app and clearer Gmail setup
 
 - Pre-fill the registered public TuxInDrive Mail client for Microsoft personal

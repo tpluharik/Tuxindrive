@@ -7,7 +7,14 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.72
+## Current baseline: 0.26.73
+
+### Implemented in 0.26.73: quota-safe Gmail refresh
+
+- Pace Gmail API reads conservatively without increasing quotas or enabling billing.
+- Retry temporary quota responses with bounded, cancellable waits.
+- Distinguish rate/daily quotas from permission failures and retain connections/indexes.
+- Add offline pacing/recovery regressions following a live Gmail rate-limit failure.
 
 ### Implemented in 0.26.72: registered Microsoft mail application
 

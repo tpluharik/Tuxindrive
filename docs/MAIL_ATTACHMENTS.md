@@ -60,6 +60,18 @@ for every user. See [Gmail OAuth scopes](https://developers.google.com/workspace
 and [Google desktop OAuth](https://developers.google.com/identity/protocols/oauth2/native-app),
 including [refresh-token expiry](https://developers.google.com/identity/protocols/oauth2#expiration).
 
+### Gmail rate limits and recovery (0.26.73)
+
+New Google Cloud projects have lower per-user quotas than older projects.
+TuxInDrive spaces Gmail API requests by at least half a second and recognizes
+`rateLimitExceeded` / `userRateLimitExceeded` HTTP 403 responses as temporary
+quota limits, not lost credentials. Recovery waits are bounded and cancellable;
+if retries run out, keep the mailbox connected and refresh after a minute.
+A daily-quota error needs the quota to reset or a project-quota review, not a
+new OAuth login. No quota increase or billing enablement is performed by the app.
+See [Gmail usage limits](https://developers.google.com/workspace/gmail/api/reference/quota).
+Genuine permission/administrator denials still require their separate recovery.
+
 ### Microsoft 365 / Office 365 setup
 
 Version 0.26.72 pre-fills the registered **TuxInDrive Mail** application:

@@ -11,6 +11,7 @@ from pathlib import Path
 from threading import Event, Thread
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
+from urllib.error import HTTPError
 from urllib.parse import parse_qs, urlencode, urlsplit
 from urllib.request import Request
 
@@ -54,6 +55,52 @@ class SyntheticClient:
 
 
 class MailAuthorizationTests(unittest.TestCase):
+    @staticmethod
+    def gmail_error(reason):
+        body = {"error": {"errors": [{"reason": reason}], "message": "synthetic-private-response"}}
+        return HTTPError("https://gmail.googleapis.com/test", 403, "Forbidden", {},
+                         io.BytesIO(json.dumps(body).encode()))
+
+    def test_gmail_quota_403_waits_and_retries_without_reauthorization(self):
+        opener, stop = Mock(), Mock()
+        stop.is_set.return_value = False
+        opener.open.side_effect = [self.gmail_error("rateLimitExceeded"), io.BytesIO(b"ok")]
+        with patch("tuxindrive.mail_auth.build_opener", return_value=opener):
+            self.assertEqual(http_bytes(Request("https://gmail.googleapis.com/test"), 4, stop=stop), b"ok")
+        stop.wait.assert_called_once_with(32)
+        self.assertEqual(opener.open.call_count, 2)
+
+    def test_gmail_quota_exhaustion_is_not_reported_as_lost_permissions(self):
+        for reason in ("rateLimitExceeded", "userRateLimitExceeded"):
+            opener = Mock()
+            opener.open.side_effect = self.gmail_error(reason)
+            with patch("tuxindrive.mail_auth.build_opener", return_value=opener), self.assertRaises(MailError) as error:
+                http_bytes(Request("https://gmail.googleapis.com/test"), 4, retries=1)
+            self.assertIn("rate limit", str(error.exception))
+            self.assertIn("remains connected", str(error.exception))
+            self.assertNotIn("permissions", str(error.exception))
+            self.assertNotIn("synthetic-private-response", str(error.exception))
+
+    def test_gmail_daily_quota_and_real_permission_denial_are_not_retried(self):
+        for reason, expected in (("dailyLimitExceeded", "daily API quota"), ("insufficientPermissions", "permissions")):
+            opener, stop = Mock(), Mock()
+            stop.is_set.return_value = False
+            opener.open.side_effect = self.gmail_error(reason)
+            with patch("tuxindrive.mail_auth.build_opener", return_value=opener), self.assertRaises(MailError) as error:
+                http_bytes(Request("https://gmail.googleapis.com/test"), 4, stop=stop)
+            self.assertIn(expected, str(error.exception))
+            self.assertEqual(opener.open.call_count, 1)
+            stop.wait.assert_not_called()
+
+    def test_gmail_quota_wait_is_cancellable_before_another_request(self):
+        opener, stop = Mock(), Mock()
+        stop.is_set.return_value = False
+        stop.wait.side_effect = lambda _delay: setattr(stop.is_set, "return_value", True)
+        opener.open.side_effect = self.gmail_error("rateLimitExceeded")
+        with patch("tuxindrive.mail_auth.build_opener", return_value=opener), self.assertRaises(MailCancelled):
+            http_bytes(Request("https://gmail.googleapis.com/test"), 4, stop=stop)
+        self.assertEqual(opener.open.call_count, 1)
+
     def test_only_microsoft_has_a_public_default_client(self):
         self.assertEqual(default_mail_client_id("microsoft365"), MICROSOFT_MAIL_CLIENT_ID)
         self.assertEqual(MICROSOFT_MAIL_CLIENT_ID, "31a841b0-b4f8-4fea-a2f4-49025a6d7370")
@@ -175,6 +222,36 @@ class MailAuthorizationTests(unittest.TestCase):
 
 
 class MailConnectorTests(unittest.TestCase):
+    def test_gmail_requests_are_paced_and_microsoft_requests_are_not(self):
+        authorization, stop = Mock(), Mock()
+        authorization.access_token.return_value = "synthetic-token"
+        stop.is_set.return_value = False
+        client = MailClient(GMAIL, authorization, stop=stop)
+        with patch("tuxindrive.mail_connectors.time.monotonic", side_effect=[100, 100, 100, 100.5]), \
+                patch("tuxindrive.mail_connectors.http_bytes", return_value=b"{}"):
+            client._request(client.base + "profile")
+            client._request(client.base + "messages")
+        stop.wait.assert_called_once_with(0.5)
+        stop.reset_mock()
+        client = MailClient(MICROSOFT, authorization, stop=stop)
+        with patch("tuxindrive.mail_connectors.http_bytes", return_value=b"{}"):
+            client._request(client.base + "messages")
+            client._request(client.base + "messages")
+        stop.wait.assert_not_called()
+
+    def test_gmail_pacing_can_be_cancelled_without_another_network_read(self):
+        authorization, stop = Mock(), Mock()
+        authorization.access_token.return_value = "synthetic-token"
+        stop.is_set.return_value = False
+        stop.wait.side_effect = lambda _delay: setattr(stop.is_set, "return_value", True)
+        client = MailClient(GMAIL, authorization, stop=stop)
+        client._next_gmail_request = 101
+        with patch("tuxindrive.mail_connectors.time.monotonic", return_value=100), \
+                patch("tuxindrive.mail_connectors.http_bytes") as network, self.assertRaises(MailCancelled):
+            client._request(client.base + "messages")
+        network.assert_not_called()
+        authorization.access_token.assert_not_called()
+
     def test_gmail_metadata_projection_excludes_body_data(self):
         self.assertNotIn("data", _gmail_fields())
         self.assertIn("data", _gmail_fields(content=True))

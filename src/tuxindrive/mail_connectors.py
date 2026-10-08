@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import binascii
+import time
 from contextlib import nullcontext
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -20,6 +21,9 @@ from .mail_auth import (
 MAX_ATTACHMENT_BYTES = 8 * 1024 * 1024
 MAX_ATTACHMENTS = 10000
 MAX_CONTENT_RESPONSE_BYTES = 64 * 1024 * 1024
+# New Gmail projects have a lower per-user budget and messages.get costs 20
+# units. Leave ample headroom for pagination, retries and other clients.
+GMAIL_REQUEST_INTERVAL = 0.5
 
 
 @dataclass(frozen=True)
@@ -109,6 +113,7 @@ class MailClient:
         self.authorization = authorization or MailAuthorization()
         self.bandwidth, self.stop = bandwidth, stop
         self.content_bytes_remaining = MAX_CONTENT_RESPONSE_BYTES
+        self._next_gmail_request = 0.0
         self.base = ("https://gmail.googleapis.com/gmail/v1/users/me/" if account.provider == "gmail"
                      else "https://graph.microsoft.com/v1.0/me/")
 
@@ -116,6 +121,12 @@ class MailClient:
         if not url.startswith(self.base) or urlsplit(url).fragment:
             raise MailError("Mail pagination left the approved account API; credentials were not forwarded.")
         check_cancel(self.stop)
+        if self.account.provider == "gmail":
+            delay = max(0, self._next_gmail_request - time.monotonic())
+            if delay:
+                (self.stop or Event()).wait(delay)
+                check_cancel(self.stop)
+            self._next_gmail_request = time.monotonic() + GMAIL_REQUEST_INTERVAL
         token = self.authorization.access_token(self.account, stop=self.stop)
         if any(ord(c) < 32 for c in token) or len(token) > 32000:
             raise MailError("Reconnect this mailbox; its access token is invalid.")

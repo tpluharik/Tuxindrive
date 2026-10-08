@@ -228,6 +228,26 @@ class NoRedirect(HTTPRedirectHandler):
         raise MailError("The mail service returned a redirect; credentials were not forwarded.")
 
 
+def _gmail_limit_kind(error: HTTPError) -> str | None:
+    """Classify a bounded Gmail error without exposing its response or URLs."""
+    try:
+        raw = error.read(8193)
+        if len(raw) > 8192:
+            return None
+        detail = json.loads(raw).get("error", {})
+        if not isinstance(detail, dict) or not isinstance(detail.get("errors", []), list):
+            return None
+        reasons = {item.get("reason") for item in detail.get("errors", [])
+                   if isinstance(item, dict) and isinstance(item.get("reason"), str)}
+    except (ValueError, UnicodeError, OSError, AttributeError):
+        return None
+    if reasons & {"rateLimitExceeded", "userRateLimitExceeded"}:
+        return "rate"
+    if "dailyLimitExceeded" in reasons:
+        return "daily"
+    return None
+
+
 def http_bytes(request: Request, limit: int, *, stop: Event | None = None,
                bandwidth=None, retries: int = 3) -> bytes:
     """Bounded HTTPS only, no redirects or unbounded Retry-After waits."""
@@ -255,13 +275,24 @@ def http_bytes(request: Request, limit: int, *, stop: Event | None = None,
                     chunks.append(chunk)
                 return b"".join(chunks)
         except HTTPError as exc:
-            if exc.code in {429, 500, 502, 503, 504} and attempt + 1 < retries:
+            quota = (_gmail_limit_kind(exc) if exc.code == 403
+                     and parsed.hostname == "gmail.googleapis.com" else None)
+            if (exc.code in {429, 500, 502, 503, 504} or quota == "rate") and attempt + 1 < retries:
+                default_delay = min(60, 32 * (2 ** attempt)) if quota == "rate" else 2 ** attempt
+                maximum_delay = 60 if quota == "rate" else 20
                 try:
-                    delay = min(20, max(1, int(exc.headers.get("Retry-After", 2 ** attempt))))
+                    delay = min(maximum_delay, max(1, int((exc.headers or {}).get("Retry-After", default_delay))))
                 except (TypeError, ValueError):
-                    delay = 2 ** attempt
+                    delay = default_delay
                 (stop or Event()).wait(delay)
+                check_cancel(stop)
                 continue
+            if quota == "rate" or exc.code == 429:
+                raise MailError("The mail service's temporary rate limit was reached; wait a minute and refresh. "
+                                "The mailbox remains connected and the previous index is retained.") from None
+            if quota == "daily":
+                raise MailError("Gmail's daily API quota was reached; retry after the quota resets or review "
+                                "the project's quota. Reconnecting the mailbox will not fix this.") from None
             if exc.code == 401:
                 raise MailError("Mail authorization expired; reconnect the mailbox.") from None
             if exc.code == 403:
