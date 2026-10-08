@@ -1,8 +1,8 @@
 {
-  "version": "0.26.68",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.68/TuxInDrive-0.26.68-macos-arm64.dmg",
-  "sha256": "d19cda00e8d99e83fef70df1ec723192c684786bdad4d934ff3d5bc607db5d5b",
-  "notes": "Tray alert summaries with direct folder error details",
-  "expires_at": "2027-01-04T19:23:56.617732+00:00",
-  "signature": "w76wn/nK/z0YB1A1YqbwfIcQsZzxIKC93fxCxHxJaALWjd/R3/gHZfCH65f8nuIeD7RF0xYPQJyVXIpKFgSEAA=="
+  "version": "0.26.70",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.70/TuxInDrive-0.26.70-macos-arm64.dmg",
+  "sha256": "7c3f3bcd0ff4e1f10c16a3ddddb58e5d88fc16fda4ab30da5c0468be66f3fc16",
+  "notes": "Owned-process safety, isolated lifecycle tests, bounded credential recovery and safe backup filters",
+  "expires_at": "2027-01-06T10:12:50.136896+00:00",
+  "signature": "3BKh5eMnlHzdgdSMEJF0pl7zUDW62Rc9KmfCwrv1cRwMtcS1PvFz1fBliKmAdE+QCsf0nGUzbmVB/R4MbkyyDA=="
 }
