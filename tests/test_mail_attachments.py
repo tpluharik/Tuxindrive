@@ -15,9 +15,9 @@ from urllib.parse import parse_qs, urlencode, urlsplit
 from urllib.request import Request
 
 from tuxindrive.mail_auth import (
-    GMAIL_SCOPE, GRAPH_SCOPE, MailAccount, MailAccountStore, MailAuthorization,
+    GMAIL_SCOPE, GRAPH_SCOPE, MICROSOFT_MAIL_CLIENT_ID, MailAccount, MailAccountStore, MailAuthorization,
     MailCancelled, MailError, MailTokenStore, NoRedirect, authorization_parameters,
-    _grant, http_bytes, valid_callback,
+    _grant, default_mail_client_id, http_bytes, valid_callback,
 )
 from tuxindrive.mail_connectors import MailAttachment, MailClient, MailScan, _gmail_fields, safe_message_url
 from tuxindrive.mail_index import MailSearchIndex
@@ -54,6 +54,21 @@ class SyntheticClient:
 
 
 class MailAuthorizationTests(unittest.TestCase):
+    def test_only_microsoft_has_a_public_default_client(self):
+        self.assertEqual(default_mail_client_id("microsoft365"), MICROSOFT_MAIL_CLIENT_ID)
+        self.assertEqual(MICROSOFT_MAIL_CLIENT_ID, "31a841b0-b4f8-4fea-a2f4-49025a6d7370")
+        self.assertEqual(default_mail_client_id("gmail"), "")
+        self.assertEqual(default_mail_client_id("unknown"), "")
+
+    def test_registered_microsoft_client_preserves_read_only_pkce_consent(self):
+        account = replace(MICROSOFT, client_id=default_mail_client_id("microsoft365"))
+        url, fields = authorization_parameters(account, "http://localhost:55555/", "state", "verifier")
+        self.assertEqual(url, "https://login.microsoftonline.com/common/oauth2/v2.0/authorize")
+        self.assertEqual(fields["client_id"], MICROSOFT_MAIL_CLIENT_ID)
+        self.assertEqual(fields["scope"], GRAPH_SCOPE + " offline_access")
+        self.assertEqual(fields["code_challenge_method"], "S256")
+        self.assertNotIn("client_secret", fields)
+
     def test_accounts_round_trip_without_tokens_and_with_private_mode(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "mail-accounts.json"

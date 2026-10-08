@@ -85,6 +85,11 @@ The GUI merges offline results and validates provider message URLs before
 opening them. Mail account settings are separate from sync jobs and profile
 exports. See [mail setup and trust boundaries](MAIL_ATTACHMENTS.md).
 
+Version 0.26.72 supplies only the registered Microsoft native app's public
+client identifier as an editable connection-dialog default. It does not
+mutate saved accounts, start consent/indexing, grant administrator consent, or
+bundle a secret. Gmail has no public default while its registration is Testing.
+
 `search_index.py` maintains a rebuildable SQLite cache under the platform cache
 root. Each refresh walks configured local synchronization roots with no-follow
 filesystem operations, applies the job's exclusion patterns, and upserts only

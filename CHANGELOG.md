@@ -2,6 +2,18 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.72 — registered Microsoft mail app and clearer Gmail setup
+
+- Pre-fill the registered public TuxInDrive Mail client for Microsoft personal
+  and work accounts, preserving editable custom-client/tenant settings.
+- Keep per-mailbox browser consent, read-only permissions, PKCE, native-only
+  token storage and explicit manual indexing; no client secret is bundled.
+- Explain unverified-publisher/organization consent restrictions and Gmail
+  Testing's test-user and seven-day refresh-token limits. Do not distribute
+  the private Testing Gmail client as a default for all users.
+- Add offline and isolated GTK regressions for defaults, custom clients and
+  explicit consent. Live mailbox authorization/indexing remains unverified.
+
 ## 0.26.71 — Gmail and Microsoft 365 attachment search
 
 - Add separate read-only browser OAuth/PKCE connectors, native credential-store

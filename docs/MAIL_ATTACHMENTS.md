@@ -1,6 +1,6 @@
 # Gmail and Microsoft 365 attachment search
 
-**Introduced in 0.26.71 desktop builds.** Live provider authorization and organization
+**Introduced in 0.26.71; easier Microsoft setup in 0.26.72 desktop builds.** Live provider authorization and organization
 consent still require end-to-end validation; synthetic tests are not evidence
 of access to a real mailbox. Android mailbox indexing is not implemented.
 
@@ -26,8 +26,10 @@ There are no send, edit or delete operations on either mail API.
 
 1. Open the magnifying glass, then **Mail accounts**.
 2. Choose **Connect Gmail** or **Connect Microsoft 365**.
-3. Enter a registered desktop application's OAuth client ID, a display name,
-   and optionally an email login hint. Follow the provider setup below.
+3. Enter a display name and optionally an email login hint. Microsoft 365
+   pre-fills the registered TuxInDrive Mail public desktop client; you can use
+   your own client/tenant instead. Gmail requires your own Desktop client ID
+   and its client secret. Follow the provider setup below.
 4. Choose **Open browser and connect** and approve read-only access in the
    system browser. The wizard also provides an authorization-page link if the
    browser did not appear. Authorization expires after three minutes and can
@@ -51,13 +53,25 @@ PKCE and a random-port loopback callback on `127.0.0.1`.
 `gmail.readonly` is a restricted scope. Development apps may need explicitly
 listed test users; production distribution can require Google verification and
 additional requirements. Workspace administrators can restrict access, and
-testing-mode credentials may expire. Do not assume a new client ID is approved
+Testing apps allow only listed test users; Gmail refresh tokens expire after
+seven days, requiring reconnection. The maintainer's private Testing client is
+not bundled or pre-filled for all users. Do not assume a new client ID is approved
 for every user. See [Gmail OAuth scopes](https://developers.google.com/workspace/gmail/api/auth/scopes)
-and [Google desktop OAuth](https://developers.google.com/identity/protocols/oauth2/native-app).
+and [Google desktop OAuth](https://developers.google.com/identity/protocols/oauth2/native-app),
+including [refresh-token expiry](https://developers.google.com/identity/protocols/oauth2#expiration).
 
 ### Microsoft 365 / Office 365 setup
 
-Register an application in Microsoft Entra ID with **Mobile and desktop
+Version 0.26.72 pre-fills the registered **TuxInDrive Mail** application:
+`31a841b0-b4f8-4fea-a2f4-49025a6d7370`, tenant `common`. It supports personal
+Microsoft accounts and work/school accounts in any Entra tenant. Its delegated
+permissions are only `Mail.Read` and `offline_access`; no tenant-wide admin
+consent has been granted. The publisher is not verified, so an organization may
+block user consent or require its administrator's approval. Registration is not
+evidence of successful live mailbox authorization or indexing. Existing saved
+mail accounts are not changed by the pre-filled default.
+
+For your own client, register an application in Microsoft Entra ID with **Mobile and desktop
 applications**, redirect URI `http://localhost`, and delegated Microsoft Graph
 `Mail.Read` permission. Use an account audience matching your mailbox: a
 specific tenant UUID or `organizations` for organizational accounts,

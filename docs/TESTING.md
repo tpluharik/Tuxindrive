@@ -25,7 +25,7 @@ The dependency-install step is required when using an isolated Python environmen
 
 CI pins third-party actions by immutable commit, runs high-severity Bandit checks and `pip-audit`, and publishes a CycloneDX dependency SBOM with the package.
 
-The source defines **644 unit checks: 630 Python tests and 14 Android JVM tests**, plus three separate isolated process-lifecycle checks. These counts describe test definitions, not evidence that a particular revision has passed CI. Seven Python checks require an isolated GTK display and are skipped during the normal headless suite. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes automatic, manual-only and Codex chat-only AI-tool backups, protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing, aggregate tray state and error summaries, historical upgrades, and 0.26.71 Gmail/Microsoft 365 attachment indexing. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
+The source defines **647 unit checks: 633 Python tests and 14 Android JVM tests**, plus three separate isolated process-lifecycle checks. These counts describe test definitions, not evidence that a particular revision has passed CI. Eight Python checks require an isolated GTK display and are skipped during the normal headless suite. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes automatic, manual-only and Codex chat-only AI-tool backups, protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing, aggregate tray state and error summaries, historical upgrades, and 0.26.71 Gmail/Microsoft 365 attachment indexing. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
 
 The credential/backup regressions use synthetic data and cover mocked timeout
 cleanup, no key replacement on credential-store failure,
@@ -42,14 +42,18 @@ No live cloud account or personal chat files are used by these regressions.
 
 ### Mail integration: synthetic data and explicit live-validation boundary
 
-The 0.26.71 mail extension adds 32 offline checks for read-only OAuth/PKCE,
+The mail extension through 0.26.72 includes 34 offline checks for read-only OAuth/PKCE,
 callback state validation, native-token storage, safe provider/pagination URLs,
 metadata-only scans, content reuse/budgets, account isolation, cancellation and
 partial-scan retention. Run `tests.test_mail_attachments` alongside
-`tests.test_search_index` and `tests.test_responsive_windows` (57 focused checks).
-Three `tests.test_mail_gtk` checks exercise the actual dialogs on an explicitly
+`tests.test_search_index` and `tests.test_responsive_windows` (59 focused checks).
+Four `tests.test_mail_gtk` checks exercise the actual dialogs on an explicitly
 isolated GTK display with fake accounts and no authorization/download traffic.
 They never instantiate the main application or start synchronization.
+
+The 0.26.72 checks cover the registered Microsoft default, no private Gmail
+default, unchanged read-only/PKCE scope, editable custom clients/tenants and
+authorization only after explicit Connect. Registration is not a live-account test.
 
 Manual release validation still needs registered Gmail/Entra desktop clients,
 browser consent, native credential-store unlock/lock, token expiry/renewal,
@@ -114,8 +118,8 @@ directories; cloud synchronization is never started.
 | `test_tray.py` | 8 | Animation frames, paused-job alerts, credential redaction, bounded summaries, runtime failures, and unresolved-error priority over successful or active transfers. |
 | `test_tray_gtk.py` | 4 | Opt-in real GTK summaries in both menus, overflow activation, direct Error details routing, rename/resolution refresh and runtime failures. |
 | `test_migration.py` | 9 | AES-GCM profile round trips, wrong-password/tamper rejection, visible and legacy cloud discovery/migration, complete unlock-key handoff, compact mobile export, secret opt-in, private permissions and validation. |
-| `test_mail_attachments.py` | 32 | Offline read-only OAuth/PKCE and state checks, native-token persistence, metadata-only Gmail/Graph projection, provider-origin and URL confinement, response/download budgets, reusable text, per-account private indexes, cancellation and partial-scan retention. |
-| `test_mail_gtk.py` | 3 | Opt-in isolated actual dialogs: no implicit browser/token access, visible options applied before refresh, text disable/purge, offline mail results and original-message navigation with synthetic accounts. |
+| `test_mail_attachments.py` | 34 | Offline read-only OAuth/PKCE and state checks, public Microsoft client defaults, native-token persistence, metadata-only Gmail/Graph projection, provider-origin and URL confinement, response/download budgets, reusable text, per-account private indexes, cancellation and partial-scan retention. |
+| `test_mail_gtk.py` | 4 | Opt-in isolated actual dialogs: no implicit browser/token access, visible options applied before refresh, text disable/purge, offline mail results and original-message navigation with synthetic accounts. |
 | `test_offline_action.py` | 9 | Mounted-drive fast dispatch, cold-start queuing, both supported command-line availability option forms, lexical file routing without FUSE resolution, sibling-prefix rejection, exact file-rule isolation, nested offline/online-only precedence, and green-state publication only for locally verified rules. |
 | `test_nautilus_extension.py` | 12 | Exact path/menu isolation, cached/coalesced badge refresh, URI lifecycle, Nautilus 4.1 construction, sensitivity and verified offline transitions. |
 | `test_network_usage.py` | 10 | Linux/macOS/Windows counter parsing and failure handling, platform dispatch, current rates, daily reset, counter rollover and private persistent totals. |

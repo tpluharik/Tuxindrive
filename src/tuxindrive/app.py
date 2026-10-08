@@ -102,7 +102,10 @@ from .bandwidth import GlobalBandwidthController, normalize_bandwidth_limit
 from .server_client import ServerClient, ServerClientError, normalize_server_url
 from .server_credentials import store_server_token
 from .search_index import FolderSearchIndex, IndexStats, SearchResult
-from .mail_auth import MailAccount, MailAccountStore, MailAuthorization, MailError, authorize as authorize_mail
+from .mail_auth import (
+    MailAccount, MailAccountStore, MailAuthorization, MailError,
+    authorize as authorize_mail, default_mail_client_id,
+)
 from .mail_connectors import MailClient, safe_message_url
 from .mail_index import MailSearchIndex, MailSearchResult
 from .file_preview import PreviewData, PreviewError, preview_path
@@ -3578,7 +3581,7 @@ class MailConnectDialog(ResponsiveDialog):
         area.set_spacing(10)
         intro = Gtk.Label(label=(
             "Mail access is read-only and separate from your cloud-drive login. "
-            "Use your registered desktop OAuth client ID. Tokens stay in the native credential store. "
+            "Tokens stay in the native credential store. "
             "No messages are sent, changed or deleted."
         ), xalign=0)
         intro.set_line_wrap(True)
@@ -3586,7 +3589,7 @@ class MailConnectDialog(ResponsiveDialog):
         grid = Gtk.Grid(column_spacing=12, row_spacing=10)
         self.name = Gtk.Entry(text=label)
         self.email = Gtk.Entry()
-        self.client_id = Gtk.Entry()
+        self.client_id = Gtk.Entry(text=default_mail_client_id(provider))
         self.client_secret = Gtk.Entry()
         self.client_secret.set_visibility(False)
         self.tenant = Gtk.Entry(text="common")
@@ -3601,11 +3604,14 @@ class MailConnectDialog(ResponsiveDialog):
             widget.set_hexpand(True)
             grid.attach(widget, 1, row, 1, 1)
         area.pack_start(grid, False, False, 0)
-        help_text = ("Enable the Gmail API, create a Desktop app OAuth client, and grant gmail.readonly. "
-                     "Google may require app verification or an explicitly listed test user."
+        help_text = ("Enter your own Gmail Desktop app client ID and secret, enable the Gmail API, "
+                     "and grant gmail.readonly. Testing apps allow only listed test users and require "
+                     "reconnection after seven days. Public distribution may require Google verification."
                      if provider == "gmail" else
-                     "Register a public desktop app with redirect URI http://localhost and delegated Mail.Read. "
-                     "Some organizations require administrator consent. No Microsoft client secret is used.")
+                     "The registered TuxInDrive Mail desktop app is pre-filled for personal and work accounts. "
+                     "It is not publisher-verified; some organizations require administrator approval. "
+                     "You can replace the client ID with your own public desktop app using http://localhost "
+                     "and delegated Mail.Read plus offline_access. No Microsoft client secret is used.")
         hint = Gtk.Label(label=help_text, xalign=0)
         hint.set_line_wrap(True)
         area.pack_start(hint, False, False, 0)

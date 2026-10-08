@@ -27,8 +27,15 @@ from .process_control import run_process
 
 GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
 GRAPH_SCOPE = "https://graph.microsoft.com/Mail.Read"
+# Public native-app identifier, not a credential. Consent remains per mailbox.
+MICROSOFT_MAIL_CLIENT_ID = "31a841b0-b4f8-4fea-a2f4-49025a6d7370"
 SERVICE = "io.github.tuxindrive.TuxInDrive"
 MAX_JSON_BYTES = 2 * 1024 * 1024
+
+
+def default_mail_client_id(provider: str) -> str:
+    """Do not distribute a Gmail client restricted to private test users."""
+    return MICROSOFT_MAIL_CLIENT_ID if provider == "microsoft365" else ""
 
 
 class MailError(RuntimeError):

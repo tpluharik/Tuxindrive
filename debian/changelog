@@ -1,3 +1,12 @@
+tuxindrive (0.26.72-1) unstable; urgency=medium
+
+  * Pre-fill the registered read-only Microsoft desktop mail application.
+  * Preserve custom clients, explicit consent and native-only token storage.
+  * Explain Gmail test-user/token expiry and organization consent limits.
+  * Keep private Gmail Testing credentials outside distributed packages.
+
+ -- TuxInDrive Maintainers <maintainers@tuxindrive.invalid>  Thu, 08 Oct 2026 18:49:00 +0200
+
 tuxindrive (0.26.71-1) unstable; urgency=medium
 
   * Add read-only Gmail and Microsoft 365 attachment indexing and search.

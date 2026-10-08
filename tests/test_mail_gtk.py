@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from tuxindrive.mail_auth import MailAccountStore
+from tuxindrive.mail_auth import MICROSOFT_MAIL_CLIENT_ID, MailAccountStore
 from tuxindrive.mail_index import MailSearchIndex
 from tuxindrive.search_index import FolderSearchIndex
 from tests.test_mail_attachments import GMAIL, SyntheticClient
@@ -62,8 +62,32 @@ class MailGtkTests(unittest.TestCase):
                 self.dialogs.append(dialog)
                 self.assertFalse(dialog._busy)
                 self.assertFalse(dialog.browser_link.get_visible())
+                self.assertEqual(dialog.client_id.get_text(),
+                                 "" if provider == "gmail" else MICROSOFT_MAIL_CLIENT_ID)
+                self.assertEqual(dialog.client_secret.get_text(), "")
+                self.assertTrue(dialog.client_id.get_editable())
             authorize.assert_not_called()
         self.controller.mail_authorization.store.assert_not_called()
+
+    def test_custom_microsoft_client_is_used_after_explicit_connect(self):
+        done = Mock()
+        dialog = self.app.MailConnectDialog(None, self.controller, "microsoft365", done)
+        self.dialogs.append(dialog)
+        custom_id = "00000000-0000-0000-0000-000000000123"
+        dialog.client_id.set_text(custom_id)
+        dialog.tenant.set_text("organizations")
+        def synchronous(operation, ready):
+            ready(operation(), None)
+        with patch.object(self.app, "authorize_mail") as authorize, \
+                patch.object(self.app, "_run_thread", side_effect=synchronous):
+            authorize.assert_not_called()
+            dialog._response(dialog, self.app.Gtk.ResponseType.OK)
+            authorize.assert_called_once()
+        account = authorize.call_args.args[0]
+        self.assertEqual((account.client_id, account.tenant), (custom_id, "organizations"))
+        self.assertEqual(authorize.call_args.kwargs["client_secret"], "")
+        done.assert_called_once_with(account)
+        self.assertIn(account, self.controller.mail_accounts.load())
 
     def test_refresh_applies_visible_options_and_searches_synthetic_contents(self):
         dialog = self.manager()

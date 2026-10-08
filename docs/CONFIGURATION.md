@@ -47,6 +47,11 @@ Mail accounts are not synchronization jobs and are not exported by profile
 migration. Mail search cache rebuilding requires a manual authenticated refresh;
 it is not reconstructed by app startup. See [mail attachment search](MAIL_ATTACHMENTS.md).
 
+Since 0.26.72, a new Microsoft mail connection pre-fills the registered public
+TuxInDrive Mail client ID and tenant `common`. Both fields remain editable.
+Existing saved accounts keep their client IDs and tenants. Gmail still requires
+a custom Desktop client; no secret or private Testing client is bundled.
+
 The search-window **Enable preview** feature flag is intentionally
 session-local and default-off. It is not written to `config.json`: opening a
 new search window always requires an explicit opt-in before any selected file
