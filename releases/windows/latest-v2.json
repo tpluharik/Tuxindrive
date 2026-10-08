@@ -1,8 +1,8 @@
 {
-  "version": "0.26.70",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.70/TuxInDrive-0.26.70-windows-x64-setup.exe",
-  "sha256": "beed2dcb038ae8f1c070d1de575a68b1fbc98519ba4e47e66acc66059e96854b",
-  "notes": "Owned-process safety, isolated lifecycle tests, bounded credential recovery and safe backup filters",
-  "expires_at": "2027-01-06T10:12:50.057058+00:00",
-  "signature": "Bdm6uPPeDDmJRnfWDEVbQWv3gyD7ePuJ1Nh/d4ZiSUCnFI2NL/QgHZci/2fxMilp821bwPm0Nb8OUgHuEjazAw=="
+  "version": "0.26.71",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.71/TuxInDrive-0.26.71-windows-x64-setup.exe",
+  "sha256": "5adf3d6b96da893c174d8e0f525c63fedf759438af1ea446b789f5ea31b99c19",
+  "notes": "Gmail and Microsoft 365 attachment search: offline metadata, opt-in bounded text, manual refresh; OAuth app setup required",
+  "expires_at": "2027-01-06T15:56:45.291258+00:00",
+  "signature": "nai5LWLJqTiN5qXL+WQJThj/GFWTIvWAKgY9R7jF6P7CdN74RJ3Q+vMHyW/oZojmWn8F8I2uCzZzmh4B7jYpAw=="
 }

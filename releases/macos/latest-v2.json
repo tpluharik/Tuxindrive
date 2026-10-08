@@ -1,8 +1,8 @@
 {
-  "version": "0.26.70",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.70/TuxInDrive-0.26.70-macos-arm64.dmg",
-  "sha256": "7c3f3bcd0ff4e1f10c16a3ddddb58e5d88fc16fda4ab30da5c0468be66f3fc16",
-  "notes": "Owned-process safety, isolated lifecycle tests, bounded credential recovery and safe backup filters",
-  "expires_at": "2027-01-06T10:12:50.136896+00:00",
-  "signature": "3BKh5eMnlHzdgdSMEJF0pl7zUDW62Rc9KmfCwrv1cRwMtcS1PvFz1fBliKmAdE+QCsf0nGUzbmVB/R4MbkyyDA=="
+  "version": "0.26.71",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.71/TuxInDrive-0.26.71-macos-arm64.dmg",
+  "sha256": "c91bc2e4541cff2ac602ddca9c69fb7deb2c1a342ff73deb8ced2e3295c4734c",
+  "notes": "Gmail and Microsoft 365 attachment search: offline metadata, opt-in bounded text, manual refresh; OAuth app setup required",
+  "expires_at": "2027-01-06T15:56:45.880853+00:00",
+  "signature": "CxpQoYZiBXgaGah/G26OISWfvixnNyb3jKRCYSd/lMqKt0xPuG6p7Ju/jstmax2XErR2OyPJSpqnYdmhI2+nBQ=="
 }

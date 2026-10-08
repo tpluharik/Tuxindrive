@@ -1,8 +1,8 @@
 {
-  "version": "0.26.70",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.70/TuxInDrive-0.26.70-android.apk",
-  "sha256": "aad4fb062072bb38441997f6acbd0d89be6099b2347851ce94b2daa85e4df279",
-  "notes": "Owned-process safety, isolated lifecycle tests and compatible Android update signature encoding",
-  "expires_at": "2027-01-06T10:12:50.378959+00:00",
-  "signature": "VwwtP5IC74rWJxKSg/wxFUiZp6xWuXog5b9ZiUpbPsPa07xSNRXPerilPskmtGUb0sbZO0Z6Icsj87bt8zceBA=="
+  "version": "0.26.71",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.71/TuxInDrive-0.26.71-android.apk",
+  "sha256": "c796a8c3276b01a42af24e47dae9f0d336b0b7d80a8acfeb6f542af435081f57",
+  "notes": "Mobile compatibility release; Gmail and Microsoft 365 attachment indexing is desktop-only",
+  "expires_at": "2027-01-06T15:56:47.660418+00:00",
+  "signature": "jPSuaXJdKhMPQIm7hPAffKdC5DrXEnCEHV8sHz5eDfwrmkbBVUdqkK4ua89DEmQm9hswKhqY1WY6+TLA9bE3DQ=="
 }
