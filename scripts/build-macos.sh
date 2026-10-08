@@ -28,6 +28,16 @@ codesign --verify --deep --strict "$app"
 architecture=$(uname -m)
 dmg="dist/TuxInDrive-$version-macos-$architecture.dmg"
 rm -f "$dmg"
-hdiutil create -volname TuxInDrive -srcfolder "$app" -ov -format UDZO "$dmg"
+attempt=1
+while ! hdiutil create -volname TuxInDrive -srcfolder "$app" -ov -format UDZO "$dmg"; do
+  if [ "$attempt" -ge 3 ]; then
+    echo "macOS disk image creation failed after $attempt attempts" >&2
+    exit 1
+  fi
+  echo "Retrying macOS disk image creation after transient runner failure" >&2
+  attempt=$((attempt + 1))
+  sleep 3
+done
 test -s "$dmg"
+hdiutil verify "$dmg"
 echo "macOS package written to $dmg"

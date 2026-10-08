@@ -4,6 +4,10 @@ This changelog summarizes user-visible releases. Detailed operation, safety limi
 
 ## 0.26.70 — owned-process safety and isolated lifecycle testing
 
+- Android update verification now uses the offline signer's compact JSON field
+  encoding, covered by an official-manifest signature regression fixture.
+- macOS disk-image creation retries transient runner failures at most three
+  times and verifies the finished image before publication.
 - Route cancellation and Tor reload through one ownership gateway. Reject
   mocked, coerced, reserved and unregistered process IDs before sending signals.
 - Pin verified Linux session members with stable process descriptors so forced

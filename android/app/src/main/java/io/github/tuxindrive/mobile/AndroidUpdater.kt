@@ -37,15 +37,7 @@ class AndroidUpdater(private val context: Context) {
         val notes = data.optString("notes")
         val expiresAt = data.getString("expires_at")
         val signature = Base64.getDecoder().decode(data.getString("signature"))
-        val canonical = listOf(
-            "expires_at" to expiresAt,
-            "notes" to notes,
-            "sha256" to sha256,
-            "url" to url,
-            "version" to version,
-        ).joinToString(prefix = "{", postfix = "}") { (key, value) ->
-            "${JSONObject.quote(key)}:${JSONObject.quote(value)}"
-        }.toByteArray(Charsets.UTF_8)
+        val canonical = UpdateManifestEncoding.canonical(version, url, sha256, notes, expiresAt)
         val verifier = Ed25519Signer().apply {
             init(false, Ed25519PublicKeyParameters(publicKey, 0))
             update(canonical, 0, canonical.size)

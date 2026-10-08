@@ -61,10 +61,14 @@ Update manifests are signed with Ed25519. The private update key is held only
 by the release maintainer and must never enter the repository, package, log, or
 workflow artifact. Clients embed only the public key. A manifest binds:
 
-- schema, product, version, platform, architecture, and expiry;
-- an approved HTTPS download origin and version-bound filename;
-- exact package size and SHA-256;
-- Ed25519 signature over canonical manifest content.
+- version, download URL, SHA-256, release notes, and expiry;
+- an Ed25519 signature over those five fields as compact, sorted JSON.
+
+Clients additionally enforce an approved HTTPS origin, a version-bound filename
+for their platform/architecture, and a 1 GiB download ceiling. The current
+manifest format does not separately sign schema, product, architecture or size.
+Desktop and Android must verify the same canonical bytes; Android's regression
+fixture uses an official manifest produced by the offline Python signer.
 
 Android packages are additionally signed with a long-lived Android keystore.
 The keystore and passwords are encrypted GitHub Actions secrets:
@@ -78,7 +82,9 @@ verification remains mandatory and separate.
 
 1. Ensure `main` is clean, reviewed, and synchronized with GitHub.
 2. Update the canonical version, changelog, README/current docs, and manifests.
-3. Run the full Python test suite and Android lint/unit/assembly tasks.
+3. Require successful CI for the guarded Python suite, isolated process
+   lifecycle tests, and Android lint/unit/assembly tasks. Do not reproduce real
+   lifecycle signals in the developer's desktop session.
 4. Validate package scripts on the target runners and confirm pinned Actions
    and dependency/tool versions.
 5. Confirm Android release-signing secrets exist without printing them.
@@ -124,12 +130,13 @@ For every platform package:
 3. Use only the approved GitHub Release URL and exact versioned filename.
 4. Canonicalize and sign with the offline Ed25519 private key using the
    repository manifest-signing tooling.
-5. Verify with the embedded public key and run the updater tests before commit.
+5. Verify with the embedded public key and the updater parser before commit;
+   updater tests run in signal-guarded CI, not as local process tests.
 6. Commit the platform `latest-v2.json` and `packages/README.md` pointers to
    `main`, then verify the raw GitHub URL delivers the committed bytes.
 
 The manifest commit normally follows a successful package release because its
-hash and size cannot be known beforehand. Until that commit lands, clients
+hash cannot be known beforehand. Until that commit lands, clients
 correctly continue to report the preceding trusted version.
 
 ## Release validation
@@ -139,8 +146,8 @@ Validate on a clean supported device for every platform:
 - install the package and confirm version, icon, launch, configuration path,
   credential store, account connection, one safe synchronization, and logs;
 - check for an update from the previous supported version;
-- verify that a changed signature, URL, filename, size, digest, expiry, product,
-  platform, or architecture is rejected;
+- verify that a changed signed field/signature, a mismatched platform/version
+  filename, an expired feed, or a download exceeding the size ceiling is rejected;
 - verify download cancellation/failure leaves the installed version usable;
 - Android: verify the signing certificate matches the previous release, SAF
   selection works, scheduled foreground sync works, profile backup is
