@@ -419,7 +419,8 @@ class SyncEngineCommandTests(unittest.TestCase):
             with patch("tuxindrive.engine.resolve_rclone", return_value="/usr/bin/rclone"), \
                  patch("tuxindrive.engine.subprocess.Popen", return_value=process), \
                  patch("tuxindrive.engine.time.monotonic", side_effect=[0.0, 0.0, 1900.0]), \
-                 patch("tuxindrive.engine.terminate_process") as terminate:
+                 patch("tuxindrive.engine.terminate_process") as terminate, \
+                 patch("tuxindrive.engine.stop_process", return_value=-15):
                 self.engine._run_worker(
                     job, Path(temporary) / "sync.log", completed.append, False
                 )
@@ -479,7 +480,8 @@ class SyncEngineCommandTests(unittest.TestCase):
                  patch("tuxindrive.engine.subprocess.Popen", return_value=process), \
                  patch("tuxindrive.engine.selectors.DefaultSelector", return_value=selector), \
                  patch("tuxindrive.engine.time.monotonic", side_effect=[0.0, 121.0]), \
-                 patch("tuxindrive.engine.terminate_process") as terminate:
+                 patch("tuxindrive.engine.terminate_process") as terminate, \
+                 patch("tuxindrive.engine.stop_process", return_value=-15):
                 self.engine._run_worker(
                     job, Path(temporary) / "sync.log", completed.append, False
                 )
@@ -832,7 +834,7 @@ class SyncEngineCommandTests(unittest.TestCase):
             with patch("tuxindrive.engine.subprocess.Popen", return_value=process), \
                  patch("tuxindrive.engine.time.sleep"), \
                  patch("tuxindrive.engine.time.monotonic", side_effect=[0.0, 1.0]), \
-                 patch("tuxindrive.engine.terminate_process") as terminate:
+                 patch("tuxindrive.engine.stop_process") as terminate:
                 with self.assertRaisesRegex(RuntimeError, "queue slot was recovered"):
                     self.engine._run_safety_preview(["rclone", "bisync"], preview)
             terminate.assert_called_once_with(process)
@@ -867,7 +869,7 @@ class SyncEngineCommandTests(unittest.TestCase):
     def test_peer_lease_metadata_is_never_synchronized_as_user_content(self):
         job = SyncJob(account_remote="peer-team", local_path="/data/Team", peer_leases=True)
         command = self.engine.command_for_job(job)
-        self.assertIn("/.tuxdrive-leases/**", command)
+        self.assertIn("- /.tuxdrive-leases/**", command)
 
     def test_google_location_scope_is_used_in_sync_command(self):
         job = SyncJob(
@@ -1460,7 +1462,7 @@ class SyncEngineCommandTests(unittest.TestCase):
         )))
         self.engine.configure_jobs([parent, streamed])
         command = self.engine.command_for_job(parent)
-        self.assertIn("/Online/**", command)
+        self.assertIn("- /Online/**", command)
 
     def test_unchanged_job_layout_skips_quadratic_exclusion_rebuild(self):
         parent = SyncJob(account_remote="google", local_path="/data/TuxInDrive")
@@ -1721,7 +1723,7 @@ class SyncEngineCommandTests(unittest.TestCase):
             selective_max_age_days=30,
         )
         command = self.engine.command_for_job(job)
-        self.assertIn("*.pdf", command)
+        self.assertIn("+ *.pdf", command)
         self.assertEqual(command[command.index("--max-size") + 1], "8M")
         self.assertEqual(command[command.index("--max-age") + 1], "30d")
         self.assertIsNotNone(
@@ -1759,7 +1761,7 @@ class SyncEngineCommandTests(unittest.TestCase):
             )
         )
         command = self.engine.command_for_job(job)
-        self.assertIn(".~lock.*#", command)
+        self.assertIn("- .~lock.*#", command)
 
 
 if __name__ == "__main__":

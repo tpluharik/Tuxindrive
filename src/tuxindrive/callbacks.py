@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Callable, ContextManager
 
 from .models import SyncJob, SyncMode
+from .process_control import new_process_group, terminate_process
 
 
 TRANSIENT_PATTERNS = (
@@ -312,7 +313,7 @@ class ChangeMonitor:
             process = self._active_process
         if process is not None and process.poll() is None:
             try:
-                process.terminate()
+                terminate_process(process)
             except ProcessLookupError:
                 pass
 
@@ -324,7 +325,7 @@ class ChangeMonitor:
                 process = self._active_process
             if process is not None and process.poll() is None:
                 try:
-                    process.kill()
+                    terminate_process(process, force=True)
                 except ProcessLookupError:
                     pass
                 if self.thread is not threading.current_thread():
@@ -338,14 +339,15 @@ class ChangeMonitor:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            **new_process_group(),
         )
         with self._process_lock:
             self._active_process = process
         try:
             stdout, stderr = process.communicate(timeout=timeout)
         except subprocess.TimeoutExpired:
-            process.kill()
-            stdout, stderr = process.communicate()
+            terminate_process(process, force=True)
+            stdout, stderr = process.communicate(timeout=5)
             raise
         finally:
             with self._process_lock:
@@ -364,12 +366,7 @@ class ChangeMonitor:
 
     def _excluded(self, relative: str) -> bool:
         candidate = relative.replace(os.sep, "/")
-        return is_transient_path(candidate) or any(
-            fnmatch.fnmatch(candidate, pattern.lstrip("/"))
-            or fnmatch.fnmatch("/" + candidate, pattern)
-            for pattern in (*self.job.exclude_patterns, *self.protected_patterns)
-            if pattern.strip()
-        )
+        return is_transient_path(candidate) or self.job.excluded_by_rules(candidate, self.protected_patterns)
 
     def _file_state(self, relative: str) -> FileState | None:
         try:
@@ -457,6 +454,17 @@ class ChangeMonitor:
                         _REMOTE_METADATA_CACHE.pop(old_key, None)
         return snapshot
 
+    def _manifest_args(self) -> list[str]:
+        """A selected manifest cannot be combined with rclone filter flags."""
+        result = []
+        args = iter(self.rclone_args())
+        for flag in args:
+            if flag in {"--filter", "--include", "--exclude", "--max-size", "--max-age"}:
+                next(args, None)
+            else:
+                result.append(flag)
+        return result
+
     def remote_path_state(self, relative: str) -> FileState | None:
         """Read one existing remote file without recursively listing the job root.
 
@@ -503,7 +511,7 @@ class ChangeMonitor:
                 process = self._run_command(
                     [self.rclone_path(), "lsjson", self.job.remote_spec, "--recursive",
                      "--files-only", "--no-mimetype", "--files-from-raw", manifest_name,
-                     *self.rclone_args()],
+                     *self._manifest_args()],
                     timeout=60,
                 )
             if process.returncode:

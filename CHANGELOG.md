@@ -2,6 +2,20 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.69 — bounded credential recovery and safe backup filters
+
+- Bound Linux credential-store requests to ten seconds and preserve the
+  existing encryption key on timeout or backend failure. The packaged helper
+  now uses the same bounded implementation as profile migration.
+- Kill owned rclone/helper process groups on control-operation timeouts and
+  escalate silent-preview shutdown after a bounded grace period. Explain local
+  keyring failures separately from cloud authorization errors.
+- Use ordered deny-first filters for sync, chats-only backups, cloud scans and
+  verification so includes cannot override credential or temporary-file exclusions.
+- Preselect incremental file manifests instead of combining them with filter
+  flags rejected by rclone; respect exclusions for incoming deletions too.
+- Add synthetic-data regressions, including a real local rclone chat backup.
+
 ## 0.26.68 — tray alert summaries
 
 - Show the affected folder and a concise error summary in both tray menus,

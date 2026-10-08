@@ -16,6 +16,16 @@ class RecoveryAdvice:
 
 _RULES: tuple[tuple[re.Pattern[str], RecoveryAdvice], ...] = (
     (
+        re.compile(r"native credential[ -]store|desktop keyring|secret.service|secret-tool|configuration key is unavailable", re.I),
+        RecoveryAdvice(
+            "credential-store",
+            "Unlock or restart the desktop credential store",
+            "The local keyring could not supply the existing configuration key; this is not a cloud sign-in failure.",
+            ("Unlock your desktop keyring; if it remains unresponsive, log out and log back in.",
+             "Restart TuxInDrive and use Sync now on affected folders. Do not delete the encrypted configuration or replace its key."),
+        ),
+    ),
+    (
         re.compile(r"auth|token|credential|unauthori[sz]ed|access denied|invalid_grant", re.I),
         RecoveryAdvice(
             "authorization",

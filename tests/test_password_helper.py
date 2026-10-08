@@ -1,4 +1,5 @@
 import unittest
+import subprocess
 from unittest.mock import MagicMock, patch
 
 from tuxindrive.password_helper import (
@@ -11,6 +12,24 @@ from tuxindrive.password_helper import (
 
 
 class PasswordHelperTests(unittest.TestCase):
+    @patch("tuxindrive.password_helper._set_password")
+    @patch("tuxindrive.password_helper.subprocess.run")
+    def test_timeout_does_not_rotate_or_store_a_replacement_key(self, run, store):
+        run.side_effect = subprocess.TimeoutExpired("secret-tool", 10)
+        with self.assertRaisesRegex(RuntimeError, "desktop keyring"):
+            configuration_password(ensure=True)
+        self.assertEqual(run.call_count, 1)
+        self.assertEqual(run.call_args.kwargs["timeout"], 10)
+        store.assert_not_called()
+
+    @patch("tuxindrive.password_helper._set_password")
+    @patch("tuxindrive.password_helper.subprocess.run")
+    def test_backend_failure_does_not_rotate_an_existing_key(self, run, store):
+        run.return_value = MagicMock(returncode=1, stdout="", stderr="backend failed")
+        with self.assertRaisesRegex(RuntimeError, "credential-store integration"):
+            configuration_password(ensure=True)
+        store.assert_not_called()
+
     @patch("tuxindrive.password_helper._uses_secret_tool", return_value=False)
     @patch("tuxindrive.password_helper._keyring")
     def test_current_native_key_is_returned(self, keyring_factory, _backend):

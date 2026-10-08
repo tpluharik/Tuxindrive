@@ -51,6 +51,11 @@ def _secret_tool_lookup(service: str) -> str | None:
             text=True,
             timeout=SECRET_TOOL_TIMEOUT,
         )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(
+            "The native credential store did not respond within 10 seconds; "
+            "unlock or restart your desktop keyring, then retry synchronization"
+        ) from exc
     except (OSError, subprocess.SubprocessError) as exc:
         raise RuntimeError("The native credential-store integration is unavailable") from exc
     if result.returncode == 0:
@@ -78,6 +83,11 @@ def _secret_tool_store(password: str) -> None:
             text=True,
             timeout=SECRET_TOOL_TIMEOUT,
         )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(
+            "The native credential store did not respond within 10 seconds; "
+            "unlock or restart your desktop keyring, then retry synchronization"
+        ) from exc
     except (OSError, subprocess.SubprocessError) as exc:
         raise RuntimeError("The native credential-store integration is unavailable") from exc
     if result.returncode != 0:

@@ -8,7 +8,7 @@ import hashlib
 import os
 from pathlib import Path
 import time
-from typing import Any
+from typing import Any, Iterable
 from uuid import uuid4
 
 
@@ -543,6 +543,40 @@ class SyncJob:
             if modified_timestamp < cutoff:
                 return False
         return True
+
+    def filter_args(self, extra_excludes: Iterable[str] = ()) -> list[str]:
+        """Deny first: rclone parses mixed --include/--exclude in another order."""
+        args: list[str] = []
+        for pattern in dict.fromkeys((*self.exclude_patterns, *extra_excludes)):
+            if pattern.strip():
+                args.extend(["--filter", f"- {pattern.strip()}"])
+        selection = self.selective_args()
+        has_includes = False
+        for flag, value in zip(selection[::2], selection[1::2]):
+            if flag == "--include":
+                has_includes = True
+                args.extend(["--filter", f"+ {value}"])
+            else:
+                args.extend([flag, value])
+        if has_includes:
+            args.extend(["--filter", "- **"])
+        return args
+
+    def excluded_by_rules(self, relative_path: str, extra_excludes: Iterable[str] = ()) -> bool:
+        candidate = relative_path.replace("\\", "/").strip("/")
+        for pattern in (*self.exclude_patterns, *extra_excludes):
+            pattern = pattern.strip()
+            if not pattern:
+                continue
+            if fnmatch.fnmatchcase("/" + candidate, pattern):
+                return True
+            if not pattern.startswith("/") and (
+                fnmatch.fnmatchcase(candidate, pattern)
+                or fnmatch.fnmatchcase(Path(candidate).name, pattern)
+                or (pattern.startswith("**/") and fnmatch.fnmatchcase(candidate, pattern[3:]))
+            ):
+                return True
+        return False
 
     def record_failure(self, message: str) -> int:
         """Count repeated equivalent failures without storing sensitive text."""

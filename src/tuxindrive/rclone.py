@@ -20,7 +20,7 @@ from typing import Any, Iterable
 
 from .models import Provider
 from .bootstrap import install_rclone, resolve_rclone
-from .process_control import new_process_group, terminate_process
+from .process_control import new_process_group, run_process, terminate_process
 
 
 class RcloneError(RuntimeError):
@@ -723,7 +723,7 @@ class RcloneClient:
             return
         if not helper.is_file() or not os.access(helper, os.X_OK):
             return
-        ensured = subprocess.run(
+        ensured = run_process(
             [str(helper), "--ensure"], capture_output=True, text=True, timeout=30, check=False,
             **({"preexec_fn": _protect_sensitive_child} if platform.system() == "Linux" else {}),
         )
@@ -731,7 +731,7 @@ class RcloneClient:
             raise RcloneError("Could not store the rclone configuration key in the system credential store")
         environment = os.environ.copy()
         environment["RCLONE_PASSWORD_COMMAND"] = str(helper)
-        result = subprocess.run(
+        result = run_process(
             [self.executable, "config", "encryption", "set", "--password-command", str(helper)],
             capture_output=True, text=True, timeout=30, check=False, env=environment,
             **({"preexec_fn": _protect_sensitive_child} if platform.system() == "Linux" else {}),
@@ -756,7 +756,7 @@ class RcloneClient:
         environment = os.environ.copy()
         environment.setdefault("LC_ALL", "C.UTF-8")
         try:
-            return subprocess.run(
+            return run_process(
                 [self.executable, *args],
                 check=True,
                 capture_output=True,

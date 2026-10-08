@@ -1,3 +1,13 @@
+tuxindrive (0.26.69-1) unstable; urgency=high
+
+  * Bound packaged credential lookups and preserve existing keys on failure.
+  * Reap timed-out process groups and bound safety-preview shutdown.
+  * Enforce deny-first backup filters, including Codex chats-only backups.
+  * Preselect incremental manifests without incompatible rclone filter flags.
+  * Give local keyring failures their own actionable recovery advice.
+
+ -- TuxInDrive Maintainers <maintainers@tuxindrive.invalid>  Thu, 08 Oct 2026 07:20:00 +0200
+
 tuxindrive (0.26.68-1) unstable; urgency=medium
 
   * Show affected-folder error summaries in both tray menus.

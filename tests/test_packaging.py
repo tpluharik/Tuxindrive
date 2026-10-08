@@ -80,7 +80,11 @@ class PackagingTests(unittest.TestCase):
         self.assertIn(f"Version: {__version__}", control)
         self.assertIn(f"Provides: tuxindrive (= {__version__})", control)
         helper = Path("packaging/tuxindrive-rclone-password").read_text(encoding="utf-8")
-        self.assertIn("lookup application tuxdrive purpose rclone-config", helper)
+        self.assertIn('run_module("tuxindrive.password_helper"', helper)
+        implementation = Path("src/tuxindrive/password_helper.py").read_text(encoding="utf-8")
+        self.assertIn('return "tuxdrive"', implementation)
+        self.assertIn("timeout=SECRET_TOOL_TIMEOUT", implementation)
+        self.assertIn("python3 -I", helper)
 
     def test_gtk3_and_gdk3_are_pinned_before_repository_import(self):
         app = Path("src/tuxindrive/app.py").read_text(encoding="utf-8")

@@ -35,7 +35,7 @@ from .security import UnsafePathError, confined_path, ensure_private_directory, 
 from .nautilus_support import is_available_offline
 from .cache_manager import CacheCleanupResult, StreamingCacheManager
 from .proton import ProtonDriveClient, ProtonDriveError
-from .process_control import new_process_group, terminate_process
+from .process_control import new_process_group, stop_process, terminate_process
 from .file_permissions import private_descriptor
 from .bandwidth import GlobalBandwidthController
 from .error_details import redact_error_text
@@ -399,18 +399,7 @@ class SyncEngine:
         ]
         if job.acknowledge_google_abuse:
             common.append("--drive-acknowledge-abuse")
-        for pattern in dict.fromkeys([
-            *job.exclude_patterns,
-            *self._protected_patterns.get(job.id, ()),
-            *TRANSIENT_PATTERNS,
-            "/.tuxdrive-versions/**",
-            "/.tuxdrive-leases/**",
-            "/.tuxdrive-delta/**",
-            "/.tuxdrive-drops/**",
-        ]):
-            if pattern.strip():
-                common.extend(["--exclude", pattern.strip()])
-        common.extend(job.selective_args())
+        common.extend(job.filter_args(self._filter_excludes(job)))
         common.extend(self.bandwidth.rclone_args(job.bandwidth_limit))
         if dry_run:
             common.append("--dry-run")
@@ -453,6 +442,13 @@ class SyncEngine:
         if job.mode is SyncMode.VIRTUAL_DRIVE:
             return self.mount_command(job)
         raise ValueError(f"Unsupported sync mode: {job.mode}")
+
+    def _filter_excludes(self, job: SyncJob) -> tuple[str, ...]:
+        return (
+            *self._protected_patterns.get(job.id, ()), *TRANSIENT_PATTERNS,
+            "/.tuxdrive-versions/**", "/.tuxdrive-leases/**",
+            "/.tuxdrive-delta/**", "/.tuxdrive-drops/**",
+        )
 
     def _prune_remote_history(self, job: SyncJob, log) -> None:
         """Bound remote version growth after a successful AI backup."""
@@ -2009,7 +2005,7 @@ class SyncEngine:
             network_activity=lambda: self._record_network(job.id),
             network_guard=self.bandwidth.guard,
             rclone_args=lambda: [
-                *job.selective_args(),
+                *job.filter_args(self._filter_excludes(job)),
                 *self.bandwidth.rclone_args(job.bandwidth_limit),
             ],
             scan_jitter=self.bandwidth.scan_jitter,
@@ -2027,7 +2023,7 @@ class SyncEngine:
         relative = change.path.strip("/")
         if not relative or ".." in Path(relative).parts:
             raise RuntimeError(f"unsafe incremental path: {change.path}")
-        if is_transient_path(relative):
+        if is_transient_path(relative) or job.excluded_by_rules(relative, self._filter_excludes(job)):
             return None
         if not job.selected_by_rules(relative):
             return None
@@ -2268,6 +2264,11 @@ class SyncEngine:
             relative = change.path.replace("\\", "/").strip("/")
             if not relative or ".." in Path(relative).parts:
                 raise RuntimeError(f"unsafe incremental path: {change.path}")
+            if (is_transient_path(relative)
+                    or job.excluded_by_rules(relative, self._filter_excludes(job))
+                    or not job.selected_by_rules(relative)
+                    or (change.side == "remote" and job.peer_role is PeerRole.SEND_ONLY)):
+                continue
             command = self._incremental_command(job, change)
             if command is None and not (change.side == "remote" and change.deleted):
                 continue
@@ -2335,7 +2336,8 @@ class SyncEngine:
                         process = subprocess.Popen(
                             command + ["--files-from-raw", manifest_name, "--no-traverse",
                                        "--stats", "1s", "--stats-one-line"]
-                            + job.selective_args()
+                            # The manifest is already selected above. Rclone
+                            # rejects --files-from combined with filter flags.
                             + self.bandwidth.rclone_args(job.bandwidth_limit),
                             stdout=log, stderr=subprocess.STDOUT, text=True,
                             **new_process_group(),
@@ -2622,7 +2624,11 @@ class SyncEngine:
                         break
                 if selector is not None:
                     selector.close()
-                return_code = process.wait()
+                return_code = (
+                    stop_process(process)
+                    if no_progress_timeout or stale_google_errors >= self._STALE_GOOGLE_ERROR_LIMIT
+                    else process.wait()
+                )
                 cancelled = return_code in (-signal.SIGTERM, 143) and not no_progress_timeout
                 log.write(f"[{datetime.now(timezone.utc).isoformat()}] Exit {return_code}\n")
             if return_code == 0:
@@ -2802,8 +2808,7 @@ class SyncEngine:
                         "stopping it so the transfer queue slot is recovered.\n"
                     )
                     preview.flush()
-                    terminate_process(process)
-                    process.wait()
+                    stop_process(process)
                     raise RuntimeError(
                         "the safety preview stopped after 2 minutes without provider "
                         "output; its queue slot was recovered automatically"

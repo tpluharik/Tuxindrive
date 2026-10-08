@@ -126,7 +126,7 @@ class RecoveryTests(unittest.TestCase):
         self.job.ransomware_protection = False
         self.assertFalse(MassChangeGuard.assess_log(self.job, log, 1).blocked)
 
-    @mock.patch("tuxindrive.recovery.subprocess.run")
+    @mock.patch("tuxindrive.recovery.run_process")
     def test_integrity_audit_parses_actionable_differences(self, run):
         run.return_value = mock.Mock(returncode=1, stdout="= same\n* changed\n+ local\n- cloud\n", stderr="")
         auditor = IntegrityAuditor("rclone", self.manager)

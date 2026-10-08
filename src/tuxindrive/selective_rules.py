@@ -62,10 +62,7 @@ def _excluded(job: SyncJob, relative: str) -> bool:
         for pattern in job.include_patterns
     ):
         return True
-    return any(
-        fnmatch.fnmatchcase(value, pattern) or fnmatch.fnmatchcase(name, pattern)
-        for pattern in job.exclude_patterns
-    )
+    return job.excluded_by_rules(value)
 
 
 def preview_local_rules(

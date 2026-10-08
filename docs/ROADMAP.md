@@ -7,7 +7,16 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.68
+## Current baseline: 0.26.69
+
+### Completed in 0.26.69: bounded keyring waits and ordered backup filters
+
+- Use the bounded Linux credential helper in installed packages; do not create
+  a replacement encryption key when the credential service fails.
+- Reap timed-out rclone/helper process groups and bound silent-preview shutdown.
+- Enforce exclusions before chat allowlists and preselect incremental manifests
+  without incompatible rclone filters.
+- Keep keyring recovery advice separate from provider reconnection.
 
 ### Completed in 0.26.68: actionable tray alerts
 

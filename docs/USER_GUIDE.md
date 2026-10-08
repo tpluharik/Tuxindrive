@@ -100,6 +100,21 @@ sign in to the AI service and cannot export browser-only chat history. Review
 the generated exceptions if a third-party extension stores secrets under a
 custom filename.
 
+From 0.26.69, exclusion rules are evaluated before the chat allowlist, so a
+matching include cannot re-admit an excluded authentication or lock file.
+This changes future transfers, not previously stored cloud data. If you used
+chats-only backups before this fix, review their destination for excluded
+authentication filenames; remove unexpected sensitive copies and rotate
+affected credentials if they were exposed. Conversation text itself can still
+contain secrets you pasted into a chat.
+
+If several providers fail together and **Error details** mentions the local
+credential store, unlock your desktop keyring. If it remains unresponsive,
+log out and back in, restart TuxInDrive, and manually use **Sync now** on each
+paused folder. Do not delete the encrypted rclone configuration or replace its
+key. Credential lookups now fail within a bounded wait instead of hanging for
+hours; paused folders are not automatically re-enabled by this update.
+
 ### Search all synchronized folders
 
 Select the magnifying glass in the top bar and type one or more words from a
@@ -828,10 +843,10 @@ Reinstall the current package with `sudo apt install ./tuxindrive_0.26.61_all.de
 - Do not point multiple normal jobs at overlapping local folders.
 - Removing a TuxInDrive job does not delete its local or cloud files.
 
-### Security upgrade checklist for 0.26.68
+### Security upgrade checklist for 0.26.69
 
-1. Install `tuxindrive_0.26.68_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
-2. Confirm **Settings → Check for updates** reports 0.26.68 and no signature or expiry error.
+1. Install `tuxindrive_0.26.69_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
+2. Confirm **Settings → Check for updates** reports 0.26.69 and no signature or expiry error.
 3. Reconnect each provider once. pCloud requires the Client ID and secret of an approved pCloud application because its shared rclone OAuth application was revoked. Verify that `~/.config/rclone/rclone.conf` is encrypted and mode `0600`; do not print or upload it.
 4. Confirm the `TuxInDrive rclone configuration` entry exists in GNOME Passwords and Keys/Secret Service. Do not delete it without an export/recovery plan.
 5. Review peer invitations, revoke unused device and Onion credentials, and exchange replacements through an authenticated channel when compromise is suspected.

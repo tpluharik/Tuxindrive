@@ -145,8 +145,9 @@ class PerformanceAndRecoveryTests(unittest.TestCase):
             process.poll.return_value = None
             with monitor._process_lock:
                 monitor._active_process = process
-            monitor.stop()
-            process.terminate.assert_called_once_with()
+            with patch("tuxindrive.callbacks.terminate_process") as terminate:
+                monitor.stop()
+            terminate.assert_called_once_with(process)
 
     @unittest.skipUnless(platform.system() == "Linux", "inotify is Linux-specific")
     def test_idle_streaming_cache_skips_unchanged_recursive_rescan(self):

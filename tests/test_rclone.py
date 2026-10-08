@@ -110,7 +110,7 @@ class RcloneClientTests(unittest.TestCase):
             helper = root / "helper"; helper.write_text("#!/bin/sh\n", encoding="utf-8"); helper.chmod(0o700)
             client = RcloneClient("/usr/bin/rclone")
             completed = subprocess.CompletedProcess([], 0, stdout="secret", stderr="")
-            with patch.dict(os.environ, {"XDG_CONFIG_HOME": str(root), "TUXINDRIVE_PASSWORD_HELPER": str(helper)}, clear=False), patch("tuxindrive.rclone.subprocess.run", return_value=completed) as run:
+            with patch.dict(os.environ, {"XDG_CONFIG_HOME": str(root), "TUXINDRIVE_PASSWORD_HELPER": str(helper)}, clear=False), patch("tuxindrive.rclone.run_process", return_value=completed) as run:
                 client._ensure_config_security()
                 self.assertEqual(os.environ.get("RCLONE_PASSWORD_COMMAND"), str(helper))
             self.assertTrue((config.parent / ".tuxindrive-encrypted").is_file())
@@ -131,7 +131,7 @@ class RcloneClientTests(unittest.TestCase):
                 os.environ,
                 {"XDG_CONFIG_HOME": str(root), "TUXDRIVE_PASSWORD_HELPER": str(helper)},
                 clear=False,
-            ), patch("tuxindrive.rclone.subprocess.run") as run:
+            ), patch("tuxindrive.rclone.run_process") as run:
                 client._ensure_config_security()
                 self.assertEqual(os.environ.get("RCLONE_PASSWORD_COMMAND"), str(helper))
             run.assert_not_called()

@@ -134,7 +134,12 @@ The UI consults this matrix before offering a synchronization mode or action.
 OAuth-capable rclone providers are configured through `RcloneClient`. MEGA,
 Nextcloud, S3-compatible storage, WebDAV, and SFTP use explicit protocol fields.
 Rclone configuration is encrypted and its password is retrieved through the
-platform credential store. GitHub and Proton use dedicated native adapters
+platform credential store. The installed Linux password-command delegates to
+`password_helper.py`, with a ten-second bound per Secret Service request.
+Backend failure is not treated as a missing entry and never triggers key
+rotation. Timed-out control operations kill their owned process groups;
+silent previews escalate shutdown after a five-second grace period.
+GitHub and Proton use dedicated native adapters
 rather than pretending to be ordinary rclone remotes. Capability records are
 intentionally conservative: generic WebDAV and SFTP do not expose public-link
 creation, and every generated link must still be HTTPS.
@@ -175,7 +180,7 @@ apply mass-change/ransomware limits. Result objects contain success, message,
 log path, incremental/dry-run state and special recovery conditions.
 
 Every rclone-backed full job receives the persisted selective filter arguments
-from `SyncJob.selective_args()`: normalized extension includes, a maximum byte
+from `SyncJob.filter_args()`: ordered exclusions before includes, a maximum byte
 size, and a maximum modification age. The native Proton adapter evaluates the
 same model before upload/download, while `search_index.py` omits locally
 unselected files. Empty extension and zero size/age values preserve the prior
@@ -206,8 +211,12 @@ the job terminates that subprocess and joins its worker within a bounded wait.
 Incremental work reserves the job ID under the engine lock **before** waiting
 for a global network slot. This prevents a full job and a callback job for the
 same mapping from starting concurrently. Multiple ordinary paths are batched
-through private `--files-from-raw` manifests; incoming content is staged and
-installed through confined filesystem operations.
+through private `--files-from-raw` manifests. Paths and upload metadata are
+selected before manifest creation; no filter, size or age flags accompany a
+manifest because rclone rejects that combination. Targeted post-upload scans
+likewise remove selection flags but retain bandwidth limits. Incoming content
+is staged and installed through confined filesystem operations; excluded remote
+deletions do not remove local files.
 
 ### Global bandwidth controller
 

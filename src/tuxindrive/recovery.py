@@ -17,6 +17,7 @@ from .models import SyncJob
 from .security import UnsafePathError, confined_path, install_confined, unlink_confined, copy_from_confined
 from .bandwidth import GlobalBandwidthController
 from .audit import reverse_file_lines
+from .process_control import run_process
 
 
 class SafetyError(RuntimeError):
@@ -253,13 +254,13 @@ class IntegrityAuditor:
         command = [
             self.rclone_path, "check", str(job.local), job.remote_spec,
             "--combined", "-", "--checkers", "4",
-            *job.selective_args(),
+            *job.filter_args(),
             *self.bandwidth.rclone_args(job.bandwidth_limit),
         ]
         if download:
             command.append("--download")
         with self.bandwidth.guard():
-            result = subprocess.run(command, capture_output=True, text=True, timeout=3600, check=False)
+            result = run_process(command, capture_output=True, text=True, timeout=3600, check=False)
         if result.returncode not in (0, 1):
             raise SafetyError((result.stderr or result.stdout or "Integrity audit failed").strip()[-800:])
         issues = []
@@ -333,6 +334,6 @@ class IntegrityAuditor:
 
     def _run(self, command: list[str]) -> None:
         with self.bandwidth.guard():
-            result = subprocess.run(command, capture_output=True, text=True, timeout=3600, check=False)
+            result = run_process(command, capture_output=True, text=True, timeout=3600, check=False)
         if result.returncode:
             raise SafetyError((result.stderr or result.stdout or "Repair failed").strip()[-800:])
