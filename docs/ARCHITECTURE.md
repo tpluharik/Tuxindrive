@@ -74,6 +74,17 @@ do not force unnecessary full-window reconstruction.
 
 ### Local synchronized-folder search
 
+The 0.26.71 desktop mail extension adds `mail_auth.py` (system-browser PKCE,
+loopback callback and native-only credential storage), `mail_connectors.py`
+(bounded read-only Gmail/Graph metadata and opt-in bytes), and `mail_index.py`
+(private separate SQLite cache and literal Unicode search). Only explicit
+mailbox refresh contacts providers. Complete scans prune stale rows;
+failed/cancelled or limited scans preserve previous metadata. One refresh/
+maintenance lock prevents late work from resurrecting removed accounts/text.
+The GUI merges offline results and validates provider message URLs before
+opening them. Mail account settings are separate from sync jobs and profile
+exports. See [mail setup and trust boundaries](MAIL_ATTACHMENTS.md).
+
 `search_index.py` maintains a rebuildable SQLite cache under the platform cache
 root. Each refresh walks configured local synchronization roots with no-follow
 filesystem operations, applies the job's exclusion patterns, and upserts only

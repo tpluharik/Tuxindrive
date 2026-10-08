@@ -16,6 +16,7 @@ import time
 import uuid
 import webbrowser
 from datetime import datetime, timedelta, timezone
+from dataclasses import replace
 from pathlib import Path
 from typing import Callable
 
@@ -57,7 +58,7 @@ except (ImportError, ValueError) as exc:  # pragma: no cover - depends on host d
 
 from .audit import AuditTimeline
 from .capabilities import CAPABILITIES, capabilities_for
-from .config import ConfigStore, cache_root
+from .config import ConfigStore, cache_root, config_root
 from .i18n import LANGUAGES, LANGUAGE_CODES, get_language, is_rtl, set_language, tr
 from .engine import JobResult, SyncEngine
 from .models import (
@@ -101,6 +102,9 @@ from .bandwidth import GlobalBandwidthController, normalize_bandwidth_limit
 from .server_client import ServerClient, ServerClientError, normalize_server_url
 from .server_credentials import store_server_token
 from .search_index import FolderSearchIndex, IndexStats, SearchResult
+from .mail_auth import MailAccount, MailAccountStore, MailAuthorization, MailError, authorize as authorize_mail
+from .mail_connectors import MailClient, safe_message_url
+from .mail_index import MailSearchIndex, MailSearchResult
 from .file_preview import PreviewData, PreviewError, preview_path
 from .error_details import details_for_job
 from .live_log import newest_first_log
@@ -3557,6 +3561,353 @@ class HelpCenterDialog(ResponsiveDialog):
         self.body.get_buffer().set_text(f"{topic.title}\n\n{topic.body}")
 
 
+class MailConnectDialog(ResponsiveDialog):
+    """Explicit browser consent for a separately registered read-only mail app."""
+
+    def __init__(self, parent, controller, provider, done):
+        label = "Gmail" if provider == "gmail" else "Microsoft 365"
+        super().__init__(title=f"Connect {label} mail", transient_for=parent, modal=True)
+        self.controller, self.provider, self.done = controller, provider, done
+        self._closed, self._busy = False, False
+        self._stop = threading.Event()
+        self.set_default_size(630, 430)
+        self.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        self.connect_button = self.add_button("Open browser and connect", Gtk.ResponseType.OK)
+        area = self.get_content_area()
+        area.set_border_width(18)
+        area.set_spacing(10)
+        intro = Gtk.Label(label=(
+            "Mail access is read-only and separate from your cloud-drive login. "
+            "Use your registered desktop OAuth client ID. Tokens stay in the native credential store. "
+            "No messages are sent, changed or deleted."
+        ), xalign=0)
+        intro.set_line_wrap(True)
+        area.pack_start(intro, False, False, 0)
+        grid = Gtk.Grid(column_spacing=12, row_spacing=10)
+        self.name = Gtk.Entry(text=label)
+        self.email = Gtk.Entry()
+        self.client_id = Gtk.Entry()
+        self.client_secret = Gtk.Entry()
+        self.client_secret.set_visibility(False)
+        self.tenant = Gtk.Entry(text="common")
+        fields = [("Display name", self.name), ("Email / login hint (optional)", self.email),
+                  ("OAuth client ID", self.client_id)]
+        if provider == "gmail":
+            fields.append(("Desktop client secret (if required)", self.client_secret))
+        else:
+            fields.append(("Tenant (common or tenant UUID)", self.tenant))
+        for row, (title, widget) in enumerate(fields):
+            grid.attach(Gtk.Label(label=title, xalign=0), 0, row, 1, 1)
+            widget.set_hexpand(True)
+            grid.attach(widget, 1, row, 1, 1)
+        area.pack_start(grid, False, False, 0)
+        help_text = ("Enable the Gmail API, create a Desktop app OAuth client, and grant gmail.readonly. "
+                     "Google may require app verification or an explicitly listed test user."
+                     if provider == "gmail" else
+                     "Register a public desktop app with redirect URI http://localhost and delegated Mail.Read. "
+                     "Some organizations require administrator consent. No Microsoft client secret is used.")
+        hint = Gtk.Label(label=help_text, xalign=0)
+        hint.set_line_wrap(True)
+        area.pack_start(hint, False, False, 0)
+        docs = ("https://developers.google.com/gmail/api/quickstart/python" if provider == "gmail"
+                else "https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app")
+        area.pack_start(Gtk.LinkButton.new_with_label(docs, "OAuth application setup instructions"), False, False, 0)
+        self.browser_link = Gtk.LinkButton.new_with_label(docs, "Open authorization page")
+        area.pack_start(self.browser_link, False, False, 0)
+        self.status = Gtk.Label(xalign=0)
+        self.status.set_line_wrap(True)
+        area.pack_start(self.status, False, False, 0)
+        self.connect("response", self._response)
+        self.connect("destroy", self._destroyed)
+        self.show_all()
+        self.browser_link.hide()
+
+    def _destroyed(self, *_args):
+        self._closed = True
+        self._stop.set()
+
+    def _authorization_url(self, url):
+        if not self._closed:
+            self.browser_link.set_uri(url)
+            self.browser_link.show()
+        return False
+
+    def _response(self, dialog, response):
+        if response != Gtk.ResponseType.OK:
+            self.destroy()
+            return
+        if self._busy:
+            return
+        try:
+            account = MailAccount(uuid.uuid4().hex, self.provider, self.name.get_text().strip(),
+                                  self.client_id.get_text().strip(), self.tenant.get_text().strip(),
+                                  self.email.get_text().strip())
+            account.validate()
+        except MailError as exc:
+            self.status.set_text(str(exc))
+            return
+        secret = self.client_secret.get_text()
+        self.client_secret.set_text("")
+        self._busy = True
+        self.connect_button.set_sensitive(False)
+        self.status.set_text("Waiting for read-only consent in your browser…")
+
+        def operation():
+            authorize_mail(account, self.controller.mail_authorization.store, client_secret=secret,
+                           stop=self._stop, on_url=lambda url: GLib.idle_add(self._authorization_url, url))
+            if self._stop.is_set():
+                raise MailError("Mail connection cancelled.")
+            accounts = self.controller.mail_accounts.load()
+            self.controller.mail_accounts.save(accounts + [account])
+            return account
+
+        def ready(result, error):
+            if self._closed:
+                return False
+            self._busy = False
+            self.connect_button.set_sensitive(True)
+            if error:
+                self.status.set_text(str(error))
+            else:
+                self.done(result)
+                self.destroy()
+            return False
+
+        _run_thread(operation, ready)
+
+
+class MailAccountsDialog(ResponsiveDialog):
+    """Manual, cancellable indexing: never schedule mailbox access implicitly."""
+
+    def __init__(self, parent, controller):
+        super().__init__(title="Mail attachment indexing", transient_for=parent, modal=False)
+        self.controller, self._closed, self._busy = controller, False, False
+        self._stop = threading.Event()
+        self.set_default_size(760, 530)
+        self.add_button("Close", Gtk.ResponseType.CLOSE)
+        self.connect("response", lambda *_args: self.destroy())
+        self.connect("destroy", self._destroyed)
+        area = self.get_content_area()
+        area.set_border_width(18)
+        area.set_spacing(10)
+        intro = Gtk.Label(label=(
+            "Connect Gmail or Microsoft 365 to search attachment names, subjects and senders. "
+            "Refresh is manual. Optional bounded attachment text stays in the private local index; "
+            "full attachment files are not retained."
+        ), xalign=0)
+        intro.set_line_wrap(True)
+        area.pack_start(intro, False, False, 0)
+        self.store = Gtk.ListStore(str, str, str, str)
+        self.view = Gtk.TreeView(model=self.store)
+        for index, title in enumerate(("Account", "Provider", "Indexed attachments"), start=1):
+            column = Gtk.TreeViewColumn(title, Gtk.CellRendererText(), text=index)
+            column.set_resizable(True)
+            column.set_expand(index == 1)
+            self.view.append_column(column)
+        self.view.get_selection().connect("changed", self._selected)
+        scroll = Gtk.ScrolledWindow()
+        scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scroll.set_min_content_height(170)
+        scroll.add(self.view)
+        area.pack_start(scroll, True, True, 0)
+        row = Gtk.Box(spacing=8)
+        self.operations = []
+        for provider, label in (("gmail", "Connect Gmail"), ("microsoft365", "Connect Microsoft 365")):
+            button = Gtk.Button(label=label)
+            button.connect("clicked", lambda _button, p=provider: MailConnectDialog(self, controller, p, self._connected))
+            row.pack_start(button, False, False, 0)
+            self.operations.append(button)
+        self.refresh_button = Gtk.Button(label="Refresh selected mailbox")
+        self.refresh_button.connect("clicked", self._refresh)
+        row.pack_start(self.refresh_button, False, False, 0)
+        self.operations.append(self.refresh_button)
+        stop = Gtk.Button(label="Stop")
+        stop.connect("clicked", lambda *_args: self._stop.set())
+        row.pack_start(stop, False, False, 0)
+        area.pack_start(row, False, False, 0)
+        grid = Gtk.Grid(column_spacing=12, row_spacing=8)
+        self.days = Gtk.SpinButton.new_with_range(0, 36500, 1)
+        self.days.set_value(365)
+        self.limit = Gtk.SpinButton.new_with_range(1, 50000, 100)
+        self.limit.set_value(2000)
+        grid.attach(Gtk.Label(label="History in days (0 = all mail)", xalign=0), 0, 0, 1, 1)
+        grid.attach(self.days, 1, 0, 1, 1)
+        grid.attach(Gtk.Label(label="Message scan limit per refresh", xalign=0), 0, 1, 1, 1)
+        grid.attach(self.limit, 1, 1, 1, 1)
+        self.contents = Gtk.CheckButton(label="Download supported attachment contents for text indexing")
+        self.contents.set_tooltip_text("Opt-in: 8 MiB per file, 64 MiB/500 downloads per refresh. Images/executables/links are excluded.")
+        self.contents.set_sensitive(controller.managed_policy.allow_content_indexing)
+        grid.attach(self.contents, 0, 2, 2, 1)
+        area.pack_start(grid, False, False, 0)
+        options = Gtk.Box(spacing=8)
+        save = Gtk.Button(label="Save indexing options")
+        save.connect("clicked", self._save_options)
+        remove = Gtk.Button(label="Disconnect and remove local index")
+        remove.connect("clicked", self._remove)
+        for button in (save, remove):
+            self.operations.append(button)
+            options.pack_start(button, False, False, 0)
+        area.pack_start(options, False, False, 0)
+        self.status = Gtk.Label(xalign=0)
+        self.status.set_line_wrap(True)
+        area.pack_start(self.status, False, False, 0)
+        self.accounts = []
+        self._reload()
+        self.show_all()
+
+    def _destroyed(self, *_args):
+        self._closed = True
+        self._stop.set()
+
+    def _reload(self):
+        selected = self._account()
+        selected_id = selected.id if selected else None
+        self.store.clear()
+        try:
+            self.accounts = self.controller.mail_accounts.load()
+            for account in self.accounts:
+                self.store.append((account.id, account.display_name,
+                                   "Gmail" if account.provider == "gmail" else "Microsoft 365",
+                                   str(self.controller.mail_search_index.count(account.id))))
+            if self.accounts:
+                index = next((i for i, a in enumerate(self.accounts) if a.id == selected_id), 0)
+                self.view.get_selection().select_path(Gtk.TreePath.new_from_indices([index]))
+            else:
+                self.status.set_text("Connect a mailbox. Its contents are not indexed until you choose Refresh.")
+        except MailError as exc:
+            self.status.set_text(str(exc))
+
+    def _account(self):
+        model, selected = self.view.get_selection().get_selected()
+        identifier = model.get_value(selected, 0) if selected is not None else ""
+        return next((a for a in self.accounts if a.id == identifier), None)
+
+    def _selected(self, *_args):
+        account = self._account()
+        if account:
+            self.days.set_value(account.days)
+            self.limit.set_value(account.max_messages)
+            self.contents.set_active(account.include_content and self.controller.managed_policy.allow_content_indexing)
+
+    def _connected(self, account):
+        self._reload()
+        self.status.set_text(f"{account.display_name} connected read-only. Choose Refresh to index attachments.")
+
+    def _persist_options(self, account):
+        updated = replace(account, days=self.days.get_value_as_int(), max_messages=self.limit.get_value_as_int(),
+                          include_content=self.contents.get_active() and self.controller.managed_policy.allow_content_indexing)
+        with self.controller.mail_search_index.maintenance():
+            self.controller.mail_accounts.save([updated if a.id == account.id else a for a in self.accounts])
+            if not updated.include_content:
+                self.controller.mail_search_index.clear_contents(account.id)
+        self.accounts = [updated if a.id == account.id else a for a in self.accounts]
+        return updated
+
+    def _save_options(self, *_args):
+        account = self._account()
+        if account is None or self._busy:
+            self.status.set_text("Select a mailbox first.")
+            return
+        try:
+            self._persist_options(account)
+            self._reload()
+            self.status.set_text("Options saved. Choose Refresh to update this mailbox; disabling content removes its indexed text immediately.")
+        except (MailError, OSError) as exc:
+            self.status.set_text(str(exc))
+
+    def _refresh(self, *_args):
+        if self._busy:
+            return
+        account = self._account()
+        if account is None:
+            self.status.set_text("Select a mailbox first.")
+            return
+        try:
+            account = self._persist_options(account)
+        except (MailError, OSError) as exc:
+            self.status.set_text(str(exc))
+            return
+        self._busy = True
+        self.view.set_sensitive(False)
+        self._stop = threading.Event()
+        for button in self.operations:
+            button.set_sensitive(False)
+        self.status.set_text("Reading attachment metadata…")
+
+        def progress(messages, maximum, attachments):
+            GLib.idle_add(self._progress, messages, maximum, attachments)
+
+        def operation():
+            client = MailClient(account, self.controller.mail_authorization, bandwidth=self.controller.bandwidth, stop=self._stop)
+            return self.controller.mail_search_index.refresh(
+                account, client, stop_event=self._stop,
+                include_content=account.include_content and self.controller.managed_policy.allow_content_indexing,
+                progress=progress,
+            )
+
+        def ready(result, error):
+            if self._closed:
+                return False
+            self._busy = False
+            self.view.set_sensitive(True)
+            for button in self.operations:
+                button.set_sensitive(True)
+            self._reload()
+            if error:
+                self.status.set_text(str(error))
+            else:
+                note = " Complete scan." if result.complete else " Scan/index limit reached; older results were retained."
+                self.status.set_text(
+                    f"Indexed {result.indexed} attachments from {result.messages} messages; removed {result.removed} stale entries. "
+                    f"Text: {result.reused} reused, {result.downloaded} download attempts, {result.content_skipped} skipped." + note)
+            return False
+
+        _run_thread(operation, ready)
+
+    def _progress(self, messages, maximum, attachments):
+        if not self._closed and self._busy:
+            self.status.set_text(f"Scanned {messages} messages (limit {maximum}); found {attachments} attachments. Content extraction follows metadata scanning.")
+        return False
+
+    def _remove(self, *_args):
+        account = self._account()
+        if account is None or self._busy:
+            return
+        confirmation = Gtk.MessageDialog(transient_for=self, modal=True, message_type=Gtk.MessageType.WARNING,
+                                         buttons=Gtk.ButtonsType.OK_CANCEL, text="Disconnect this mailbox and remove its local attachment index?")
+        confirmation.format_secondary_text("Messages and attachments on the mail service are not deleted. Provider-side app consent can be revoked separately.")
+        approved = confirmation.run() == Gtk.ResponseType.OK
+        confirmation.destroy()
+        if not approved:
+            return
+
+        self._busy = True
+        self.view.set_sensitive(False)
+        for button in self.operations:
+            button.set_sensitive(False)
+        self.status.set_text("Disconnecting the mailbox and removing its local index…")
+        accounts = list(self.accounts)
+
+        def operation():
+            with self.controller.mail_search_index.maintenance():
+                self.controller.mail_authorization.store.delete(account)
+                self.controller.mail_authorization.invalidate(account)
+                self.controller.mail_accounts.save([a for a in accounts if a.id != account.id])
+                self.controller.mail_search_index.remove_account(account.id)
+
+        def ready(_result, error):
+            if not self._closed:
+                self._busy = False
+                self.view.set_sensitive(True)
+                for button in self.operations:
+                    button.set_sensitive(True)
+                self._reload()
+                self.status.set_text(str(error) if error else "Mailbox disconnected and its local index removed. Remote mail was not changed.")
+            return False
+
+        _run_thread(operation, ready)
+
+
 class FolderSearchDialog(ResponsiveDialog):
     """Search the private filename index without contacting cloud providers."""
 
@@ -3564,7 +3915,7 @@ class FolderSearchDialog(ResponsiveDialog):
         super().__init__(title="Search synchronized folders", transient_for=parent, modal=False)
         self.set_default_size(900, 620)
         self.controller = controller
-        self._results: list[SearchResult] = []
+        self._results: list[SearchResult | MailSearchResult] = []
         self._query_source = 0
         self._query_cancel = threading.Event()
         self._preview_serial = 0
@@ -3582,10 +3933,19 @@ class FolderSearchDialog(ResponsiveDialog):
 
         search_row = Gtk.Box(spacing=8)
         self.search_entry = Gtk.SearchEntry()
-        self.search_entry.set_placeholder_text("File or folder name")
+        self.search_entry.set_placeholder_text("Filename, email subject, sender or indexed text")
         self.search_entry.connect("search-changed", self._search_changed)
         self.search_entry.connect("activate", lambda _entry: self._run_search())
         search_row.pack_start(self.search_entry, True, True, 0)
+        self.scope = Gtk.ComboBoxText()
+        for key, label in (("all", "Files and mail"), ("folders", "Synchronized files"), ("mail", "Mail attachments")):
+            self.scope.append(key, label)
+        self.scope.set_active_id("all")
+        self.scope.connect("changed", lambda *_args: self._run_search())
+        search_row.pack_start(self.scope, False, False, 0)
+        mail = Gtk.Button(label="Mail accounts")
+        mail.connect("clicked", self._mail_accounts)
+        search_row.pack_start(mail, False, False, 0)
         refresh = Gtk.Button.new_from_icon_name("view-refresh-symbolic", Gtk.IconSize.BUTTON)
         refresh.set_tooltip_text("Refresh the local index")
         refresh.connect("clicked", self._refresh_index)
@@ -3611,7 +3971,7 @@ class FolderSearchDialog(ResponsiveDialog):
         self.store = Gtk.ListStore(str, str, str, str, str)
         self.view = Gtk.TreeView(model=self.store)
         self.view.set_headers_visible(True)
-        for index, title in enumerate(("Name", "Synchronized folder", "Location", "Size", "Match")):
+        for index, title in enumerate(("Name", "Source", "Location / subject and sender", "Size", "Match")):
             renderer = Gtk.CellRendererText()
             renderer.set_property("ellipsize", 3)
             column = Gtk.TreeViewColumn(title, renderer, text=index)
@@ -3682,7 +4042,7 @@ class FolderSearchDialog(ResponsiveDialog):
         )
         footer.pack_end(local_location, False, False, 0)
         content.pack_start(footer, False, False, 0)
-        self.status.set_text(f"{self.controller.search_index.count()} indexed items. Type to search.")
+        self.status.set_text(self._index_summary())
         self.show_all()
         self.preview_frame.hide()
         self.search_entry.grab_focus()
@@ -3692,6 +4052,10 @@ class FolderSearchDialog(ResponsiveDialog):
         if self._query_source:
             GLib.source_remove(self._query_source)
         self._query_source = GLib.timeout_add(180, self._run_search)
+
+    def _index_summary(self):
+        return (f"{self.controller.search_index.count()} synchronized items; "
+                f"{self.controller.mail_search_index.count()} mail attachments. Type to search.")
 
     def _destroyed(self, _dialog: Gtk.Widget) -> None:
         self._closed = True
@@ -3706,18 +4070,20 @@ class FolderSearchDialog(ResponsiveDialog):
         if self._closed:
             return False
         query = self.search_entry.get_text().strip()
+        scope = self.scope.get_active_id()
         self._query_cancel.set()
         self._query_cancel = threading.Event()
         cancel = self._query_cancel
         self.store.clear()
         if not query:
             self._results = []
-            self.status.set_text(f"{self.controller.search_index.count()} indexed items. Type to search.")
+            self.status.set_text(self._index_summary())
             return False
         self.status.set_text("Searching the private local index…")
 
-        def ready(results: list[SearchResult] | None, error: Exception | None) -> bool:
-            if self._closed or query != self.search_entry.get_text().strip():
+        def ready(results: list[SearchResult | MailSearchResult] | None, error: Exception | None) -> bool:
+            if (self._closed or query != self.search_entry.get_text().strip()
+                    or cancel is not self._query_cancel or scope != self.scope.get_active_id()):
                 return False
             if error:
                 self.status.set_text(f"Search failed: {error}")
@@ -3726,11 +4092,27 @@ class FolderSearchDialog(ResponsiveDialog):
             self._render_results(query)
             return False
 
-        _run_thread(
-            lambda: self.controller.search_index.search(query, stop_event=cancel),
-            ready,
-        )
+        def search():
+            folders = self.controller.search_index.search(query, stop_event=cancel) if scope != "mail" else []
+            mail = self.controller.mail_search_index.search(query, stop_event=cancel) if scope != "folders" else []
+            # Both source types remain visible when either alone has 200 hits.
+            combined = []
+            for index in range(max(len(folders), len(mail))):
+                if index < len(folders):
+                    combined.append(folders[index])
+                if index < len(mail):
+                    combined.append(mail[index])
+            return combined[:200]
+
+        _run_thread(search, ready)
         return False
+
+    def _mail_accounts(self, *_args):
+        existing = getattr(self.controller, "_mail_dialog", None)
+        if existing is not None and not existing._closed:
+            existing.present()
+            return
+        self.controller._mail_dialog = MailAccountsDialog(self, self.controller)
 
     def _render_results(self, query: str) -> None:
         self.store.clear()
@@ -3738,12 +4120,16 @@ class FolderSearchDialog(ResponsiveDialog):
             size = "Folder" if result.is_directory else format_bytes(result.size)
             self.store.append((
                 result.name, result.job_name, result.relative_path, size,
-                "Content" if result.matched_content else "Name/path",
+                "Content" if result.matched_content else ("Mail metadata" if isinstance(result, MailSearchResult) else "Name/path"),
             ))
         suffix = " (first 200 shown)" if len(self._results) == 200 else ""
         self.status.set_text(f"{len(self._results)} matches for “{query}”{suffix}")
 
     def _refresh_index(self, _button: Gtk.Widget) -> None:
+        if self.scope.get_active_id() == "mail":
+            self.status.set_text("Choose a mailbox and Refresh in Mail accounts. Searches themselves remain offline.")
+            self._mail_accounts()
+            return
         self.status.set_text("Refreshing the private local index…")
         self.controller.refresh_search_index(self._refresh_ready)
 
@@ -3769,9 +4155,9 @@ class FolderSearchDialog(ResponsiveDialog):
                 "only in the private local index."
             )
         else:
-            detail = "File contents are not read."
+            detail = "Synchronized file contents are not read. Mail content indexing is configured separately in Mail accounts."
         self.intro.set_text(
-            "Searches synchronized folders using a private local index. "
+            "Searches synchronized files and explicitly refreshed mail attachments using private local indexes. "
             f"{detail} Files-on-demand drives are excluded so indexing cannot download cloud data."
         )
 
@@ -3811,6 +4197,8 @@ class FolderSearchDialog(ResponsiveDialog):
 
     @staticmethod
     def _resolved_result(result: SearchResult) -> Path:
+        if isinstance(result, MailSearchResult):
+            raise ValueError("Email attachment files are not retained locally. Use Open online location to open the message.")
         if result.local_path.is_symlink():
             raise ValueError("The indexed item was replaced by a symbolic link")
         root = result.root.resolve(strict=True)
@@ -3830,6 +4218,10 @@ class FolderSearchDialog(ResponsiveDialog):
             self.preview_text.get_buffer().set_text(
                 "Preview is opt-in and reads only the selected local item. Search indexing remains metadata-only."
             )
+            return
+        if isinstance(result, MailSearchResult):
+            self.preview_meta.set_text(f"{result.attachment.subject} · {result.attachment.sender}")
+            self.preview_text.get_buffer().set_text(result.indexed_text or "No attachment text is indexed. Enable attachment content indexing in Mail accounts and refresh, or open the original message.")
             return
         try:
             target = self._resolved_result(result)
@@ -3897,6 +4289,9 @@ class FolderSearchDialog(ResponsiveDialog):
         if result is None:
             self.status.set_text("Select a result first.")
             return
+        if isinstance(result, MailSearchResult):
+            self._open_selected_online_location()
+            return
         try:
             target = self._resolved_result(result)
         except (OSError, ValueError) as exc:
@@ -3929,6 +4324,14 @@ class FolderSearchDialog(ResponsiveDialog):
         result = self._selected_result()
         if result is None:
             self.status.set_text("Select a result first.")
+            return
+        if isinstance(result, MailSearchResult):
+            try:
+                url = safe_message_url(result.attachment.message_url, result.attachment.provider)
+                if not webbrowser.open(url):
+                    self.status.set_text("The default browser could not open this message.")
+            except (MailError, webbrowser.Error) as exc:
+                self.status.set_text(str(exc))
             return
         try:
             target = self._resolved_result(result)
@@ -4113,7 +4516,7 @@ class MainWindow(Gtk.ApplicationWindow):
         health.connect("clicked", lambda _button: OperationsDashboard(self, self.controller))
         header.pack_start(health)
         search = Gtk.Button.new_from_icon_name("edit-find-symbolic", Gtk.IconSize.BUTTON)
-        search.set_tooltip_text("Search synchronized folders")
+        search.set_tooltip_text("Search synchronized folders and indexed mail attachments")
         search.connect("clicked", lambda _button: FolderSearchDialog(self, self.controller))
         header.pack_start(search)
         cloud_copy = Gtk.Button.new_from_icon_name("edit-copy-symbolic", Gtk.IconSize.BUTTON)
@@ -6157,6 +6560,11 @@ class TuxInDriveApplication(Gtk.Application):
         self.profiles = ProfileManager(self.store, self.rclone)
         self.network_meter = NetworkUsageMeter()
         self.search_index = FolderSearchIndex(cache_root() / "folder-search.sqlite3")
+        self.mail_accounts = MailAccountStore(config_root() / "mail-accounts.json")
+        self.mail_authorization = MailAuthorization()
+        self.mail_search_index = MailSearchIndex(cache_root() / "mail-search.sqlite3")
+        if not self.managed_policy.allow_content_indexing:
+            self.mail_search_index.clear_contents()
         self._search_index_lock = threading.Lock()
         self._search_index_started = False
         self.server_client = (

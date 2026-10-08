@@ -1,3 +1,13 @@
+tuxindrive (0.26.71-1) unstable; urgency=medium
+
+  * Add read-only Gmail and Microsoft 365 attachment indexing and search.
+  * Keep queries offline with explicit manual refresh and original mail links.
+  * Bound opt-in text downloads and reuse unchanged extracted contents.
+  * Preserve partial indexes, protect native tokens and prevent refresh races.
+  * Document OAuth registration and pending live-mailbox validation.
+
+ -- TuxInDrive Maintainers <maintainers@tuxindrive.invalid>  Thu, 08 Oct 2026 17:44:00 +0200
+
 tuxindrive (0.26.70-1) unstable; urgency=high
 
   * Validate native owned processes for cancellation and Tor reload.

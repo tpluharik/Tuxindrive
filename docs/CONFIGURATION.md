@@ -37,6 +37,16 @@ bounded normalized text extract from supported fully local files. It never
 contains credentials and never traverses files-on-demand mounts. Deleting it
 while TuxInDrive is stopped is safe; the next start reconstructs it.
 
+The **0.26.71 desktop mail integration** uses separate
+`config_root()/mail-accounts.json` settings and `cache_root()/mail-search.sqlite3`
+metadata/opt-in text. Account settings contain `id`, `provider`, `display_name`,
+`client_id`, `tenant`, optional `email` login hint, `days` (365; 0 means all),
+`max_messages` (2000) and `include_content` (false). Tokens and optional Google
+desktop secrets are native-credential-store-only, not fields in this JSON.
+Mail accounts are not synchronization jobs and are not exported by profile
+migration. Mail search cache rebuilding requires a manual authenticated refresh;
+it is not reconstructed by app startup. See [mail attachment search](MAIL_ATTACHMENTS.md).
+
 The search-window **Enable preview** feature flag is intentionally
 session-local and default-off. It is not written to `config.json`: opening a
 new search window always requires an explicit opt-in before any selected file
@@ -100,6 +110,11 @@ world writable. Schema 1 supports `allowed_providers`,
 `global_bandwidth_ceiling`, `minimum_headroom_percent`,
 `allow_content_indexing`, `allow_cloud_to_cloud`, and `allow_audit_export`.
 An invalid policy is rejected and logged rather than interpreted partially.
+
+In the 0.26.71 mail integration, `allow_content_indexing=false` also blocks
+mail attachment-content downloads and removes searchable cached mail text at
+startup. `allowed_providers` currently restricts cloud-drive providers, not
+these separate mailbox connectors.
 
 ### Bandwidth syntax and scope
 

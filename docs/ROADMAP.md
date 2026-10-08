@@ -7,7 +7,16 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.70
+## Current baseline: 0.26.71
+
+### Implemented in 0.26.71: desktop mail attachment search
+
+- Add read-only Gmail/Microsoft 365 OAuth connectors with native-only tokens.
+- Search offline metadata and opt-in bounded text alongside synchronized files.
+- Refresh manually, reuse unchanged text, retain metadata on incomplete scans,
+  and open the original provider message without retaining attachment files.
+- Require registered desktop OAuth clients; live mailbox/administrator-consent
+  validation remains pending. Android mailbox indexing is not implemented.
 
 ### Completed in 0.26.70: owned-process safety and isolated release gates
 

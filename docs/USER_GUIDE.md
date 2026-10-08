@@ -117,6 +117,15 @@ hours; paused folders are not automatically re-enabled by this update.
 
 ### Search all synchronized folders
 
+**Added in 0.26.71 desktop builds:** search now also offers **Mail
+accounts** and the **Files and mail / Synchronized files / Mail attachments**
+scope selector. Gmail/Microsoft 365 indexing requires separate read-only OAuth
+registration and explicit **Refresh selected mailbox**. Mail results open the
+original email, not a local attachment copy; optional bounded attachment-text
+indexing is configured per mailbox. See [mail setup, limits and privacy](MAIL_ATTACHMENTS.md).
+Registered OAuth clients and live-mailbox authorization validation are required;
+Android does not include mailbox indexing.
+
 Select the magnifying glass in the top bar and type one or more words from a
 file name or relative path. Matching folders appear first, followed by files;
 the result identifies its TuxInDrive job, relative location and size. Select a
@@ -843,10 +852,10 @@ Reinstall the current package with `sudo apt install ./tuxindrive_0.26.61_all.de
 - Do not point multiple normal jobs at overlapping local folders.
 - Removing a TuxInDrive job does not delete its local or cloud files.
 
-### Security upgrade checklist for 0.26.70
+### Security upgrade checklist for 0.26.71
 
-1. Install `tuxindrive_0.26.70_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
-2. Confirm **Settings → Check for updates** reports 0.26.70 and no signature or expiry error.
+1. Install `tuxindrive_0.26.71_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
+2. Confirm **Settings → Check for updates** reports 0.26.71 and no signature or expiry error.
 3. Reconnect each provider once. pCloud requires the Client ID and secret of an approved pCloud application because its shared rclone OAuth application was revoked. Verify that `~/.config/rclone/rclone.conf` is encrypted and mode `0600`; do not print or upload it.
 4. Confirm the `TuxInDrive rclone configuration` entry exists in GNOME Passwords and Keys/Secret Service. Do not delete it without an export/recovery plan.
 5. Review peer invitations, revoke unused device and Onion credentials, and exchange replacements through an authenticated channel when compromise is suspected.

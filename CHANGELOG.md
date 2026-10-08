@@ -2,6 +2,18 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.71 — Gmail and Microsoft 365 attachment search
+
+- Add separate read-only browser OAuth/PKCE connectors, native credential-store
+  tokens, and manual, cancellable mailbox indexing. No mail mutation APIs.
+- Search names, subjects and senders offline alongside synchronized files;
+  filter by source and open the original Gmail/Outlook message.
+- Make supported attachment-text extraction opt-in, bounded and cache-reusing;
+  exclude inline/reference items, retain old metadata on incomplete scans,
+  and prevent refresh/disconnect races.
+- Document client registration, consent requirements, private but unencrypted
+  search-cache storage, content limits and remaining live-account verification.
+
 ## 0.26.70 — owned-process safety and isolated lifecycle testing
 
 - Android update verification now uses the offline signer's compact JSON field

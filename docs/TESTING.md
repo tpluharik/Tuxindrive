@@ -25,7 +25,7 @@ The dependency-install step is required when using an isolated Python environmen
 
 CI pins third-party actions by immutable commit, runs high-severity Bandit checks and `pip-audit`, and publishes a CycloneDX dependency SBOM with the package.
 
-The source defines **609 unit checks: 595 Python tests and 14 Android JVM tests**, plus three separate isolated process-lifecycle checks. These counts describe test definitions, not evidence that a particular revision has passed CI. Four Python checks require an isolated GTK display and are skipped during the normal headless suite. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes automatic, manual-only and Codex chat-only AI-tool backups, protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing, aggregate tray state and error summaries, and historical upgrades. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
+The source defines **644 unit checks: 630 Python tests and 14 Android JVM tests**, plus three separate isolated process-lifecycle checks. These counts describe test definitions, not evidence that a particular revision has passed CI. Seven Python checks require an isolated GTK display and are skipped during the normal headless suite. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes automatic, manual-only and Codex chat-only AI-tool backups, protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing, aggregate tray state and error summaries, historical upgrades, and 0.26.71 Gmail/Microsoft 365 attachment indexing. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
 
 The credential/backup regressions use synthetic data and cover mocked timeout
 cleanup, no key replacement on credential-store failure,
@@ -39,6 +39,23 @@ PYTHONPATH=src TUXINDRIVE_TEST_RCLONE=/absolute/path/to/rclone \
 ```
 
 No live cloud account or personal chat files are used by these regressions.
+
+### Mail integration: synthetic data and explicit live-validation boundary
+
+The 0.26.71 mail extension adds 32 offline checks for read-only OAuth/PKCE,
+callback state validation, native-token storage, safe provider/pagination URLs,
+metadata-only scans, content reuse/budgets, account isolation, cancellation and
+partial-scan retention. Run `tests.test_mail_attachments` alongside
+`tests.test_search_index` and `tests.test_responsive_windows` (57 focused checks).
+Three `tests.test_mail_gtk` checks exercise the actual dialogs on an explicitly
+isolated GTK display with fake accounts and no authorization/download traffic.
+They never instantiate the main application or start synchronization.
+
+Manual release validation still needs registered Gmail/Entra desktop clients,
+browser consent, native credential-store unlock/lock, token expiry/renewal,
+multi-account message links, real pagination and supported attachment formats,
+administrator-denied consent, and provider disconnection. Do not claim this
+is passed merely because the synthetic suite passes. See [mail setup](MAIL_ATTACHMENTS.md).
 
 ### Real process lifecycle: isolated CI only
 
@@ -97,10 +114,12 @@ directories; cloud synchronization is never started.
 | `test_tray.py` | 8 | Animation frames, paused-job alerts, credential redaction, bounded summaries, runtime failures, and unresolved-error priority over successful or active transfers. |
 | `test_tray_gtk.py` | 4 | Opt-in real GTK summaries in both menus, overflow activation, direct Error details routing, rename/resolution refresh and runtime failures. |
 | `test_migration.py` | 9 | AES-GCM profile round trips, wrong-password/tamper rejection, visible and legacy cloud discovery/migration, complete unlock-key handoff, compact mobile export, secret opt-in, private permissions and validation. |
+| `test_mail_attachments.py` | 32 | Offline read-only OAuth/PKCE and state checks, native-token persistence, metadata-only Gmail/Graph projection, provider-origin and URL confinement, response/download budgets, reusable text, per-account private indexes, cancellation and partial-scan retention. |
+| `test_mail_gtk.py` | 3 | Opt-in isolated actual dialogs: no implicit browser/token access, visible options applied before refresh, text disable/purge, offline mail results and original-message navigation with synthetic accounts. |
 | `test_offline_action.py` | 9 | Mounted-drive fast dispatch, cold-start queuing, both supported command-line availability option forms, lexical file routing without FUSE resolution, sibling-prefix rejection, exact file-rule isolation, nested offline/online-only precedence, and green-state publication only for locally verified rules. |
 | `test_nautilus_extension.py` | 12 | Exact path/menu isolation, cached/coalesced badge refresh, URI lifecycle, Nautilus 4.1 construction, sensitivity and verified offline transitions. |
 | `test_network_usage.py` | 10 | Linux/macOS/Windows counter parsing and failure handling, platform dispatch, current rates, daily reset, counter rollover and private persistent totals. |
-| `test_packaging.py` | 17 | Debian/Windows/macOS/Android packaging, release-channel layout, native assets, automatic missing-version publication, upgrade process, Nautilus routing and emblem metadata. |
+| `test_packaging.py` | 22 | Debian/Windows/macOS/Android/Snap packaging, signing policy, release-channel layout, native assets, automatic missing-version publication, upgrade process, Nautilus routing and emblem metadata. |
 | `test_password_helper.py` | 8 | Private credential-helper input/output, packaged Secret Service fallback, migration-key storage and rejection behavior. |
 | `test_profile_qr.py` | 3 | Stable desktop/Android QR protocol, multi-frame ordering/deduplication, bounds and incomplete/mixed/tampered transfer rejection. |
 | `test_performance.py` | 16 | Inotify delivery/startup race, remote retry, shared scans, interruptible monitor shutdown, overflow reconciliation, monitor safety, cache protection, fail-closed markers and performance hooks. |
@@ -112,8 +131,8 @@ directories; cloud synchronization is never started.
 | `test_peer.py` | 27 | Invitation compatibility, approval-based LAN requests/advertisements, roles/drops/transports, signed atomic deltas, isolated device roots, authorization/revocation, host-key pinning, leases and private identities. |
 | `test_policies.py` | 7 | Controlled defaults plus battery, metered-network and normal/overnight schedule decisions, including fail-open probe handling. |
 | `test_recovery.py` | 13 | Local archive/restore behavior, disabled retention, malformed/foreign record rejection, expiry pruning, mass-change and ransomware-suffix blocking, integrity-audit parsing and directional repairs. |
-| `test_responsive_windows.py` | 5 | Monitor-safe, freely resizable client/server windows, local scrolling, wide-control isolation and search preview feature gating. |
-| `test_search_index.py` | 13 | Private metadata indexing, explicit bounded content opt-in, Unicode/token lookup, cancellation, literal wildcard handling, stale pruning, exclusions, symlink rejection, paused roots, streaming avoidance and safety-limit retention. |
+| `test_responsive_windows.py` | 11 | Monitor-safe, freely resizable client/server windows, local scrolling, wide-control isolation, search preview gating, OAuth recovery routing, live log lifecycle and dedicated recovery details. |
+| `test_search_index.py` | 14 | Private metadata indexing, explicit bounded content opt-in, Unicode/token lookup, cancellation, literal wildcard handling, stale pruning, exclusions, symlink rejection, paused roots, streaming avoidance and safety-limit retention. |
 | `test_security.py` | 8 | Empty/absolute/parent path rejection, symlink refusal, confined atomic installation, Ed25519-only keys and signed transaction tamper detection. |
 | `test_server.py` | 26 | Private initialization, race-resistant root configuration writes, shared agent/relay bandwidth control, package-launcher forwarding and private library isolation, TLS/URL/token validation, default-off client flag, opaque mailbox/object/rendezvous/collaboration isolation and deterministic same-second operation ordering, expiry/quota bounds, bounded authenticated HTTP and relay admission, relay rejection, read-only MCP, GUI/desktop packaging and private staging-file permission rejection. |
 | `test_network_lab.py` | 4 | Separate release packaging, 19 loopback-only production-protocol scenarios with fictional tenants, real multi-address local TCP/HTTP traffic, private redacted reports, cancellation/cleanup, visual topology and non-blocking GUI progress reporting. |
