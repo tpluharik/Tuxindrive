@@ -112,7 +112,8 @@ class MailSearchIndex(FolderSearchIndex):
         with self.maintenance(), self._connect() as connection:
             connection.execute("DELETE FROM mail_attachments WHERE account_id=?", (account_id,))
 
-    def search(self, query: str, *, stop_event: Event | None = None, limit: int = 200) -> list[MailSearchResult]:
+    def search(self, query: str, *, stop_event: Event | None = None, limit: int = 200,
+               account_id: str | None = None) -> list[MailSearchResult]:
         if stop_event is not None and stop_event.is_set():
             return []
         tokens = _normalized(query).split()
@@ -121,6 +122,9 @@ class MailSearchIndex(FolderSearchIndex):
         if len(tokens) > 20 or len(query) > 1000:
             raise MailError("Use a shorter attachment search query.")
         conditions, values = [], []
+        if account_id is not None:
+            conditions.append("account_id=?")
+            values.append(account_id)
         for token in tokens:
             literal = token.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
             conditions.append("(search_text LIKE ? ESCAPE '\\' OR content_text LIKE ? ESCAPE '\\')")

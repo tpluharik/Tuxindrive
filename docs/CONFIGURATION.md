@@ -111,15 +111,20 @@ job state (`initialized`, last run/status/error) is persisted with the job.
 
 Linux administrators may install `/etc/tuxindrive/policy.json`. TuxInDrive
 accepts only a small regular, non-symlink, root-owned file which is not group or
-world writable. Schema 1 supports `allowed_providers`,
+world writable. Schema 1 supports `allowed_providers`, `allowed_mail_providers`,
 `global_bandwidth_ceiling`, `minimum_headroom_percent`,
 `allow_content_indexing`, `allow_cloud_to_cloud`, and `allow_audit_export`.
 An invalid policy is rejected and logged rather than interpreted partially.
 
 In the 0.26.71 mail integration, `allow_content_indexing=false` also blocks
 mail attachment-content downloads and removes searchable cached mail text at
-startup. `allowed_providers` currently restricts cloud-drive providers, not
-these separate mailbox connectors.
+startup. From 0.26.74, `allowed_mail_providers` accepts `gmail`
+and `microsoft365`; an empty list blocks both. If omitted, an unrestricted
+drive-provider policy allows mail; an existing non-empty `allowed_providers`
+allowlist blocks mail unless explicitly allowed. Restrictions apply to new
+connections, reconnection and refresh, but do not remove existing offline indexes.
+Published versions through 0.26.73 restrict only drive providers with this
+allowlist; they do not implement `allowed_mail_providers`.
 
 ### Bandwidth syntax and scope
 

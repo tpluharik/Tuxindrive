@@ -14,6 +14,7 @@ import tempfile
 import time
 import webbrowser
 from dataclasses import asdict, dataclass
+from enum import Enum
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from threading import Event, RLock
@@ -31,6 +32,25 @@ GRAPH_SCOPE = "https://graph.microsoft.com/Mail.Read"
 MICROSOFT_MAIL_CLIENT_ID = "31a841b0-b4f8-4fea-a2f4-49025a6d7370"
 SERVICE = "io.github.tuxindrive.TuxInDrive"
 MAX_JSON_BYTES = 2 * 1024 * 1024
+
+
+class MailProvider(str, Enum):
+    """Online account choices, deliberately not filesystem/rclone providers."""
+
+    GMAIL = "gmail"
+    MICROSOFT365 = "microsoft365"
+
+    @property
+    def label(self) -> str:
+        return "Gmail" if self is self.GMAIL else "Microsoft 365 mail"
+
+    @property
+    def icon_name(self) -> str:
+        return "mail-unread-symbolic"
+
+    @property
+    def home_url(self) -> str:
+        return "https://mail.google.com/" if self is self.GMAIL else "https://outlook.office.com/mail/"
 
 
 def default_mail_client_id(provider: str) -> str:
@@ -133,6 +153,15 @@ class MailAccountStore:
                 temporary.replace(self.path)
             finally:
                 temporary.unlink(missing_ok=True)
+
+    def upsert(self, account: MailAccount, *, existing: bool = False) -> None:
+        """Merge under the store lock, preserving unrelated concurrent additions."""
+        with self.lock:
+            accounts = self.load()
+            if existing and not any(item.id == account.id for item in accounts):
+                raise MailError("This mailbox was disconnected; add it again from Add account.")
+            self.save([account if item.id == account.id else item for item in accounts]
+                      if any(item.id == account.id for item in accounts) else accounts + [account])
 
 
 class MailTokenStore:

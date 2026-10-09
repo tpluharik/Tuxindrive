@@ -8,7 +8,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from tuxindrive.mail_auth import MICROSOFT_MAIL_CLIENT_ID, MailAccountStore
+from tuxindrive.mail_auth import MICROSOFT_MAIL_CLIENT_ID, MailAccountStore, MailError
+from tuxindrive.managed_policy import ManagedPolicy
+from tuxindrive.models import Account, AppConfig, Provider
 from tuxindrive.mail_index import MailSearchIndex
 from tuxindrive.search_index import FolderSearchIndex
 from tests.test_mail_attachments import GMAIL, SyntheticClient
@@ -40,7 +42,7 @@ class MailGtkTests(unittest.TestCase):
         root = Path(self.directory.name)
         self.controller = SimpleNamespace(
             config=SimpleNamespace(settings=SimpleNamespace(search_content_indexing=False)),
-            managed_policy=SimpleNamespace(allow_content_indexing=True),
+            managed_policy=ManagedPolicy(),
             mail_accounts=MailAccountStore(root / "mail-accounts.json"),
             mail_search_index=MailSearchIndex(root / "mail.sqlite3"),
             search_index=FolderSearchIndex(root / "files.sqlite3"),
@@ -66,6 +68,7 @@ class MailGtkTests(unittest.TestCase):
                                  "" if provider == "gmail" else MICROSOFT_MAIL_CLIENT_ID)
                 self.assertEqual(dialog.client_secret.get_text(), "")
                 self.assertTrue(dialog.client_id.get_editable())
+                self.assertEqual(dialog.advanced.get_expanded(), provider == "gmail")
             authorize.assert_not_called()
         self.controller.mail_authorization.store.assert_not_called()
 
@@ -88,6 +91,121 @@ class MailGtkTests(unittest.TestCase):
         self.assertEqual(authorize.call_args.kwargs["client_secret"], "")
         done.assert_called_once_with(account)
         self.assertIn(account, self.controller.mail_accounts.load())
+
+    def test_reconnect_keeps_id_options_index_and_uses_native_google_secret(self):
+        self.controller.mail_search_index.refresh(GMAIL, SyntheticClient())
+        self.controller.mail_authorization.store.load.return_value = {"client_secret": "synthetic-secret"}
+        done = Mock()
+        dialog = self.app.MailConnectDialog(None, self.controller, "gmail", done, existing=GMAIL)
+        self.dialogs.append(dialog)
+        def synchronous(operation, ready):
+            ready(operation(), None)
+        with patch.object(self.app, "authorize_mail") as authorize, \
+                patch.object(self.app, "_run_thread", side_effect=synchronous):
+            dialog._response(dialog, self.app.Gtk.ResponseType.OK)
+        saved = self.controller.mail_accounts.load()
+        self.assertEqual(saved, [GMAIL])
+        self.assertEqual(self.controller.mail_search_index.count(GMAIL.id), 1)
+        self.assertEqual(authorize.call_args.kwargs["client_secret"], "synthetic-secret")
+        self.controller.mail_authorization.invalidate.assert_called_once_with(GMAIL)
+        done.assert_called_once_with(GMAIL)
+
+    def test_failed_reconnect_retains_account_and_index(self):
+        self.controller.mail_search_index.refresh(GMAIL, SyntheticClient())
+        dialog = self.app.MailConnectDialog(None, self.controller, "gmail", Mock(), existing=GMAIL)
+        self.dialogs.append(dialog)
+        def synchronous(operation, ready):
+            try:
+                ready(operation(), None)
+            except MailError as error:
+                ready(None, error)
+        with patch.object(self.app, "authorize_mail", side_effect=MailError("Consent declined")), \
+                patch.object(self.app, "_run_thread", side_effect=synchronous):
+            dialog._response(dialog, self.app.Gtk.ResponseType.OK)
+        self.assertIn("Consent declined", dialog.status.get_text())
+        self.assertEqual(self.controller.mail_accounts.load(), [GMAIL])
+        self.assertEqual(self.controller.mail_search_index.count(), 1)
+        dialog.done.assert_not_called()
+
+    def test_main_sidebar_contains_existing_mail_account_without_drive_migration(self):
+        controller = self.app.Gtk.Application(flags=self.app.Gio.ApplicationFlags.NON_UNIQUE)
+        controller.register(None)
+        controller.config = AppConfig()
+        controller.config.accounts = [Account("drive-one", Provider.GOOGLE_DRIVE, "Drive")]
+        controller.engine = SimpleNamespace(running_jobs=set(), mounted_jobs=set())
+        for name in ("mail_accounts", "mail_search_index", "managed_policy"):
+            setattr(controller, name, getattr(self.controller, name))
+        with patch.object(self.app.MainWindow, "set_network_meter_enabled"), \
+                patch.object(self.app.MainWindow, "set_activity_log_enabled"):
+            window = self.app.MainWindow(controller)
+        self.dialogs.append(window)
+        self.assertEqual(len(window.account_list.get_children()), 2)
+        self.assertEqual(window.summary_values["services"].get_text(), "2")
+        label = window._account_widgets["mail:" + GMAIL.id]["label"].get_text()
+        self.assertIn("Personal mail", label)
+        self.assertIn("Gmail", label)
+        self.assertEqual(controller.config.accounts[0].remote, "drive-one")
+        self.assertEqual(len(controller.config.accounts), 1)
+        self.assertEqual(controller.config.jobs, [])
+        # Real menu controls carry mail-only actions, not rclone drive operations.
+        row = window.account_list.get_children()[1]
+        menu = next(child for child in row.get_child().get_children() if isinstance(child, self.app.Gtk.MenuButton))
+        labels = [item.get_label() for item in menu.get_popup().get_children()]
+        self.assertIn("Search attachments", labels)
+        self.assertIn("Indexing options / refresh", labels)
+        self.assertFalse(any("mount" in label.lower() or "sync now" in label.lower() for label in labels))
+        changed = self.app.replace(GMAIL, display_name="Renamed mailbox")
+        controller.mail_accounts.upsert(changed)
+        window._refresh_now()
+        self.assertIn("Renamed mailbox", window._account_widgets["mail:" + GMAIL.id]["label"].get_text())
+
+    def test_main_add_account_routes_mail_to_browser_oauth_not_rclone(self):
+        main = SimpleNamespace(controller=self.controller, _mail_connected=Mock())
+        self.controller.config.accounts = []
+        def choose_gmail(dialog):
+            responses = []
+            dialog.connect("response", lambda _dialog, response: responses.append(response))
+            def walk(widget):
+                yield widget
+                if isinstance(widget, self.app.Gtk.Container):
+                    for child in widget.get_children():
+                        yield from walk(child)
+            button = next(widget for widget in walk(dialog)
+                          if isinstance(widget, self.app.Gtk.Button) and widget.get_label() == "Gmail")
+            button.clicked()
+            return responses[-1]
+        # Use a real parent window; no application startup or network calls.
+        parent = self.app.Gtk.Window()
+        self.dialogs.append(parent)
+        parent.controller = self.controller
+        parent._mail_connected = main._mail_connected
+        with patch.object(self.app.ResponsiveDialog, "run", choose_gmail), \
+                patch.object(self.app, "MailConnectDialog") as connect, \
+                patch.object(self.app, "OAuthWizard") as drive:
+            self.app.MainWindow._choose_provider(parent, None)
+        connect.assert_called_once_with(parent, self.controller, "gmail", main._mail_connected)
+        drive.assert_not_called()
+
+    def test_indexing_manager_selects_mailbox_from_main_account_menu(self):
+        second = self.app.replace(GMAIL, id="c" * 32, display_name="Second mailbox", days=14)
+        self.controller.mail_accounts.save([GMAIL, second])
+        dialog = self.app.MailAccountsDialog(None, self.controller, selected_id=second.id)
+        self.dialogs.append(dialog)
+        self.assertEqual(dialog._account(), second)
+        self.assertEqual(dialog.days.get_value_as_int(), 14)
+
+    def test_mail_account_search_starts_in_mail_scope(self):
+        self.controller.mail_search_index.refresh(GMAIL, SyntheticClient())
+        dialog = self.app.FolderSearchDialog(None, self.controller, mail_account_id=GMAIL.id)
+        self.dialogs.append(dialog)
+        self.assertEqual(dialog.scope.get_active_id(), "mail")
+        def synchronous(operation, ready):
+            ready(operation(), None)
+        with patch.object(self.app, "_run_thread", side_effect=synchronous):
+            dialog.search_entry.set_text("invoice")
+            dialog._run_search()
+        self.assertEqual(len(dialog._results), 1)
+        self.assertEqual(dialog._results[0].attachment.account_id, GMAIL.id)
 
     def test_refresh_applies_visible_options_and_searches_synthetic_contents(self):
         dialog = self.manager()

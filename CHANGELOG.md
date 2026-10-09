@@ -2,6 +2,20 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.74 — mailboxes as online accounts
+
+- Add Gmail and Microsoft 365 mail to the main Add account picker and Online
+  accounts sidebar, using explicit read-only browser OAuth sign-in.
+- Offer per-mailbox attachment search, indexing/refresh options, online mail,
+  rename, reconnect and disconnect from the account menu.
+- Preserve existing account IDs, indexing options and indexes on reconnect;
+  keep mailboxes out of drive sync, mounts and file-backup destinations.
+- Keep Microsoft's registered client pre-filled and custom OAuth settings
+  under Advanced. Gmail still requires a custom Desktop client; shared
+  production approval is separate and is not provided by this release.
+- Add managed mail-provider allowlists and regression coverage for the
+  unified picker/sidebar, scoped search, reconnect and atomic settings updates.
+
 ## 0.26.73 — quota-safe Gmail indexing
 
 - Pace Gmail requests conservatively for the lower per-user quotas of new

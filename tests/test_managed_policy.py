@@ -5,11 +5,30 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tuxindrive.managed_policy import load_managed_policy
+from tuxindrive.managed_policy import ManagedPolicy, load_managed_policy
+from tuxindrive.mail_auth import MailProvider
 from tuxindrive.models import AppSettings, Provider
 
 
 class ManagedPolicyTests(unittest.TestCase):
+    def test_mail_allowlist_does_not_expand_existing_drive_policy(self):
+        self.assertTrue(ManagedPolicy().mail_provider_allowed(MailProvider.GMAIL))
+        restricted = ManagedPolicy(allowed_providers=(Provider.GOOGLE_DRIVE,))
+        self.assertFalse(restricted.mail_provider_allowed(MailProvider.GMAIL))
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "policy.json"
+            path.write_text(json.dumps({"allowed_providers": ["google_drive"],
+                                       "allowed_mail_providers": ["microsoft365"]}))
+            policy = load_managed_policy(path, require_root=False)
+            self.assertTrue(policy.mail_provider_allowed("microsoft365"))
+            self.assertFalse(policy.mail_provider_allowed("gmail"))
+            path.write_text('{"allowed_mail_providers": []}')
+            self.assertFalse(load_managed_policy(path, require_root=False).mail_provider_allowed("gmail"))
+            for value in ('{"allowed_mail_providers": "gmail"}', '{"allowed_mail_providers": ["unknown"]}'):
+                path.write_text(value)
+                with self.assertRaises(RuntimeError):
+                    load_managed_policy(path, require_root=False)
+
     def test_policy_constrains_features_and_bandwidth(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "policy.json"

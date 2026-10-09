@@ -25,7 +25,7 @@ The dependency-install step is required when using an isolated Python environmen
 
 CI pins third-party actions by immutable commit, runs high-severity Bandit checks and `pip-audit`, and publishes a CycloneDX dependency SBOM with the package.
 
-The source defines **653 unit checks: 639 Python tests and 14 Android JVM tests**, plus three separate isolated process-lifecycle checks. These counts describe test definitions, not evidence that a particular revision has passed CI. Eight Python checks require an isolated GTK display and are skipped during the normal headless suite. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes automatic, manual-only and Codex chat-only AI-tool backups, protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing, aggregate tray state and error summaries, historical upgrades, and 0.26.71 Gmail/Microsoft 365 attachment indexing. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
+The source defines **663 unit checks: 649 Python tests and 14 Android JVM tests**, plus three separate isolated process-lifecycle checks. These counts describe test definitions, not evidence that a particular revision has passed CI. Fourteen Python checks require an isolated GTK display and are skipped during the normal headless suite. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes automatic, manual-only and Codex chat-only AI-tool backups, protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing, aggregate tray state and error summaries, historical upgrades, and 0.26.71 Gmail/Microsoft 365 attachment indexing. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
 
 The credential/backup regressions use synthetic data and cover mocked timeout
 cleanup, no key replacement on credential-store failure,
@@ -42,14 +42,16 @@ No live cloud account or personal chat files are used by these regressions.
 
 ### Mail integration: synthetic data and explicit live-validation boundary
 
-The mail extension through 0.26.73 includes 40 offline checks for read-only OAuth/PKCE,
+The mail extension through 0.26.74 includes 43 offline checks for read-only OAuth/PKCE,
 callback state validation, native-token storage, safe provider/pagination URLs,
 metadata-only scans, content reuse/budgets, account isolation, cancellation and
 partial-scan retention. Run `tests.test_mail_attachments` alongside
-`tests.test_search_index` and `tests.test_responsive_windows` (65 focused checks).
-Four `tests.test_mail_gtk` checks exercise the actual dialogs on an explicitly
+`tests.test_search_index` and `tests.test_responsive_windows` (68 focused checks).
+Ten `tests.test_mail_gtk` checks exercise the actual dialogs and main account
+picker/sidebar on an explicitly
 isolated GTK display with fake accounts and no authorization/download traffic.
-They never instantiate the main application or start synchronization.
+They use a plain synthetic GTK application object only, never the real
+TuxInDrive application startup or synchronization lifecycle.
 
 The 0.26.72 checks cover the registered Microsoft default, no private Gmail
 default, unchanged read-only/PKCE scope, editable custom clients/tenants and
@@ -59,6 +61,12 @@ The 0.26.73 regressions cover provider-specific pacing, quota-versus-permission
 HTTP 403 classification, native-credential preservation, bounded retry waits and
 immediate cancellation. A maintainer's live Gmail authorization exposed the
 original per-user rate-limit failure; this is not proof of all-account compatibility.
+
+The 0.26.74 regressions cover existing mail accounts in the main sidebar,
+browser-OAuth routing from Add account, hidden advanced Microsoft settings,
+account-scoped searches, reconnect without duplication or index loss, and
+atomic account-store updates. Managed-policy tests also cover explicit mail
+allowlists without widening a pre-existing restricted drive allowlist.
 
 Manual release validation still needs registered Gmail/Entra desktop clients,
 browser consent, native credential-store unlock/lock, token expiry/renewal,

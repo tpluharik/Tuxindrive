@@ -365,6 +365,14 @@ class MailIndexTests(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.index = MailSearchIndex(Path(self.temporary.name) / "mail.sqlite3")
 
+    def test_account_menu_search_is_scoped_and_parameterized(self):
+        self.index.refresh(GMAIL, SyntheticClient())
+        self.index.refresh(MICROSOFT, SyntheticClient(MICROSOFT))
+        self.assertEqual(len(self.index.search("invoice")), 2)
+        results = self.index.search("invoice", account_id=GMAIL.id)
+        self.assertEqual([item.attachment.account_id for item in results], [GMAIL.id])
+        self.assertEqual(self.index.search("invoice", account_id="' OR 1=1 --"), [])
+
     def test_metadata_only_searches_filename_subject_and_sender_without_downloads(self):
         client = SyntheticClient()
         result = self.index.refresh(GMAIL, client)
@@ -500,11 +508,36 @@ class MailSearchUITests(unittest.TestCase):
         self.assertIn("Refresh selected mailbox", manager)
         self.assertIn("Disconnect and remove local index", manager)
         self.assertIn("self._stop.set()", manager)
-        self.assertIn("mail_search_index.search(query, stop_event=cancel)", search)
+        self.assertIn("mail_search_index.search(", search)
+        self.assertIn("query, stop_event=cancel, account_id=self.mail_account_id", search)
         self.assertIn("safe_message_url(result.attachment.message_url", search)
         self.assertIn("cancel is not self._query_cancel", search)
         self.assertIn("account = self._persist_options(account)", manager)
         self.assertIn("with self.controller.mail_search_index.maintenance():", manager)
+
+    def test_mail_accounts_are_added_from_main_picker_not_as_drive_remotes(self):
+        source = (Path(__file__).resolve().parents[1] / "src/tuxindrive/app.py").read_text()
+        chooser = source[source.index("    def _choose_provider"):source.index("    def _configure_github")]
+        self.assertIn("for provider in MailProvider", chooser)
+        self.assertIn("isinstance(provider, MailProvider)", chooser)
+        self.assertIn("MailConnectDialog(self, self.controller, provider.value", chooser)
+        mail_row = source[source.index("    def _mail_account_row"):source.index("    @staticmethod\n    def _account_drag_targets")]
+        self.assertNotIn("rclone", mail_row)
+        self.assertNotIn("add_job", mail_row)
+        self.assertIn("existing=account", mail_row)
+
+    def test_store_updates_preserve_other_accounts_and_reject_disconnected_reconnect(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            store = MailAccountStore(Path(temporary) / "mail-accounts.json")
+            store.save([GMAIL])
+            store.upsert(MICROSOFT)
+            renamed = replace(GMAIL, display_name="Renamed")
+            store.upsert(renamed, existing=True)
+            self.assertEqual(store.load(), [renamed, MICROSOFT])
+            store.save([MICROSOFT])
+            with self.assertRaisesRegex(MailError, "disconnected"):
+                store.upsert(GMAIL, existing=True)
+            self.assertEqual(store.load(), [MICROSOFT])
 
 
 if __name__ == "__main__":

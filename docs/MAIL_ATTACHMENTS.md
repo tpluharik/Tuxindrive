@@ -1,6 +1,6 @@
 # Gmail and Microsoft 365 attachment search
 
-**Introduced in 0.26.71; easier Microsoft setup in 0.26.72 desktop builds.** Live provider authorization and organization
+**Introduced in 0.26.71; unified online accounts in 0.26.74 desktop builds.** Live provider authorization and organization
 consent still require end-to-end validation; synthetic tests are not evidence
 of access to a real mailbox. Android mailbox indexing is not implemented.
 
@@ -24,17 +24,35 @@ There are no send, edit or delete operations on either mail API.
 
 ## Connect a mailbox
 
-1. Open the magnifying glass, then **Mail accounts**.
-2. Choose **Connect Gmail** or **Connect Microsoft 365**.
+**From desktop version 0.26.74:**
+mailboxes share the main **Online accounts** sidebar with cloud drives.
+Existing mailbox settings, credential-store IDs and indexes are reused, without
+requiring another sign-in just to display them there.
+
+1. Choose **Add account** (`+`) in the main window.
+2. Choose **Gmail** or **Microsoft 365 mail** alongside the storage providers.
 3. Enter a display name and optionally an email login hint. Microsoft 365
    pre-fills the registered TuxInDrive Mail public desktop client; you can use
-   your own client/tenant instead. Gmail requires your own Desktop client ID
+   your own client/tenant under **Advanced OAuth application settings** instead.
+   Gmail requires your own Desktop client ID
    and its client secret. Follow the provider setup below.
 4. Choose **Open browser and connect** and approve read-only access in the
    system browser. The wizard also provides an authorization-page link if the
    browser did not appear. Authorization expires after three minutes and can
    be cancelled; TuxInDrive never asks for your mailbox password.
-5. Select the connected mailbox and choose **Refresh selected mailbox**.
+5. The mailbox appears under **Online accounts**. Its menu offers **Search
+   attachments**, **Indexing options / refresh**, **Open online**, **Rename**,
+   **Reconnect**, and **Disconnect and remove local index**. Open indexing
+   options, then choose **Refresh selected mailbox**.
+
+The search window's **Mail indexing** button is a shortcut to these options,
+not a separate account-registration flow. In published versions through
+0.26.73, the previous **Search → Mail accounts → Connect** workflow still applies.
+Reconnection updates the existing account ID and keeps its indexing options;
+it does not create a duplicate mailbox entry. Use Add account for a different
+mailbox. Mail credentials remain separate from drive credentials internally:
+mail accounts cannot be selected for folder synchronization, mounts, AI backup
+destinations or cloud-to-cloud file copying.
 
 Connecting does not scan mail automatically. Refresh applies the displayed
 indexing options and saves them. **Save indexing options** can save options
@@ -153,7 +171,8 @@ not guaranteed to be securely erased.
 **Disconnect and remove local index** removes the saved account, local native
 credential and its indexed entries. Remote emails/attachments are unchanged;
 revoke provider-side app consent separately if desired. If authorization was
-revoked or expired, disconnect and connect again with the same registered app,
-then refresh. Account/index mutations refuse to overlap a running refresh.
+revoked or expired, choose **Reconnect** in the account menu and sign in to
+the same mailbox, then refresh. Account/index mutations refuse to overlap a
+running refresh.
 
 This feature is attachment discovery, not a full mailbox backup or mail client.

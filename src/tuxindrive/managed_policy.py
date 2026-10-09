@@ -10,6 +10,7 @@ import stat
 
 from .bandwidth import effective_rclone_limit, normalize_bandwidth_limit
 from .models import AppSettings, Provider
+from .mail_auth import MailProvider
 
 
 DEFAULT_POLICY_PATH = Path("/etc/tuxindrive/policy.json")
@@ -26,9 +27,16 @@ class ManagedPolicy:
     allow_content_indexing: bool = True
     allow_cloud_to_cloud: bool = True
     allow_audit_export: bool = True
+    allowed_mail_providers: tuple[MailProvider, ...] | None = None
 
     def provider_allowed(self, provider: Provider) -> bool:
         return not self.allowed_providers or provider in self.allowed_providers
+
+    def mail_provider_allowed(self, provider: MailProvider | str) -> bool:
+        if self.allowed_mail_providers is not None:
+            return MailProvider(provider) in self.allowed_mail_providers
+        # An existing restrictive drive allowlist must not implicitly allow mail.
+        return not self.allowed_providers
 
     def apply(self, settings: AppSettings) -> None:
         if not self.active:
@@ -84,6 +92,14 @@ def load_managed_policy(path: Path = DEFAULT_POLICY_PATH, *, require_root: bool 
         providers = tuple(dict.fromkeys(Provider(str(item)) for item in raw_providers))
     except ValueError as exc:
         raise RuntimeError("Managed policy contains an unknown provider") from exc
+    raw_mail = value.get("allowed_mail_providers")
+    if raw_mail is not None and not isinstance(raw_mail, list):
+        raise RuntimeError("allowed_mail_providers must be a list")
+    try:
+        mail_providers = (None if raw_mail is None else
+                          tuple(dict.fromkeys(MailProvider(str(item)) for item in raw_mail)))
+    except ValueError as exc:
+        raise RuntimeError("Managed policy contains an unknown mail provider") from exc
     try:
         ceiling = normalize_bandwidth_limit(value.get("global_bandwidth_ceiling", ""))
         headroom = min(80, max(0, int(value.get("minimum_headroom_percent", 0))))
@@ -91,6 +107,7 @@ def load_managed_policy(path: Path = DEFAULT_POLICY_PATH, *, require_root: bool 
         raise RuntimeError("Managed policy contains an invalid bandwidth limit") from exc
     return ManagedPolicy(
         active=True, source=str(path), allowed_providers=providers,
+        allowed_mail_providers=mail_providers,
         global_bandwidth_ceiling=ceiling, minimum_headroom_percent=headroom,
         allow_content_indexing=value.get("allow_content_indexing", True) is True,
         allow_cloud_to_cloud=value.get("allow_cloud_to_cloud", True) is True,

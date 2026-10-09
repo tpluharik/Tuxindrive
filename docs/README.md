@@ -16,7 +16,7 @@ facts are identified by version; planned work is never described as shipped.
 |---|---|---|
 | Everyone | [Repository overview](../README.md) | Product scope, feature summary, installation, supported platforms and project links. |
 | Users | [User guide](USER_GUIDE.md) | Accounts, folders, synchronization, incremental AI-tool backups, streaming, peer sharing, recovery, mobile use and troubleshooting. |
-| Desktop users | [Mail attachment search](MAIL_ATTACHMENTS.md) | Gmail/Microsoft 365 integration, registered Microsoft app, custom Gmail setup, 0.26.73 quota-safe refresh, privacy and consent limits; wider live-account verification pending. |
+| Desktop users | [Mail attachment search](MAIL_ATTACHMENTS.md) | 0.26.74 unified online accounts, read-only OAuth, registered Microsoft app, custom Gmail setup, quota-safe refresh, privacy and consent limits; wider live-account verification pending. |
 | Administrators | [Operations guide](OPERATIONS.md) | State locations, bandwidth policy, health checks, logs, backup, recovery and incident handling. |
 | Developers | [Architecture](ARCHITECTURE.md) | Components, threads, data flows, synchronization engine, Android implementation and module map. |
 | Developers and administrators | [Configuration reference](CONFIGURATION.md) | Configuration file, every persisted setting/job field, environment integration and compatibility rules. |
