@@ -104,7 +104,7 @@ from .server_credentials import store_server_token
 from .search_index import FolderSearchIndex, IndexStats, SearchResult
 from .mail_auth import (
     MailAccount, MailAccountStore, MailAuthorization, MailError, MailProvider,
-    authorize as authorize_mail, default_mail_client_id,
+    authorize as authorize_mail, configured_gmail_application, default_mail_client_id,
 )
 from .mail_connectors import MailClient, safe_message_url
 from .mail_index import MailSearchIndex, MailSearchResult
@@ -152,12 +152,21 @@ def _account_card_markup(account: Account, state: str) -> str:
     )
 
 
-def _mail_account_card_markup(account: MailAccount, count: int) -> str:
+def _mail_account_card_markup(account: MailAccount, count: int, scan=None, *, indexing=False) -> str:
     provider = MailProvider(account.provider)
     identity = f"Login hint: {account.email}" if account.email else "Read-only OAuth"
+    state = f"{count} indexed attachments"
+    if indexing:
+        state = "Indexing attachments…"
+    elif scan is None and not count:
+        state = "Not indexed yet — choose Index attachments"
+    elif scan is not None and not scan.complete:
+        state += " · scan limit reached"
+    elif scan is not None and not count:
+        state = "No attachments found in the scanned history"
     return (
         f"<b>{GLib.markup_escape_text(account.display_name)}</b>\n"
-        f"<small>{provider.label} · {count} indexed attachments</small>\n"
+        f"<small>{provider.label} · {GLib.markup_escape_text(state)}</small>\n"
         f"<small>{GLib.markup_escape_text(identity)}</small>"
     )
 
@@ -3582,11 +3591,21 @@ class MailConnectDialog(ResponsiveDialog):
         super().__init__(title=f"Connect {label}", transient_for=parent, modal=True)
         self.controller, self.provider, self.done = controller, provider, done
         self.existing = existing
+        self._google_application = existing if provider == "gmail" else None
+        application_error = ""
+        if provider == "gmail" and existing is None:
+            try:
+                self._google_application = configured_gmail_application(controller.mail_accounts.load())
+            except MailError as exc:
+                application_error = str(exc)
         self._closed, self._busy = False, False
         self._stop = threading.Event()
         self.set_default_size(630, 430)
         self.add_button("Cancel", Gtk.ResponseType.CANCEL)
-        self.connect_button = self.add_button("Open browser and connect", Gtk.ResponseType.OK)
+        self.connect_button = self.add_button(
+            "Sign in with Google" if provider == "gmail" else "Open browser and connect",
+            Gtk.ResponseType.OK,
+        )
         area = self.get_content_area()
         area.set_border_width(18)
         area.set_spacing(10)
@@ -3601,7 +3620,11 @@ class MailConnectDialog(ResponsiveDialog):
         grid = Gtk.Grid(column_spacing=12, row_spacing=10)
         self.name = Gtk.Entry(text=existing.display_name if existing else label)
         self.email = Gtk.Entry(text=existing.email if existing else "")
-        self.client_id = Gtk.Entry(text=existing.client_id if existing else default_mail_client_id(provider))
+        self.client_id = Gtk.Entry(text=(
+            existing.client_id if existing else
+            self._google_application.client_id if self._google_application else
+            default_mail_client_id(provider)
+        ))
         self.client_secret = Gtk.Entry()
         self.client_secret.set_visibility(False)
         self.tenant = Gtk.Entry(text=existing.tenant if existing else "common")
@@ -3611,6 +3634,13 @@ class MailConnectDialog(ResponsiveDialog):
             widget.set_hexpand(True)
             grid.attach(widget, 1, row, 1, 1)
         area.pack_start(grid, False, False, 0)
+        self.index_after_connect = Gtk.CheckButton(label="Index attachments after sign-in")
+        self.index_after_connect.set_active(existing is None)
+        self.index_after_connect.set_tooltip_text(
+            "New mailboxes index attachment names, subjects and senders, not attachment contents. "
+            "Reconnecting uses the mailbox's saved indexing options. Later refreshes remain manual."
+        )
+        area.pack_start(self.index_after_connect, False, False, 0)
         self.advanced = Gtk.Expander(label="Advanced OAuth application settings")
         oauth_grid = Gtk.Grid(column_spacing=12, row_spacing=10)
         fields = [("OAuth client ID", self.client_id)]
@@ -3625,10 +3655,17 @@ class MailConnectDialog(ResponsiveDialog):
         self.advanced.add(oauth_grid)
         self.advanced.set_expanded(not self.client_id.get_text())
         area.pack_start(self.advanced, False, False, 0)
-        help_text = ("Enter your own Gmail Desktop app client ID and secret, enable the Gmail API, "
-                     "and grant gmail.readonly. Testing apps allow only listed test users and require "
-                     "reconnection after seven days. Public distribution may require Google verification."
-                     if provider == "gmail" else
+        help_text = ((
+                     "Choose Sign in with Google and approve read-only Gmail access in your browser. "
+                     "The Google application already configured on this desktop is reused; "
+                     "each mailbox still needs its own consent. No client ID or secret needs to be entered. "
+                     "Google Testing or organization restrictions still apply."
+                     if self._google_application else
+                     "A Google application has not yet been selected for this desktop. "
+                     "Shared TuxInDrive Gmail sign-in is awaiting Google production approval. "
+                     "Advanced settings allow a custom Desktop app with the Gmail API enabled; "
+                     "Testing apps allow only listed test users and need reconnection after seven days."
+                     ) if provider == "gmail" else
                      "The registered TuxInDrive Mail desktop app is pre-filled for personal and work accounts. "
                      "It is not publisher-verified; some organizations require administrator approval. "
                      "You can replace the client ID with your own public desktop app using http://localhost "
@@ -3638,16 +3675,20 @@ class MailConnectDialog(ResponsiveDialog):
         area.pack_start(hint, False, False, 0)
         docs = ("https://developers.google.com/gmail/api/quickstart/python" if provider == "gmail"
                 else "https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app")
-        area.pack_start(Gtk.LinkButton.new_with_label(docs, "OAuth application setup instructions"), False, False, 0)
+        self.setup_link = Gtk.LinkButton.new_with_label(docs, "OAuth application setup instructions")
+        area.pack_start(self.setup_link, False, False, 0)
         self.browser_link = Gtk.LinkButton.new_with_label(docs, "Open authorization page")
         area.pack_start(self.browser_link, False, False, 0)
         self.status = Gtk.Label(xalign=0)
         self.status.set_line_wrap(True)
+        self.status.set_text(application_error)
         area.pack_start(self.status, False, False, 0)
         self.connect("response", self._response)
         self.connect("destroy", self._destroyed)
         self.show_all()
         self.browser_link.hide()
+        if self._google_application:
+            self.setup_link.hide()
 
     def _destroyed(self, *_args):
         self._closed = True
@@ -3678,24 +3719,34 @@ class MailConnectDialog(ResponsiveDialog):
             return
         secret = self.client_secret.get_text()
         self.client_secret.set_text("")
+        index_after_connect = self.index_after_connect.get_active()
         self._busy = True
         self.connect_button.set_sensitive(False)
+        self.index_after_connect.set_sensitive(False)
         self.status.set_text("Waiting for read-only consent in your browser…")
 
         def operation():
             # Do not replace authorization or settings during an index refresh.
             with self.controller.mail_search_index.maintenance():
                 selected_secret = secret
+                current_accounts = self.controller.mail_accounts.load()
                 if self.existing:
-                    current = next((a for a in self.controller.mail_accounts.load() if a.id == account.id), None)
+                    current = next((a for a in current_accounts if a.id == account.id), None)
                     if current is None:
                         raise MailError("This mailbox was disconnected; add it again from Add account.")
-                    if (account.provider == "gmail" and not selected_secret
-                            and account.client_id == self.existing.client_id):
-                        try:
-                            selected_secret = self.controller.mail_authorization.store.load(self.existing).get("client_secret", "")
-                        except MailError:
-                            pass  # Missing credentials can be supplied in Advanced settings.
+                if (self._google_application and not selected_secret
+                        and account.client_id == self._google_application.client_id):
+                    source = next((a for a in current_accounts
+                                   if a.id == self._google_application.id), None)
+                    if (source is None or source.provider != "gmail"
+                            or source.client_id != account.client_id):
+                        raise MailError("Google connection settings changed; close this dialog and try again.")
+                    # Copy only the application configuration. Never reuse this
+                    # mailbox's access/refresh tokens or imply its identity.
+                    selected_secret = self.controller.mail_authorization.store.load(source).get("client_secret", "")
+                    if (not isinstance(selected_secret, str) or len(selected_secret) > 4096
+                            or any(ord(c) < 32 for c in selected_secret)):
+                        raise MailError("Saved Google application settings are invalid; review Advanced settings.")
                 authorize_mail(account, self.controller.mail_authorization.store, client_secret=selected_secret,
                                stop=self._stop, on_url=lambda url: GLib.idle_add(self._authorization_url, url))
                 if self._stop.is_set():
@@ -3709,10 +3760,11 @@ class MailConnectDialog(ResponsiveDialog):
                 return False
             self._busy = False
             self.connect_button.set_sensitive(True)
+            self.index_after_connect.set_sensitive(True)
             if error:
                 self.status.set_text(str(error))
             else:
-                self.done(result)
+                self.done(result, index_after_connect=index_after_connect)
                 self.destroy()
             return False
 
@@ -3720,7 +3772,7 @@ class MailConnectDialog(ResponsiveDialog):
 
 
 class MailAccountsDialog(ResponsiveDialog):
-    """Manual, cancellable indexing: never schedule mailbox access implicitly."""
+    """Cancellable indexing, explicitly selected during sign-in or manually."""
 
     def __init__(self, parent, controller, *, selected_id=None):
         super().__init__(title="Mail attachment indexing", transient_for=parent, modal=False)
@@ -3736,7 +3788,8 @@ class MailAccountsDialog(ResponsiveDialog):
         area.set_spacing(10)
         intro = Gtk.Label(label=(
             "Connect Gmail or Microsoft 365 to search attachment names, subjects and senders. "
-            "Refresh is manual. Optional bounded attachment text stays in the private local index; "
+            "Run Index attachments now to populate search; later refreshes are manual. "
+            "Optional bounded attachment text stays in the private local index; "
             "full attachment files are not retained."
         ), xalign=0)
         intro.set_line_wrap(True)
@@ -3761,7 +3814,7 @@ class MailAccountsDialog(ResponsiveDialog):
         add.set_sensitive(getattr(controller, "window", None) is not None)
         row.pack_start(add, False, False, 0)
         self.operations.append(add)
-        self.refresh_button = Gtk.Button(label="Refresh selected mailbox")
+        self.refresh_button = Gtk.Button(label="Index attachments now")
         self.refresh_button.connect("clicked", self._refresh)
         row.pack_start(self.refresh_button, False, False, 0)
         self.operations.append(self.refresh_button)
@@ -3818,7 +3871,7 @@ class MailAccountsDialog(ResponsiveDialog):
                 index = next((i for i, a in enumerate(self.accounts) if a.id == selected_id), 0)
                 self.view.get_selection().select_path(Gtk.TreePath.new_from_indices([index]))
             else:
-                self.status.set_text("Connect a mailbox. Its contents are not indexed until you choose Refresh.")
+                self.status.set_text("Connect a mailbox, then choose Index attachments now to populate search.")
         except MailError as exc:
             self.status.set_text(str(exc))
 
@@ -3833,12 +3886,23 @@ class MailAccountsDialog(ResponsiveDialog):
             self.days.set_value(account.days)
             self.limit.set_value(account.max_messages)
             self.contents.set_active(account.include_content and self.controller.managed_policy.allow_content_indexing)
+            scan = self.controller.mail_search_index.last_scan(account.id)
+            count = self.controller.mail_search_index.count(account.id)
+            if scan is None and not count:
+                self.status.set_text("Connected, but not indexed yet. Choose Index attachments now to populate search.")
+            elif scan is not None:
+                history = f"{scan.days} days" if scan.days else "all history"
+                note = "Scan complete for that history." if scan.complete else "Scan limit reached; adjust the history/limit and index again."
+                self.status.set_text(f"{count} searchable attachments; last scan read {scan.messages} messages "
+                                     f"({history}, limit {scan.max_messages}). {note}")
+            else:
+                self.status.set_text(f"{count} searchable attachments. Choose Index attachments now to refresh them.")
 
     def _connected(self, account):
         if getattr(self.controller, "window", None):
             self.controller.window.refresh()
         self._reload()
-        self.status.set_text(f"{account.display_name} connected read-only. Choose Refresh to index attachments.")
+        self.status.set_text(f"{account.display_name} connected read-only. Choose Index attachments now to populate search.")
 
     def _persist_options(self, account):
         updated = replace(account, days=self.days.get_value_as_int(), max_messages=self.limit.get_value_as_int(),
@@ -3858,7 +3922,7 @@ class MailAccountsDialog(ResponsiveDialog):
         try:
             self._persist_options(account)
             self._reload()
-            self.status.set_text("Options saved. Choose Refresh to update this mailbox; disabling content removes its indexed text immediately.")
+            self.status.set_text("Options saved. Choose Index attachments now to update this mailbox; disabling content removes its indexed text immediately.")
         except (MailError, OSError) as exc:
             self.status.set_text(str(exc))
 
@@ -3880,6 +3944,9 @@ class MailAccountsDialog(ResponsiveDialog):
         for button in self.operations:
             button.set_sensitive(False)
         self.status.set_text("Reading attachment metadata…")
+        self._active_account_id = account.id
+        if getattr(self.controller, "window", None):
+            self.controller.window.refresh()
 
         def progress(messages, maximum, attachments):
             GLib.idle_add(self._progress, messages, maximum, attachments)
@@ -3895,11 +3962,11 @@ class MailAccountsDialog(ResponsiveDialog):
             )
 
         def ready(result, error):
+            self._busy = False
             if getattr(self.controller, "window", None):
                 self.controller.window.refresh()
             if self._closed:
                 return False
-            self._busy = False
             self.view.set_sensitive(True)
             for button in self.operations:
                 button.set_sensitive(True)
@@ -4943,8 +5010,14 @@ class MainWindow(Gtk.ApplicationWindow):
         for account in self._mail_account_snapshot:
             widgets = self._account_widgets.get("mail:" + account.id)
             if widgets:
+                dialog = getattr(self.controller, "_mail_dialog", None)
+                busy = dialog is not None and not dialog._closed and dialog._busy
+                indexing = busy and getattr(dialog, "_active_account_id", None) == account.id
                 widgets["label"].set_markup(_mail_account_card_markup(
-                    account, self.controller.mail_search_index.count(account.id)))
+                    account, self.controller.mail_search_index.count(account.id),
+                    self.controller.mail_search_index.last_scan(account.id), indexing=indexing))
+                widgets["index"].set_sensitive(not busy)
+                widgets["index"].set_label("Indexing…" if indexing else "Index attachments")
         for job in self.controller.config.jobs:
             widgets = self._job_widgets.get(job.id)
             if not widgets:
@@ -5085,12 +5158,15 @@ class MainWindow(Gtk.ApplicationWindow):
         text = Gtk.Label(xalign=0)
         text.set_ellipsize(3)
         text.set_max_width_chars(32)
-        text.set_markup(_mail_account_card_markup(account, self.controller.mail_search_index.count(account.id)))
+        text.set_markup(_mail_account_card_markup(
+            account, self.controller.mail_search_index.count(account.id),
+            self.controller.mail_search_index.last_scan(account.id)))
         menu = Gtk.MenuButton()
         menu.set_image(Gtk.Image.new_from_icon_name("open-menu-symbolic", Gtk.IconSize.BUTTON))
         popup = Gtk.Menu()
         for label, callback in (
             ("Search attachments", self._search_mail_account),
+            ("Index attachments now", self._index_mail_account),
             ("Indexing options / refresh", self._mail_indexing),
             (tr("open_online"), self._open_mail_online),
             (tr("rename_account"), self._rename_account),
@@ -5103,19 +5179,35 @@ class MainWindow(Gtk.ApplicationWindow):
         popup.show_all()
         menu.set_popup(popup)
         box.pack_start(icon, False, False, 0)
-        box.pack_start(text, True, True, 0)
+        content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        content.pack_start(text, False, False, 0)
+        index_button = Gtk.Button(label="Index attachments")
+        index_button.set_halign(Gtk.Align.START)
+        index_button.connect("clicked", self._index_mail_account, account)
+        content.pack_start(index_button, False, False, 0)
+        box.pack_start(content, True, True, 0)
         box.pack_end(menu, False, False, 0)
         row.add(box)
-        self._account_widgets["mail:" + account.id] = {"label": text, "icon": icon}
+        self._account_widgets["mail:" + account.id] = {"label": text, "icon": icon, "index": index_button}
         return row
 
-    def _mail_connected(self, account: MailAccount) -> None:
+    def _mail_connected(self, account: MailAccount, *, index_after_connect=False) -> None:
         self.refresh()
         existing = getattr(self.controller, "_mail_dialog", None)
         if existing is not None and not existing._closed:
             existing._selected_id = account.id
             existing._connected(account)
-        self.message(f"{account.display_name} connected read-only. Use its account menu to refresh the attachment index.")
+        if index_after_connect:
+            self.message(f"{account.display_name} connected read-only. Starting attachment indexing…")
+            self._index_mail_account(None, account)
+        else:
+            self.message(f"{account.display_name} connected read-only. Choose Index attachments to populate search.")
+
+    def _index_mail_account(self, _item, account: MailAccount):
+        dialog = self._mail_indexing(_item, account)
+        if not dialog._busy and dialog._account() is not None and dialog._account().id == account.id:
+            dialog._refresh()
+        return dialog
 
     def _mail_indexing(self, _item, account: MailAccount):
         dialog = getattr(self.controller, "_mail_dialog", None)

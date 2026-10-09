@@ -1,8 +1,11 @@
 # Gmail and Microsoft 365 attachment search
 
-**Introduced in 0.26.71; unified online accounts in 0.26.74 desktop builds.** Live provider authorization and organization
-consent still require end-to-end validation; synthetic tests are not evidence
-of access to a real mailbox. Android mailbox indexing is not implemented.
+**Introduced in 0.26.71; unified online accounts in 0.26.74 desktop builds.**
+Authorization and organization consent depend on the selected account.
+Read-only Microsoft metadata scanning has been checked against a live mailbox;
+this does not establish access to every personal/work account or shared mailbox.
+Synthetic tests are not evidence of access to a real mailbox.
+Android mailbox indexing is not implemented.
 
 ## What it does
 
@@ -54,13 +57,55 @@ mailbox. Mail credentials remain separate from drive credentials internally:
 mail accounts cannot be selected for folder synchronization, mounts, AI backup
 destinations or cloud-to-cloud file copying.
 
-Connecting does not scan mail automatically. Refresh applies the displayed
+In published versions through **0.26.74**, connecting does not scan mail
+automatically. In the mailbox menu, choose **Indexing options / refresh**,
+select the mailbox, and choose **Refresh selected mailbox** to populate search.
+Refresh applies the displayed
 indexing options and saves them. **Save indexing options** can save options
 without contacting the provider. Refresh and disconnect run in the background;
 **Stop** or closing the manager cancels refresh at the next cancellation check.
 An in-flight network read can take up to its timeout before returning.
 
+### Initial scan and visible index status (from 0.26.75)
+
+The sign-in dialog offers **Index attachments after sign-in**, enabled for new
+mailboxes. This starts a bounded scan after successful browser consent and
+credential storage. New accounts index attachment names, subjects and senders
+only; attachment-content downloads remain off. Uncheck it to connect without
+scanning. Reconnect defaults to no scan and preserves existing settings;
+explicitly selecting the checkbox on reconnect uses those saved options.
+Later refreshes remain manual: no recurring mailbox scan is scheduled.
+
+Each mailbox card has a visible **Index attachments** button, with the same
+action available in its account menu. It opens the selected mailbox's options
+and starts its scan. The manager button is **Index attachments now**. Running
+scans show **Indexing…** and prevent another refresh from overlapping.
+
+**Not indexed yet** is not the same as a completed scan finding zero
+attachments. Successful scan summaries are committed with the attachment rows
+and survive restarting the app. Empty and limited scans report their actual
+status and history/message limits. Failure or cancellation keeps the last
+committed metadata and successful summary; disconnect removes both.
+Existing indexes are preserved without requiring a migration or another login.
+
 ### Gmail setup
+
+**From 0.26.75:** when this desktop already has Gmail
+configured with one OAuth application, **Add account → Gmail → Sign in with
+Google** reuses that application's settings. There is no need to retype its
+client ID or secret. Advanced settings stay collapsed and the application
+secret is read from the native credential store only after choosing Sign in.
+Each new mailbox still requires its own Google browser consent; access tokens,
+refresh tokens and the prior mailbox's login hint are never copied. Reconnect
+also retains its existing application configuration. Different locally
+configured Google applications require an explicit selection in Advanced;
+TuxInDrive does not guess between them. A missing, locked or invalid native
+credential stops the operation without replacing existing accounts/indexes.
+
+This reuses **Gmail application registration**, not Google Drive credentials or
+permissions. It does not bypass Google's test-user, consent or organization
+restrictions. An empty first installation still requires the setup below
+until a shared production-approved TuxInDrive Google application is available.
 
 Enable the Gmail API in your Google Cloud project, configure the OAuth consent
 screen, and create a **Desktop app** OAuth client. Enter its client ID and,

@@ -7,7 +7,18 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.74
+## Current baseline: 0.26.75
+
+### Implemented in 0.26.75: simple sign-in and visible mail indexing
+
+- Reuse an existing, unambiguous local Gmail application's settings for browser
+  sign-in without re-entering client IDs/secrets; request fresh mailbox consent.
+- Offer an explicit initial metadata scan for new accounts and a visible
+  Index attachments action; reconnect keeps its options and defaults to no scan.
+- Persist successful scan summaries and distinguish unindexed, empty and
+  limited results. Keep the last committed metadata on failure/cancellation.
+- Verify a live Microsoft mailbox's metadata indexing. Broader account/tenant
+  coverage, shared Gmail production approval and Android mail remain pending.
 
 ### Implemented in 0.26.74: mailboxes as online accounts
 

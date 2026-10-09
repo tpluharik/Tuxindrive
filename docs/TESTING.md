@@ -42,12 +42,12 @@ No live cloud account or personal chat files are used by these regressions.
 
 ### Mail integration: synthetic data and explicit live-validation boundary
 
-The mail extension through 0.26.74 includes 43 offline checks for read-only OAuth/PKCE,
+The mail extension through 0.26.75 includes 46 offline checks for read-only OAuth/PKCE,
 callback state validation, native-token storage, safe provider/pagination URLs,
 metadata-only scans, content reuse/budgets, account isolation, cancellation and
 partial-scan retention. Run `tests.test_mail_attachments` alongside
-`tests.test_search_index` and `tests.test_responsive_windows` (68 focused checks).
-Ten `tests.test_mail_gtk` checks exercise the actual dialogs and main account
+`tests.test_managed_policy` and `tests.test_search_index` (63 focused checks).
+Twenty `tests.test_mail_gtk` checks exercise the actual dialogs and main account
 picker/sidebar on an explicitly
 isolated GTK display with fake accounts and no authorization/download traffic.
 They use a plain synthetic GTK application object only, never the real
@@ -67,6 +67,15 @@ browser-OAuth routing from Add account, hidden advanced Microsoft settings,
 account-scoped searches, reconnect without duplication or index loss, and
 atomic account-store updates. Managed-policy tests also cover explicit mail
 allowlists without widening a pre-existing restricted drive allowlist.
+
+The 0.26.75 regressions cover reuse of local Google application settings without
+copying mailbox authorization, explicit initial-scan consent/opt-out, preserved
+reconnect options, visible account-card indexing, overlap protection and busy
+state cleanup after closing the manager. Successful scan summaries persist
+alongside metadata, including empty/limited scans; failed/cancelled scans keep
+the previous summary and disconnect removes it. A live read-only Microsoft scan
+completed for a 365-day history with no attachment-content downloads. This
+validates that mailbox only, not all tenants or shared-mailbox behavior.
 
 Manual release validation still needs registered Gmail/Entra desktop clients,
 browser consent, native credential-store unlock/lock, token expiry/renewal,

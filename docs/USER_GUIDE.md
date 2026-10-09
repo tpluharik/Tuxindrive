@@ -123,6 +123,19 @@ drives. Their account menus open attachment search, indexing/refresh options,
 online mail, rename, reconnect and disconnect. They are not synchronization or
 backup destinations. See [mail setup](MAIL_ATTACHMENTS.md) for OAuth requirements.
 
+**From 0.26.75:** if a Gmail application is already configured on this desktop,
+choose **Add account → Gmail → Sign in with Google** without re-entering its
+client ID or secret. Each mailbox still needs its own browser consent. An empty
+installation still needs a custom Google Desktop app until shared production
+approval is available. New sign-ins offer **Index attachments after sign-in**
+for an initial metadata-only scan; uncheck it to connect without scanning.
+Reconnect defaults to no scan and preserves saved indexing options. Later
+refreshes remain manual. Use the visible **Index attachments** button on a
+mailbox card, or **Index attachments now** in its menu. **Not indexed yet**
+distinguishes a missing scan from one that found no attachments; limited scans
+report that more history may remain. Live Microsoft metadata indexing has been
+checked on one mailbox, not every organization or shared-mailbox setup.
+
 **Added in 0.26.71 desktop builds:** search now also offers **Mail
 accounts** and the **Files and mail / Synchronized files / Mail attachments**
 scope selector. Gmail/Microsoft 365 indexing requires separate read-only OAuth
@@ -865,10 +878,10 @@ Reinstall the current package with `sudo apt install ./tuxindrive_0.26.61_all.de
 - Do not point multiple normal jobs at overlapping local folders.
 - Removing a TuxInDrive job does not delete its local or cloud files.
 
-### Security upgrade checklist for 0.26.74
+### Security upgrade checklist for 0.26.75
 
-1. Install `tuxindrive_0.26.74_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
-2. Confirm **Settings → Check for updates** reports 0.26.74 and no signature or expiry error.
+1. Install `tuxindrive_0.26.75_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
+2. Confirm **Settings → Check for updates** reports 0.26.75 and no signature or expiry error.
 3. Reconnect each provider once. pCloud requires the Client ID and secret of an approved pCloud application because its shared rclone OAuth application was revoked. Verify that `~/.config/rclone/rclone.conf` is encrypted and mode `0600`; do not print or upload it.
 4. Confirm the `TuxInDrive rclone configuration` entry exists in GNOME Passwords and Keys/Secret Service. Do not delete it without an export/recovery plan.
 5. Review peer invitations, revoke unused device and Onion credentials, and exchange replacements through an authenticated channel when compromise is suspected.

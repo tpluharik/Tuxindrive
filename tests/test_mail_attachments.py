@@ -18,7 +18,7 @@ from urllib.request import Request
 from tuxindrive.mail_auth import (
     GMAIL_SCOPE, GRAPH_SCOPE, MICROSOFT_MAIL_CLIENT_ID, MailAccount, MailAccountStore, MailAuthorization,
     MailCancelled, MailError, MailTokenStore, NoRedirect, authorization_parameters,
-    _grant, default_mail_client_id, http_bytes, valid_callback,
+    _grant, configured_gmail_application, default_mail_client_id, http_bytes, valid_callback,
 )
 from tuxindrive.mail_connectors import MailAttachment, MailClient, MailScan, _gmail_fields, safe_message_url
 from tuxindrive.mail_index import MailSearchIndex
@@ -106,6 +106,16 @@ class MailAuthorizationTests(unittest.TestCase):
         self.assertEqual(MICROSOFT_MAIL_CLIENT_ID, "31a841b0-b4f8-4fea-a2f4-49025a6d7370")
         self.assertEqual(default_mail_client_id("gmail"), "")
         self.assertEqual(default_mail_client_id("unknown"), "")
+
+    def test_google_application_selection_uses_only_existing_local_gmail_settings(self):
+        self.assertIsNone(configured_gmail_application([]))
+        self.assertIsNone(configured_gmail_application([MICROSOFT]))
+        second = replace(GMAIL, id="c" * 32)
+        self.assertEqual(configured_gmail_application([MICROSOFT, GMAIL, second]), GMAIL)
+        other_app = replace(second, client_id="different.apps.googleusercontent.com")
+        self.assertIsNone(configured_gmail_application([GMAIL, other_app]))
+        with self.assertRaises(MailError):
+            configured_gmail_application([replace(GMAIL, client_id="")])
 
     def test_registered_microsoft_client_preserves_read_only_pkce_consent(self):
         account = replace(MICROSOFT, client_id=default_mail_client_id("microsoft365"))
@@ -383,6 +393,32 @@ class MailIndexTests(unittest.TestCase):
         self.assertEqual(self.index.search("private needle"), [])
         self.assertEqual(self.index.path.stat().st_mode & 0o777, 0o600)
 
+    def test_scan_state_distinguishes_never_indexed_from_empty_success_and_survives_reopen(self):
+        self.assertIsNone(self.index.last_scan(MICROSOFT.id))
+        account = replace(MICROSOFT, days=14, max_messages=100)
+        self.index.refresh(account, SyntheticClient(account, items=[]))
+        self.assertEqual(self.index.count(account.id), 0)
+        state = MailSearchIndex(self.index.path).last_scan(account.id)
+        self.assertEqual((state.messages, state.complete, state.days, state.max_messages), (0, True, 14, 100))
+        self.assertGreater(state.completed_at, 0)
+        self.assertIsNone(self.index.last_scan(GMAIL.id))
+
+    def test_failure_cancellation_and_disconnect_do_not_misreport_scan_state(self):
+        self.index.refresh(MICROSOFT, SyntheticClient(MICROSOFT, complete=False))
+        previous = self.index.last_scan(MICROSOFT.id)
+        self.assertFalse(previous.complete)
+        client = SyntheticClient(MICROSOFT)
+        with patch.object(client, "scan", side_effect=MailError("synthetic failure")), self.assertRaises(MailError):
+            self.index.refresh(MICROSOFT, client)
+        stop = Event()
+        stop.set()
+        with self.assertRaises(MailCancelled):
+            self.index.refresh(MICROSOFT, client, stop_event=stop)
+        self.assertEqual(self.index.last_scan(MICROSOFT.id), previous)
+        self.index.remove_account(MICROSOFT.id)
+        self.assertIsNone(self.index.last_scan(MICROSOFT.id))
+        self.assertEqual(self.index.count(MICROSOFT.id), 0)
+
     def test_content_is_explicitly_opt_in_and_reused_when_unchanged(self):
         account = replace(GMAIL, include_content=True)
         client = SyntheticClient(account)
@@ -505,7 +541,7 @@ class MailSearchUITests(unittest.TestCase):
         source = (Path(__file__).resolve().parents[1] / "src/tuxindrive/app.py").read_text()
         manager = source[source.index("class MailAccountsDialog"):source.index("class FolderSearchDialog")]
         search = source[source.index("class FolderSearchDialog"):source.index("class CloudTransferDialog")]
-        self.assertIn("Refresh selected mailbox", manager)
+        self.assertIn("Index attachments now", manager)
         self.assertIn("Disconnect and remove local index", manager)
         self.assertIn("self._stop.set()", manager)
         self.assertIn("mail_search_index.search(", search)

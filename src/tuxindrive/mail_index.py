@@ -60,6 +60,15 @@ class MailIndexStats:
     complete: bool = True
 
 
+@dataclass(frozen=True)
+class MailIndexState:
+    completed_at: float
+    messages: int
+    complete: bool
+    days: int
+    max_messages: int
+
+
 def _fingerprint(item: MailAttachment) -> str:
     value = [item.message_id, item.attachment_id, item.name, item.size, item.received,
              item.mime_type, item.revision]
@@ -83,6 +92,11 @@ class MailSearchIndex(FolderSearchIndex):
                 );
                 CREATE INDEX IF NOT EXISTS mail_account_generation
                   ON mail_attachments(account_id, generation);
+                CREATE TABLE IF NOT EXISTS mail_scan_state (
+                  account_id TEXT PRIMARY KEY, completed_at REAL NOT NULL,
+                  messages INTEGER NOT NULL, complete INTEGER NOT NULL,
+                  days INTEGER NOT NULL, max_messages INTEGER NOT NULL
+                );
             """)
 
     def count(self, account_id: str | None = None) -> int:
@@ -90,6 +104,13 @@ class MailSearchIndex(FolderSearchIndex):
             if account_id:
                 return int(connection.execute("SELECT COUNT(*) FROM mail_attachments WHERE account_id=?", (account_id,)).fetchone()[0])
             return int(connection.execute("SELECT COUNT(*) FROM mail_attachments").fetchone()[0])
+
+    def last_scan(self, account_id: str) -> MailIndexState | None:
+        """Only committed scans count, including a legitimate empty result."""
+        with self._connect() as connection:
+            row = connection.execute("SELECT * FROM mail_scan_state WHERE account_id=?", (account_id,)).fetchone()
+            return (MailIndexState(row["completed_at"], row["messages"], bool(row["complete"]),
+                                   row["days"], row["max_messages"]) if row else None)
 
     @contextmanager
     def maintenance(self):
@@ -111,6 +132,7 @@ class MailSearchIndex(FolderSearchIndex):
     def remove_account(self, account_id: str) -> None:
         with self.maintenance(), self._connect() as connection:
             connection.execute("DELETE FROM mail_attachments WHERE account_id=?", (account_id,))
+            connection.execute("DELETE FROM mail_scan_state WHERE account_id=?", (account_id,))
 
     def search(self, query: str, *, stop_event: Event | None = None, limit: int = 200,
                account_id: str | None = None) -> list[MailSearchResult]:
@@ -235,6 +257,13 @@ class MailSearchIndex(FolderSearchIndex):
                     removed = connection.execute(
                         "DELETE FROM mail_attachments WHERE account_id=? AND generation!=?", (account.id, generation)
                     ).rowcount
+                check_cancel(stop_event)
+                connection.execute("""
+                    INSERT INTO mail_scan_state VALUES(?,?,?,?,?,?)
+                    ON CONFLICT(account_id) DO UPDATE SET
+                      completed_at=excluded.completed_at,messages=excluded.messages,
+                      complete=excluded.complete,days=excluded.days,max_messages=excluded.max_messages
+                """, (account.id, time.time(), scan.messages, int(complete), account.days, account.max_messages))
             return MailIndexStats(indexed, scan.messages, removed, reused, downloaded, skipped, complete)
         finally:
             self.refresh_lock.release()

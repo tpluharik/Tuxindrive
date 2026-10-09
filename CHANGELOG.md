@@ -2,6 +2,24 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.75 — simpler mail sign-in and visible attachment indexing
+
+- Reuse an existing, unambiguous Gmail application configuration on this
+  desktop so Add account → Gmail offers Sign in with Google without re-entering
+  a client ID or secret; keep developer options collapsed for configured apps.
+- Read the saved application secret only after explicit Connect; require fresh
+  mailbox OAuth consent and never copy access or refresh tokens between accounts.
+- Detect removed/changed configuration before authorization. Keep the private
+  Testing client out of public defaults; first-install shared Gmail sign-in
+  remains pending Google production configuration and approval.
+- Offer an explicit initial metadata scan during mailbox sign-in, enabled for
+  new accounts and optional on reconnect; later refreshes remain manual.
+- Add a visible Index attachments button and a direct account-menu action,
+  with running state and protection against overlapping scans.
+- Persist successful scan summaries alongside the index. Distinguish an
+  unindexed mailbox from a completed empty scan and a scan stopped by limits;
+  retain the last successful summary and metadata on failure/cancellation.
+
 ## 0.26.74 — mailboxes as online accounts
 
 - Add Gmail and Microsoft 365 mail to the main Add account picker and Online

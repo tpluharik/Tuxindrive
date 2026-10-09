@@ -110,6 +110,20 @@ class MailAccount:
             raise MailError("Invalid attachment-content setting.")
 
 
+def configured_gmail_application(accounts: list[MailAccount]) -> MailAccount | None:
+    """Reuse a locally configured app, never a mailbox's authorization.
+
+    No credential-store access happens here. Multiple different application
+    registrations require an explicit choice instead of guessing one.
+    """
+    gmail = [account for account in accounts if account.provider == "gmail"]
+    for account in gmail:
+        account.validate()
+    if len({account.client_id for account in gmail}) == 1:
+        return gmail[0]
+    return None
+
+
 class MailAccountStore:
     """Only non-secret settings; mail accounts are not sync jobs/profile secrets."""
 
