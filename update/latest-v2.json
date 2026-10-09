@@ -1,8 +1,8 @@
 {
-  "version": "0.26.74",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.74/tuxindrive_0.26.74_all.deb",
-  "sha256": "cdd5c728726f11e49920790f93bb067f4a51bc2de0b1c5633d68d026077e4096",
-  "notes": "Gmail and Microsoft 365 mailboxes now appear in Online accounts, with read-only browser OAuth, attachment search, indexing controls and safe reconnect. Gmail still requires a custom Desktop OAuth client.",
-  "expires_at": "2027-01-07T08:00:09.246800+00:00",
-  "signature": "tRl0sSL811sVOFnI5ELL349pHPe4jBY36CuMFl4Gg0yp4U/9SzTo6IwHE0W/Kkx26GRsFQ0rF5QID+9v2AxuCw=="
+  "version": "0.26.75",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.75/tuxindrive_0.26.75_all.deb",
+  "sha256": "b12a195922f8486c454db309e0e94c203645e8b7eef5ab06169f5a23844b8cc1",
+  "notes": "Simpler Gmail browser sign-in for configured desktops; initial/manual attachment indexing and persistent scan status. Shared Gmail production setup remains pending.",
+  "expires_at": "2027-01-07T19:54:07.838027+00:00",
+  "signature": "ImkXtOdjRnOdBVt4FYYqNKeJ/4RMLhDOauRjBuj022f6V2rfdzuvvoi9HMin53WXbNpfTxPxsVhxGx1cLBATCg=="
 }

@@ -1,8 +1,8 @@
 {
-  "version": "0.26.74",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.74/TuxInDrive-0.26.74-android.apk",
-  "sha256": "eb91ff32dd722c65ff82420378e9e66b137918fd5e0479725cf3dcc6ceb2cfee",
-  "notes": "Gmail and Microsoft 365 mailboxes now appear in Online accounts, with read-only browser OAuth, attachment search, indexing controls and safe reconnect. Gmail still requires a custom Desktop OAuth client.",
-  "expires_at": "2027-01-07T08:00:10.015865+00:00",
-  "signature": "kOmB2+zIdPfUws9FrXcTU5wYPaXO64M7pLm4MoIHsMJ7B4m4mgDxAqcoUNVkyMm4JK5lKEaWphTEiYPor17rAw=="
+  "version": "0.26.75",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.75/TuxInDrive-0.26.75-android.apk",
+  "sha256": "1ed5b29b212d54d9522df2d562ed2ba3c4e69c01af417a18296e8cb36d58338c",
+  "notes": "Version alignment and passed release safety checks. Mail attachment indexing remains desktop-only.",
+  "expires_at": "2027-01-07T19:54:08.426539+00:00",
+  "signature": "AWH3V/K/PdVNUtkgvPtUOS2YmEhiUDBmQ3Y+IExAISaNs6g1qOsHB2U7sOkaBNXYsozJab39CxtUvB/PDwSXCg=="
 }
