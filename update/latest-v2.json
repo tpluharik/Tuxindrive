@@ -1,8 +1,8 @@
 {
-  "version": "0.26.73",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.73/tuxindrive_0.26.73_all.deb",
-  "sha256": "150f84da25a7ff36ff998c46f9ce7d6843e71a972878abaae286353e3a8acbf3",
-  "notes": "Quota-safe Gmail attachment indexing, bounded rate-limit recovery, and preserved read-only mailbox connections.",
-  "expires_at": "2027-01-06T18:12:31.247532+00:00",
-  "signature": "+KLnsQsw2eP7vR0+xVIgtU1Vo0k+w2NQ4rrHRVUCZQLzdsf8FTtRhmdecdYkqmf2ykY+LUijb7LyNsens12LBA=="
+  "version": "0.26.74",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.74/tuxindrive_0.26.74_all.deb",
+  "sha256": "cdd5c728726f11e49920790f93bb067f4a51bc2de0b1c5633d68d026077e4096",
+  "notes": "Gmail and Microsoft 365 mailboxes now appear in Online accounts, with read-only browser OAuth, attachment search, indexing controls and safe reconnect. Gmail still requires a custom Desktop OAuth client.",
+  "expires_at": "2027-01-07T08:00:09.246800+00:00",
+  "signature": "tRl0sSL811sVOFnI5ELL349pHPe4jBY36CuMFl4Gg0yp4U/9SzTo6IwHE0W/Kkx26GRsFQ0rF5QID+9v2AxuCw=="
 }
