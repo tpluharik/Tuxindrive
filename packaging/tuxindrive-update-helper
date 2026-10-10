@@ -1,5 +1,0 @@
-#!/bin/sh
-set -eu
-export PYTHONPATH=/usr/lib
-export PATH=/usr/sbin:/usr/bin:/sbin:/bin
-exec /usr/bin/python3 -m tuxindrive.update_helper "$@"

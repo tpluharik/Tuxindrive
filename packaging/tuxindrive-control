@@ -1,8 +1,0 @@
-#!/bin/sh
-set -eu
-unset PYTHONPATH PYTHONHOME
-rclone_config_root="${XDG_CONFIG_HOME:-${HOME}/.config}/rclone"
-if [ -f "$rclone_config_root/.tuxindrive-encrypted" ] || [ -f "$rclone_config_root/.tuxdrive-encrypted" ]; then
-  export RCLONE_PASSWORD_COMMAND=/usr/lib/tuxindrive/rclone-password
-fi
-exec /usr/bin/python3 -I -c 'import runpy,sys; sys.path.insert(0,"/usr/lib"); sys.argv[0]="tuxindrive-control"; runpy.run_module("tuxindrive.control",run_name="__main__")' "$@"

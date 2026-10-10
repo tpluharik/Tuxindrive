@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 288 288">
-  <title>TuxInDrive circular error indicator</title>
-  <circle cx="144" cy="144" r="132" fill="#d32f2f"/>
-  <path stroke="#fff" stroke-width="28" stroke-linecap="round" d="M144 68v92"/>
-  <circle cx="144" cy="207" r="15" fill="#fff"/>
-</svg>

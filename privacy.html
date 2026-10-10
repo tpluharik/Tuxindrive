@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TuxInDrive Mail — privacy policy</title>
+  <meta name="description" content="How TuxInDrive accesses, uses and stores Gmail and Microsoft 365 data for local attachment search, and how to disconnect or remove your local index.">
+  <link rel="canonical" href="https://tpluharik.github.io/Tuxindrive/privacy.html">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header><div class="bar"><a class="brand" href="./">TuxInDrive</a><nav aria-label="Main"><a href="./">Product</a><a href="https://github.com/tpluharik/Tuxindrive">Source &amp; documentation</a></nav></div></header>
+<main id="main" class="policy">
+  <p class="eyebrow">Privacy &amp; data controls</p>
+  <h1>TuxInDrive Mail privacy policy</h1>
+  <p class="meta">Effective date: 10 October 2026.</p>
+  <p>This disclosure covers the desktop Gmail and Microsoft 365 attachment-search feature, not all unrelated cloud-drive, sharing, peer-transfer or AI-backup features.</p>
+  <h2>Publisher and contact</h2>
+  <p>The publisher of TuxInDrive is Tomas Pluharik. Support and privacy contact: <a href="mailto:tpluharik@gmail.com">tpluharik@gmail.com</a>.</p>
+  <h2>What you authorize</h2>
+  <p>You choose a mailbox and authorize access on Google's or Microsoft's website in your normal browser. Mailbox access is separate from cloud-drive access. For Gmail, TuxInDrive requests <code>https://www.googleapis.com/auth/gmail.readonly</code>. This permission can read messages and attachments, but cannot send, change or delete them. TuxInDrive uses it only for the attachment discovery and optional attachment-text indexing described here. Microsoft mail uses delegated read-only mailbox access and token renewal.</p>
+  <h2>Data accessed and used</h2>
+  <p>By default, TuxInDrive requests your mailbox address and attachment/message metadata: attachment filenames, sizes and media types; message subjects, senders, received timestamps, message/attachment identifiers and links to the original email. This data is used to build and refresh your local searchable attachment index and open the correct mailbox result.</p>
+  <p>Attachment-content downloads are off by default. If you explicitly enable supported attachment-content indexing, the application downloads bounded attachment data into private temporary files and stores extracted text locally for search and preview. Gmail may return encoded MIME-part data during this operation; email body text is not indexed. Unsupported, encrypted or oversized attachment formats may remain searchable only by metadata.</p>
+  <p>You control the selected history period and scan limits. The initial settings scan up to 365 days and 2,000 messages; a scan limit can leave older or unseen messages outside the refreshed index. TuxInDrive is an attachment discovery tool, not a complete mailbox backup.</p>
+  <h2>Storage and protection</h2>
+  <p>OAuth access and refresh tokens, and an optional Google Desktop application secret, are stored in the operating system's native credential store. TuxInDrive has no plaintext credential fallback. Mail settings are stored separately from tokens. Metadata and opt-in extracted text are saved in a local SQLite search cache with private operating-system permissions where supported.</p>
+  <p>The SQLite cache is not encrypted by TuxInDrive. Use disk encryption, protect your user account and consider the sensitivity of any device or backup containing the cache. Temporary attachment files are removed after extraction, but removal is not guaranteed secure erasure.</p>
+  <h2>Transfer, sharing and human access</h2>
+  <p>The mail-indexing feature communicates directly from your desktop with Google or Microsoft over HTTPS. It does not upload your mailbox index to a TuxInDrive developer-operated mail-indexing server. Opening a result opens the provider's web mailbox in your browser.</p>
+  <p>TuxInDrive does not sell Gmail data or use it for advertising, credit decisions, or training generalized AI models. Mail data is used for the visible attachment search and preview features described above. TuxInDrive follows the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including its Limited Use requirements.</p>
+  <p>If you choose to send screenshots, logs or other diagnostics to support, review and redact private information first. Support review of particular mailbox data requires your affirmative consent to share that data. Files or indexes that you independently export, copy, synchronize or back up to a destination you choose are subject to that destination's handling and access controls.</p>
+  <h2>Retention, disconnect and deletion</h2>
+  <p>The index remains locally until refreshed, cleared or removed. A failed or cancelled scan preserves the previous committed results. Disabling optional content indexing removes that mailbox's searchable extracted text while retaining metadata.</p>
+  <p>Choose <strong>Disconnect and remove local index</strong> to remove the saved mailbox account, its locally stored credential and its indexed entries. Remote messages and attachments are unchanged. Remove the application's access in your Google or Microsoft account to revoke provider-side consent as well. A reusable application registration may remain available for connecting another mailbox; it does not retain the removed mailbox's tokens.</p>
+  <p>SQLite journal/WAL files, backups and storage-device remnants are not guaranteed to be securely erased. Separately created backups must be managed by you.</p>
+  <h2>Changes and choices</h2>
+  <p>Mailbox authorization and optional content indexing are voluntary. A new use of Google data beyond this disclosure must be disclosed and require the user's consent before that data is accessed or used for the new purpose. Contact <a href="mailto:tpluharik@gmail.com">tpluharik@gmail.com</a> for questions about this feature or its local data controls.</p>
+  <p><a href="./">Back to TuxInDrive</a></p>
+</main>
+<footer><div class="bar"><p>TuxInDrive · Tomas Pluharik</p><nav aria-label="Footer"><a href="./">Product</a><a href="mailto:tpluharik@gmail.com">Contact</a><a href="https://github.com/tpluharik/Tuxindrive">GitHub</a></nav></div></footer>
+</body>
+</html>

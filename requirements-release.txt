@@ -1,5 +1,0 @@
-# Exact versions used when resolving Python-based release builds.
-cryptography==50.0.0
-defusedxml==0.7.1
-keyring==25.6.0; platform_system != "Linux"
-pyinstaller==6.16.0; platform_system == "Darwin"

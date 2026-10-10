@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" data-state="pending">
-  <title>Pending</title>
-  <desc>Amber diamond status badge with a white clock symbol</desc>
-  <path d="M32 3 61 32 32 61 3 32Z" fill="#D97706" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round"/>
-  <circle cx="32" cy="32" r="15" fill="none" stroke="#FFFFFF" stroke-width="4"/>
-  <path d="M32 22v11l8 5" fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>

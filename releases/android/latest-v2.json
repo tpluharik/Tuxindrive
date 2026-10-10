@@ -1,8 +1,0 @@
-{
-  "version": "0.26.75",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.75/TuxInDrive-0.26.75-android.apk",
-  "sha256": "1ed5b29b212d54d9522df2d562ed2ba3c4e69c01af417a18296e8cb36d58338c",
-  "notes": "Version alignment and passed release safety checks. Mail attachment indexing remains desktop-only.",
-  "expires_at": "2027-01-07T19:54:08.426539+00:00",
-  "signature": "AWH3V/K/PdVNUtkgvPtUOS2YmEhiUDBmQ3Y+IExAISaNs6g1qOsHB2U7sOkaBNXYsozJab39CxtUvB/PDwSXCg=="
-}

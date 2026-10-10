@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" data-state="error">
-  <title>Synchronization error</title>
-  <desc>Red octagonal status badge with a white exclamation mark</desc>
-  <path d="M21 4h22l17 17v22L43 60H21L4 43V21Z" fill="#C62828" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round"/>
-  <path d="M32 17v22" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
-  <circle cx="32" cy="48" r="4" fill="#FFFFFF"/>
-</svg>

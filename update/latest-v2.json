@@ -1,8 +1,0 @@
-{
-  "version": "0.26.75",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.75/tuxindrive_0.26.75_all.deb",
-  "sha256": "b12a195922f8486c454db309e0e94c203645e8b7eef5ab06169f5a23844b8cc1",
-  "notes": "Simpler Gmail browser sign-in for configured desktops; initial/manual attachment indexing and persistent scan status. Shared Gmail production setup remains pending.",
-  "expires_at": "2027-01-07T19:54:07.838027+00:00",
-  "signature": "ImkXtOdjRnOdBVt4FYYqNKeJ/4RMLhDOauRjBuj022f6V2rfdzuvvoi9HMin53WXbNpfTxPxsVhxGx1cLBATCg=="
-}

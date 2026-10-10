@@ -1,2 +1,0 @@
-cryptography>=50.0.0,<51
-defusedxml>=0.7.1,<0.8

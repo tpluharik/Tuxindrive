@@ -1,8 +1,0 @@
-{
-  "version": "0.26.75",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.75/TuxInDrive-0.26.75-macos-arm64.dmg",
-  "sha256": "5045ca8dae519baf346a64af0504fb413712819e8d887a6eff4e2243295f1012",
-  "notes": "Simpler Gmail browser sign-in for configured desktops; initial/manual attachment indexing and persistent scan status. Shared Gmail production setup remains pending.",
-  "expires_at": "2027-01-07T19:54:08.111606+00:00",
-  "signature": "0bv47b7gVK/wm9SX97lV9Zy2tGpOMVksjQD+N/bwxcdZQuUrRzlk7m2RT29zZaR/V9AmMHhuofX725X38m3JAw=="
-}

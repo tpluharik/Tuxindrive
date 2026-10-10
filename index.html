@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TuxInDrive — cloud drives and searchable mail attachments</title>
+  <meta name="description" content="TuxInDrive connects cloud drives and provides read-only, local Gmail and Microsoft 365 attachment search on your Linux desktop.">
+  <link rel="canonical" href="https://tpluharik.github.io/Tuxindrive/">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header><div class="bar"><a class="brand" href="./">TuxInDrive</a><nav aria-label="Main"><a href="https://github.com/tpluharik/Tuxindrive">Source &amp; documentation</a><a href="privacy.html">Mail privacy policy</a></nav></div></header>
+<main id="main">
+  <section class="hero" aria-labelledby="title">
+    <p class="eyebrow">Open source · Local mail search</p>
+    <h1 id="title">Your cloud drives.<br>Your mail attachments.<br>One place to search.</h1>
+    <p class="lead">TuxInDrive connects your configured cloud accounts, synchronizes folders and searches files across your online drives. Its mail feature adds Gmail and Microsoft 365 mailboxes through browser authorization and builds a local attachment index on your Linux desktop.</p>
+    <div class="actions"><a class="button" href="https://github.com/tpluharik/Tuxindrive/releases/latest">Downloads</a><a class="button secondary" href="https://github.com/tpluharik/Tuxindrive/blob/main/docs/MAIL_ATTACHMENTS.md">Mail feature guide</a></div>
+  </section>
+  <section class="grid" aria-label="Mail search features">
+    <article class="card"><h2 style="font-size:1.15rem;margin:0 0 .8em">Find attachments</h2><p>Search attachment names, message subjects and senders, then open the original email in Gmail or Outlook. Mail search uses the last completed local index, not a new mailbox query for every keystroke.</p></article>
+    <article class="card"><h2 style="font-size:1.15rem;margin:0 0 .8em">Read-only access</h2><p>Each mailbox requires its own consent. TuxInDrive does not send, edit or delete Gmail messages. Gmail authorization and Google Drive authorization are separate.</p></article>
+    <article class="card"><h2 style="font-size:1.15rem;margin:0 0 .8em">Local processing</h2><p>Mail indexing runs on your computer. OAuth tokens stay in your native credential store. Supported attachment-text indexing is optional and off by default.</p></article>
+  </section>
+  <section aria-labelledby="availability"><h2 id="availability">Gmail sign-in availability</h2><div class="notice"><p>Gmail currently requires a configured Desktop OAuth application. The shared TuxInDrive Mail application is being prepared for Google's public verification. Universal one-click Gmail sign-in is not yet approved or available to all users.</p><p>This is a reusable product feature for independently consenting users, not an integration limited to one email address.</p></div></section>
+  <section aria-labelledby="privacy"><h2 id="privacy">Your mail data and choices</h2><p>Attachment metadata and optional extracted text are stored in a private local search cache. That cache is not encrypted by the app; protect your device and backups. You can disconnect a mailbox and remove its local index without changing remote mail.</p><p>Read the <a href="privacy.html">TuxInDrive Mail privacy policy</a> for access, storage, sharing and removal details.</p></section>
+  <section aria-labelledby="contact"><h2 id="contact">Publisher and contact</h2><p>TuxInDrive is published by Tomas Pluharik. For support or privacy questions, contact <a href="mailto:tpluharik@gmail.com">tpluharik@gmail.com</a>.</p></section>
+</main>
+<footer><div class="bar"><p>TuxInDrive · Tomas Pluharik</p><nav aria-label="Footer"><a href="privacy.html">Mail privacy policy</a><a href="mailto:tpluharik@gmail.com">Contact</a><a href="https://github.com/tpluharik/Tuxindrive">GitHub</a></nav></div></footer>
+</body>
+</html>

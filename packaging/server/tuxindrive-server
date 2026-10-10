@@ -1,4 +1,0 @@
-#!/bin/sh
-set -eu
-unset PYTHONPATH PYTHONHOME
-exec /usr/bin/python3 -I -c 'import runpy,sys; sys.path.insert(0,"/usr/lib/tuxindrive-server"); sys.argv[0]="tuxindrive-server"; runpy.run_module("tuxindrive.server",run_name="__main__")' "$@"
