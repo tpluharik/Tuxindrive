@@ -86,9 +86,11 @@ The keystore and passwords are protected release-environment secrets, not
 repository-wide secrets:
 `ANDROID_KEYSTORE_BASE64`, `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and
 `ANDROID_KEY_PASSWORD`. Losing that identity prevents seamless upgrades of an
-installed Android app. Windows/macOS production code-signing and notarization
-are not currently available in this workflow; update-manifest
-verification remains mandatory and separate.
+installed Android app. Windows/macOS production signing and notarization remain
+pending. Opt-in identity/timestamp/Gatekeeper verification gates are available,
+but do not provision private credentials or a signing producer. See the exact
+remaining setup in [Code signing policy](CODE_SIGNING_POLICY.md).
+Update-manifest verification remains mandatory and separate.
 
 The Android build job receives no signing credentials. A separate job, after
 guarded tests and historical upgrade checks, downloads only its unsigned

@@ -18,6 +18,11 @@ jobs:
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.12"
+      - name: Install hash-pinned project dependencies
+        run: |
+          python -m pip install --require-hashes -r requirements-build-tools.lock
+          python -m pip install --require-hashes --no-build-isolation -r requirements-ci-linux.lock
+          python -m pip install --no-deps --no-build-isolation .
       - name: Run upgrade and recovery matrix
         run: PYTHONPATH=src python3 scripts/run-reliability-matrix.py
       - name: Benchmark metadata index
@@ -27,4 +32,8 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: reliability-evidence
-          path: dist/*.json
+          if-no-files-found: error
+          path: |
+            dist/reliability-report.json
+            dist/search-benchmark.json
+            dist/search-content-benchmark.json

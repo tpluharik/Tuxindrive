@@ -29,6 +29,7 @@ on:
       - "scripts/build-windows-msys2.sh"
       - "scripts/build-windows-frozen.sh"
       - "scripts/build-environment.py"
+      - "scripts/verify-native-distribution.py"
       - "packaging/build-environments/**"
       - "scripts/build-macos.sh"
       - "scripts/generate-marketplace-metadata.py"
@@ -217,6 +218,15 @@ jobs:
       - name: Build Windows installer and portable archive
         shell: pwsh
         run: scripts/build-windows.ps1 -PackageOnly
+      - name: Enforce requested Windows native-signing policy
+        shell: pwsh
+        env:
+          TUXINDRIVE_REQUIRE_WINDOWS_SIGNING: ${{ vars.TUXINDRIVE_REQUIRE_WINDOWS_SIGNING || '0' }}
+          TUXINDRIVE_WINDOWS_CERT_SHA256: ${{ vars.TUXINDRIVE_WINDOWS_CERT_SHA256 }}
+        run: |
+          $version = (Select-String -Path src/tuxindrive/__init__.py -Pattern '__version__ = "([^"]+)"').Matches.Groups[1].Value
+          python scripts/verify-native-distribution.py --platform windows --version $version
+          if ($LASTEXITCODE -ne 0) { throw 'Native Windows verification failed; refusing unsigned fallback' }
       - name: Verify frozen Windows application starts without opening an account
         shell: pwsh
         run: |
@@ -277,6 +287,13 @@ jobs:
         run: sh scripts/build-macos.sh
       - name: Verify frozen macOS application starts without opening an account
         run: build/macos/TuxInDrive.app/Contents/MacOS/TuxInDrive --version
+      - name: Enforce requested macOS Developer ID and notarization policy
+        env:
+          TUXINDRIVE_REQUIRE_MACOS_SIGNING: ${{ vars.TUXINDRIVE_REQUIRE_MACOS_SIGNING || '0' }}
+          TUXINDRIVE_APPLE_TEAM_ID: ${{ vars.TUXINDRIVE_APPLE_TEAM_ID }}
+        run: |
+          version=$(PYTHONPATH=src python3 -c 'from tuxindrive import __version__; print(__version__)')
+          /usr/bin/python3 scripts/verify-native-distribution.py --platform macos --version "$version"
       - name: Stage dedicated macOS release folder
         run: |
           mkdir -p releases/macos/packages
