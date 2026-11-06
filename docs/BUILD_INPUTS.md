@@ -64,6 +64,10 @@ publication gates remain in force.
 ## Explicit boundaries
 
 This freezes third-party runtime and packaging inputs, not a complete VM image.
+macOS CI uses the supported `macos-15` ARM64 host after GitHub retired macOS 14
+on 2 November 2026. The existing reviewed dependency archives are unchanged;
+capture/replay still reject an architecture mismatch. See
+[GitHub's retirement notice](https://github.blog/changelog/2026-10-01-github-actions-macos-14-runner-image-retirement/).
 GitHub's Windows/macOS host OS and Apple system tools such as `codesign` and
 `hdiutil` are recorded but not vendored or made immutable. Archive timestamps,
 native signing and packaging can still change final bytes; bit-for-bit

@@ -78,7 +78,7 @@ jobs:
 
   capture-macos:
     if: inputs.capture_native_environments
-    runs-on: macos-14
+    runs-on: macos-15 # Standard ARM64 runner; capture rejects an architecture mismatch.
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
@@ -249,7 +249,7 @@ jobs:
 
   macos:
     if: ${{ !inputs.collect_dependency_verification && !inputs.capture_native_environments }}
-    runs-on: macos-14
+    runs-on: macos-15 # Standard ARM64 runner; replay rejects an architecture mismatch.
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
