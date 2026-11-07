@@ -287,6 +287,17 @@ class MailActivityTests(unittest.TestCase):
         self.index.remove_account(GMAIL.id)
         self.assertIsNone(self.index.activity(GMAIL.id))
 
+    def test_stopping_a_queued_scheduled_scan_waits_one_interval_even_after_restart(self):
+        self.scheduled()
+        self.service.tick()
+        self.service.cancel(GMAIL.id)
+        self.assertNotIn(GMAIL.id, self.service.running_ids)
+        self.run_worker()
+        self.factory.assert_not_called()
+        restarted = self.make_service()
+        restarted.tick()
+        self.assertEqual(self.operations, [])
+
 
 if __name__ == "__main__":
     unittest.main()

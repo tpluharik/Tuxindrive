@@ -62,7 +62,7 @@ class MailIndexActivity:
     @property
     def running_ids(self):
         with self.lock:
-            return frozenset(self.pending) | ({self.active_id} if self.active_id else set())
+            return frozenset(key for key, kind in self.pending.items() if kind != "cancelled") | ({self.active_id} if self.active_id else set())
 
     def activity(self, identifier):
         with self.lock:
@@ -95,7 +95,7 @@ class MailIndexActivity:
         with self.lock:
             if self.closed:
                 raise MailError("Mail indexing is shutting down.")
-            if identifier == self.active_id or identifier in self.pending:
+            if identifier == self.active_id or identifier in self.pending and self.pending[identifier] != "cancelled":
                 return False
             if len(self.pending) >= 100:
                 raise MailError("The mail indexing queue is full; wait for an activity to finish.")
@@ -139,7 +139,10 @@ class MailIndexActivity:
                 self.stop_event.set()
                 self.activities[identifier] = MailActivity("cancelling", "Stopping mail indexing… an in-flight request may finish first.")
             elif identifier in self.pending:
-                self.pending.pop(identifier)
+                # The existing serial worker records this cancellation without
+                # network/token work. Keeping a tombstone until then prevents
+                # the scheduler from immediately replaying the stopped cycle.
+                self.pending[identifier] = "cancelled"
                 self.activities[identifier] = MailActivity("cancelled", "Queued mail indexing cancelled.")
         self._changed()
 
@@ -181,11 +184,15 @@ class MailIndexActivity:
                     self.active_id = self.stop_event = None
                     return
                 # A manual request has priority over an automatic one.
-                identifier = min(self.pending, key=lambda key: self.pending[key])
+                identifier = min(self.pending, key=lambda key: 0 if self.pending[key] == "cancelled"
+                                 else 2 if self.pending[key] else 1)
                 automatic = self.pending.pop(identifier)
                 self.active_id, self.stop_event = identifier, threading.Event()
                 stop = self.stop_event
-                self.activities[identifier] = MailActivity("running", "Reading attachment metadata in the background…")
+                if automatic == "cancelled":
+                    stop.set()
+                else:
+                    self.activities[identifier] = MailActivity("running", "Reading attachment metadata in the background…")
             self._changed()
             try:
                 self._execute(identifier, automatic, stop)
@@ -210,7 +217,8 @@ class MailIndexActivity:
                 return
             previous = self.index.activity(identifier)
             started = self.clock()
-            state = MailRefreshState(started, failures=previous.failures if previous else 0)
+            state = MailRefreshState(started, failures=previous.failures if previous else 0,
+                                     retry_at=previous.retry_at if previous else 0)
             self.index.record_activity(identifier, state)  # before touching the native credential store
             try:
                 check_cancel(stop)
@@ -226,7 +234,7 @@ class MailIndexActivity:
                     result = self.index.refresh(account, client, stop_event=stop,
                                                 include_content=account.include_content and self.content_allowed(),
                                                 progress=self._progress)
-                    state = replace(state, status="completed", detail=scan_summary(result), failures=0)
+                    state = replace(state, status="completed", detail=scan_summary(result), failures=0, retry_at=0)
             except MailCancelled as error:
                 state = replace(state, status="cancelled", detail=str(error))
             except Exception as error:
