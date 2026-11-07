@@ -7,7 +7,15 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.82
+## Current baseline: 0.26.83
+
+### Implemented in 0.26.83: optional recurring background mail activities
+
+Gmail/Microsoft 365 indexing can run at a saved per-mailbox interval while the
+app runs. Manual indexing stays available, closing the view does not cancel,
+and Stop remains explicit. One bounded serial queue, persisted timing/backoff
+and existing policy/read-only/content limits protect background work. Existing
+mailboxes remain manual-only until the user enables a schedule.
 
 ### Implemented in 0.26.81–0.26.82: frozen native inputs and release checks
 

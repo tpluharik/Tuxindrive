@@ -12,6 +12,7 @@ from tuxindrive.mail_auth import MICROSOFT_MAIL_CLIENT_ID, MailAccountStore, Mai
 from tuxindrive.managed_policy import ManagedPolicy
 from tuxindrive.models import Account, AppConfig, Provider
 from tuxindrive.mail_index import MailSearchIndex
+from tuxindrive.mail_activity import MailIndexActivity
 from tuxindrive.search_index import FolderSearchIndex
 from tests.test_mail_attachments import GMAIL, SyntheticClient
 
@@ -50,6 +51,9 @@ class MailGtkTests(unittest.TestCase):
         )
         self.controller.mail_accounts.save([GMAIL])
         self.controller.mail_authorization.store.load.return_value = {"client_secret": "synthetic-app-secret"}
+        self.controller.mail_indexer = MailIndexActivity(
+            self.controller.mail_accounts, self.controller.mail_search_index, self.controller.mail_authorization,
+            client_factory=lambda account, *_args, **_kwargs: SyntheticClient(account), launch=lambda operation: operation())
         self.dialogs = []
         self.addCleanup(lambda: [dialog.destroy() for dialog in reversed(self.dialogs)])
 
@@ -285,7 +289,7 @@ class MailGtkTests(unittest.TestCase):
         controller.config = AppConfig()
         controller.config.accounts = [Account("drive-one", Provider.GOOGLE_DRIVE, "Drive")]
         controller.engine = SimpleNamespace(running_jobs=set(), mounted_jobs=set())
-        for name in ("mail_accounts", "mail_search_index", "managed_policy"):
+        for name in ("mail_accounts", "mail_search_index", "mail_indexer", "managed_policy"):
             setattr(controller, name, getattr(self.controller, name))
         with patch.object(self.app.MainWindow, "set_network_meter_enabled"), \
                 patch.object(self.app.MainWindow, "set_activity_log_enabled"):
@@ -368,9 +372,7 @@ class MailGtkTests(unittest.TestCase):
         dialog.limit.set_value(10)
         def synchronous(operation, ready):
             ready(operation(), None)
-        with patch.object(self.app, "MailClient", return_value=SyntheticClient()), \
-                patch.object(self.app, "_run_thread", side_effect=synchronous):
-            dialog._refresh()
+        dialog._refresh()
         saved = self.controller.mail_accounts.load()[0]
         self.assertEqual((saved.days, saved.max_messages, saved.include_content), (30, 10, True))
         self.assertEqual(len(self.controller.mail_search_index.search("needle")), 1)
@@ -379,17 +381,47 @@ class MailGtkTests(unittest.TestCase):
         dialog._save_options()
         self.assertEqual(self.controller.mail_search_index.search("needle"), [])
 
-    def test_closed_scan_manager_releases_busy_state_when_worker_returns(self):
+    def test_closed_scan_manager_leaves_the_app_owned_background_activity_running(self):
         dialog = self.manager()
         pending = []
-        with patch.object(self.app, "_run_thread", side_effect=lambda operation, ready: pending.append(ready)):
-            dialog._refresh()
+        self.controller.mail_indexer.launch = pending.append
+        dialog._refresh()
         self.assertTrue(dialog._busy)
         self.assertEqual(dialog._active_account_id, GMAIL.id)
         dialog.destroy()
-        self.assertTrue(dialog._stop.is_set())
-        pending[0](None, MailError("Mail index refresh cancelled."))
-        self.assertFalse(dialog._busy)
+        self.assertIn(GMAIL.id, self.controller.mail_indexer.running_ids)
+        pending[0]()
+        self.assertEqual(self.controller.mail_search_index.count(), 1)
+        self.assertEqual(self.controller.mail_indexer.activity(GMAIL.id).status, "completed")
+
+    def test_interval_controls_are_manual_by_default_and_survive_dialog_reopening(self):
+        dialog = self.manager()
+        self.assertFalse(dialog.automatic.get_active())
+        self.assertFalse(dialog.interval.get_sensitive())
+        dialog.automatic.set_active(True)
+        dialog.interval.set_value(120)
+        dialog._save_options()
+        self.assertEqual(self.controller.mail_accounts.load()[0].index_interval_minutes, 120)
+        dialog.destroy()
+        reopened = self.manager()
+        self.assertTrue(reopened.automatic.get_active())
+        self.assertEqual(reopened.interval.get_value_as_int(), 120)
+        reopened.automatic.set_active(False)
+        reopened._save_options()
+        self.assertEqual(self.controller.mail_accounts.load()[0].index_interval_minutes, 0)
+
+    def test_background_button_and_stop_are_explicit_and_not_tied_to_view_lifetime(self):
+        dialog = self.manager()
+        pending = []
+        self.controller.mail_indexer.launch = pending.append
+        dialog._background_refresh()
+        self.assertTrue(dialog._closed)
+        reopened = self.manager()
+        self.assertTrue(reopened._busy)
+        reopened._cancel()
+        pending[0]()
+        self.assertEqual(self.controller.mail_search_index.count(), 0)
+        self.assertEqual(self.controller.mail_indexer.activity(GMAIL.id).status, "cancelled")
 
     def test_mail_result_opens_message_without_local_materialization(self):
         self.controller.mail_search_index.refresh(GMAIL, SyntheticClient())

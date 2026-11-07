@@ -566,27 +566,19 @@ class MailMimeRecoveryTests(unittest.TestCase):
         index = Mock()
         index.last_scan.return_value, index.count.return_value = state, 1
         dialog = SimpleNamespace(_account=lambda: GMAIL, days=Mock(), limit=Mock(), contents=Mock(), status=Mock(),
+                                 automatic=Mock(), interval=Mock(),
                                  controller=SimpleNamespace(mail_search_index=index,
+                                 mail_indexer=SimpleNamespace(activity=lambda _id: None, running_ids=frozenset()),
                                  managed_policy=SimpleNamespace(allow_content_indexing=True)))
         selected(dialog)
         self.assertIn("1 unreadable message(s) skipped", dialog.status.set_text.call_args.args[0])
 
     def test_actual_refresh_completion_reports_partial_results_without_false_success(self):
-        refresh = self.app_function("_refresh", class_name="MailAccountsDialog", extra={
-            "_run_thread": lambda operation, ready: ready(operation(), None)})
-        index = Mock()
-        index.refresh.return_value = MailIndexStats(1, 2, complete=False, skipped_messages=1)
-        dialog = SimpleNamespace(_busy=False, _closed=False, _account=lambda: GMAIL, _persist_options=lambda value: value,
-                                 _reload=Mock(), _progress=Mock(), operations=[Mock()], view=Mock(), status=Mock(),
-                                 controller=SimpleNamespace(window=None, mail_search_index=index, bandwidth=None,
-                                 mail_authorization=Mock(), managed_policy=SimpleNamespace(
-                                 mail_provider_allowed=lambda _provider: True, allow_content_indexing=True)))
-        refresh(dialog)
-        text = dialog.status.set_text.call_args.args[0]
+        from tuxindrive.mail_activity import scan_summary
+        text = scan_summary(MailIndexStats(1, 2, complete=False, skipped_messages=1))
         self.assertIn("1 unreadable message(s) skipped", text)
-        self.assertIn("older results were retained", text)
+        self.assertIn("older results retained", text)
         self.assertNotIn("Complete scan", text)
-        self.assertFalse(dialog._busy)
 
 
 class MailIndexTests(unittest.TestCase):
@@ -763,7 +755,9 @@ class MailSearchUITests(unittest.TestCase):
         search = source[source.index("class FolderSearchDialog"):source.index("class CloudTransferDialog")]
         self.assertIn("Index attachments now", manager)
         self.assertIn("Disconnect and remove local index", manager)
-        self.assertIn("self._stop.set()", manager)
+        self.assertIn("self.controller.mail_indexer.cancel(account.id)", manager)
+        self.assertIn("self.controller.mail_indexer.request(account.id)", manager)
+        self.assertIn("Automatically index every", manager)
         self.assertIn("mail_search_index.search(", search)
         self.assertIn("query, stop_event=cancel, account_id=self.mail_account_id", search)
         self.assertIn("safe_message_url(result.attachment.message_url", search)

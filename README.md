@@ -14,6 +14,12 @@ TuxInDrive is a native Linux, Windows, macOS and Android client for **Google Dri
 
 Release maintainers can reuse the factual [0.26.31 media kit](docs/ANNOUNCEMENT_0.26.31.md) when inviting testers and contributors.
 
+Version 0.26.83 adds **scheduled background mail indexing**. Set an optional
+per-mailbox interval under **Indexing options / refresh**, or choose **Run in
+background** for a manual scan. Closing the dialog no longer cancels indexing;
+**Stop** still does. Existing mailboxes remain manual-only until enabled.
+Schedules run while TuxInDrive is running, including minimized/background mode.
+
 Version 0.26.82 repairs the hash-pinned reliability-test setup, requires complete
 benchmark evidence, and replaces retired macOS build hosts while retaining the
 same reviewed ARM64 dependency snapshot. Optional native signing verification
@@ -70,7 +76,8 @@ Google Testing limits apply. Gmail requests are paced and temporary quota
 errors retry without discarding the connection or suggesting new consent.
 New sign-ins offer an initial metadata-only scan; visible **Index attachments**
 controls and persisted scan summaries distinguish unindexed, empty and limited
-results. Later refreshes remain manual. Live Microsoft metadata indexing has
+results. Refreshes remain manual unless a per-mailbox recurring interval is
+explicitly enabled. Live Microsoft metadata indexing has
 been checked on one mailbox; broader account/tenant and shared-mailbox coverage
 remain pending. Android mailbox indexing is not implemented.
 See [mail attachment setup and privacy](docs/MAIL_ATTACHMENTS.md).
@@ -227,7 +234,7 @@ TuxInDrive is publicly readable. Direct repository writes remain restricted to m
 - [Contribution guide](CONTRIBUTING.md)
 - [Code of conduct](CODE_OF_CONDUCT.md)
 
-The current 0.26.82 desktop targets Ubuntu 24.04/26.04, Debian 12/13, Windows 10/11 x64 and macOS 12+; Android 8+ uses its native mobile interface. The main window remains freely resizable; settings and other dialogs open at a monitor-safe maximum and keep oversized controls reachable through local scrolling. **Nordic Glass**, **Bento Cloud**, and **Midnight Sync** are persistent visual designs. By default every layout follows the desktop dark-mode preference while retaining its layout; this can be disabled in Settings. Account and folder grouping/reordering changes only interface metadata, while explicit offline/online-only controls, streaming mounts, GitHub synchronization, searchable offline help, private cross-folder search with cancellable indexed queries, direct local/provider location actions, opt-in local content indexing and default-off previews, six-language localization and functional Nautilus badges preserve their established behavior.
+The current 0.26.83 desktop targets Ubuntu 24.04/26.04, Debian 12/13, Windows 10/11 x64 and macOS 12+; Android 8+ uses its native mobile interface. The main window remains freely resizable; settings and other dialogs open at a monitor-safe maximum and keep oversized controls reachable through local scrolling. **Nordic Glass**, **Bento Cloud**, and **Midnight Sync** are persistent visual designs. By default every layout follows the desktop dark-mode preference while retaining its layout; this can be disabled in Settings. Account and folder grouping/reordering changes only interface metadata, while explicit offline/online-only controls, streaming mounts, GitHub synchronization, searchable offline help, private cross-folder search with cancellable indexed queries, direct local/provider location actions, opt-in local content indexing and default-off previews, six-language localization and functional Nautilus badges preserve their established behavior.
 
 Idle and active traffic share one global controller. Event-driven local monitoring, adaptive remote backoff, bounded jitter, atomic incremental admission, unchanged-state write suppression, visibility-aware network/log rendering and conservative pin-aware cache limits reduce background work without weakening reconciliation, signed updates, mass-change protection, conflict handling or path confinement. A local collaboration host selects a folder and advertises it on the LAN; no file endpoint starts until the owner approves the requesting device fingerprint.
 
@@ -241,7 +248,7 @@ Proton Drive uses Proton's official browser-authenticated CLI on supported Linux
 - Android update downloads remain signature/digest bound, accept only explicit HTTPS GitHub release redirect origins, are installed from a durable atomic cache file, and request sideload permission only in the sideload build. The sideload app now checks automatically, respects network/battery constraints, and notifies the user before Android's mandatory installer approval.
 - The complete control inventory, upgrade procedure, credential migration behavior, residual risks, and operator checklist are in the [security-hardening guide](docs/SECURITY_HARDENING.md).
 
-The following controls are enforced in 0.26.82:
+The following controls are enforced in 0.26.83:
 
 - Signed and expiring update manifests are verified in both the desktop process and a fixed privileged helper. The helper stages the package in a root-only directory and rechecks its digest and Debian identity before APT executes it.
 - Tor-only/no-public-IP shares bind SFTP to loopback, and protocol-v5 invitations carry an explicit transport allowlist so direct-only and no-relay policies cannot silently fall back.
@@ -380,12 +387,12 @@ TuxInDrive Profile links the application to an existing Google Drive, OneDrive, 
 
 | Platform | Package | Notes |
 | --- | --- | --- |
-| Ubuntu/Debian | `tuxindrive_0.26.82_all.deb` | Signed in-app Debian updates remain supported. |
-| Ubuntu/Debian Server | `tuxindrive-server_0.26.82_all.deb` | Separate preview service; explicit enablement, bearer token, and TLS for remote access. |
+| Ubuntu/Debian | `tuxindrive_0.26.83_all.deb` | Signed in-app Debian updates remain supported. |
+| Ubuntu/Debian Server | `tuxindrive-server_0.26.83_all.deb` | Separate preview service; explicit enablement, bearer token, and TLS for remote access. |
 | Ubuntu/Debian Network Lab | `tuxindrive-network-lab_0.26.31+lab5_all.deb` | Separate local release with 19 functional scenarios, visual topology and real multi-address loopback traffic. |
-| Windows 10/11 x64 | `TuxInDrive-0.26.82-windows-x64-setup.exe` | Same GTK desktop UI; install WinFsp for streaming drives. |
-| macOS 12+ | `TuxInDrive-0.26.82-macos-*.dmg` | Same GTK desktop UI; install macFUSE for streaming drives. |
-| Android 8+ | `TuxInDrive-0.26.82-android.apk` | Native phone/tablet UI, SAF folder access and OS-managed background sync. |
+| Windows 10/11 x64 | `TuxInDrive-0.26.83-windows-x64-setup.exe` | Same GTK desktop UI; install WinFsp for streaming drives. |
+| macOS 12+ | `TuxInDrive-0.26.83-macos-*.dmg` | Same GTK desktop UI; install macFUSE for streaming drives. |
+| Android 8+ | `TuxInDrive-0.26.83-android.apk` | Native phone/tablet UI, SAF folder access and OS-managed background sync. |
 
 ### Ubuntu and Debian
 
@@ -404,7 +411,7 @@ commands are named TuxInDrive. Alternatively, download the release `.deb` and
 run:
 
 ```bash
-sudo apt install ./tuxindrive_0.26.82_all.deb
+sudo apt install ./tuxindrive_0.26.83_all.deb
 ```
 
 Open **TuxInDrive** from the application menu. Choose **Connect account**, select a provider, and complete its guided authorization. Then add a local synchronized folder or virtual drive. The same visual cloud tree and multi-folder selection are used for supported storage providers; GitHub uses a dedicated repository/branch/local-folder dialog.
@@ -414,7 +421,7 @@ and keep the required `./` local-file prefix:
 
 ```bash
 cd ~/Downloads
-sudo apt install ./tuxindrive-server_0.26.82_all.deb
+sudo apt install ./tuxindrive-server_0.26.83_all.deb
 ```
 
 Continue with the bootstrap token, service start, local health check, TLS rules,
@@ -439,7 +446,7 @@ Maintainers can produce a signed Launchpad source upload with
 Launchpad receives source packages and builds the final binaries inside the
 matching Ubuntu series.
 
-The Debian installers are written to `dist/tuxindrive_0.26.82_all.deb` and `dist/tuxindrive-server_0.26.82_all.deb`. The independently versioned Network Lab build writes `dist/tuxindrive-network-lab_0.26.31+lab5_all.deb`. Windows, macOS and Android artifacts are built by `.github/workflows/platform-packages.yml` on their native build hosts. Durable product packages are attached to the matching GitHub Release; the lab uses its own `network-lab-v*` release. Dedicated signed client channel manifests and package-location pointers live under [`releases/`](releases/README.md).
+The Debian installers are written to `dist/tuxindrive_0.26.83_all.deb` and `dist/tuxindrive-server_0.26.83_all.deb`. The independently versioned Network Lab build writes `dist/tuxindrive-network-lab_0.26.31+lab5_all.deb`. Windows, macOS and Android artifacts are built by `.github/workflows/platform-packages.yml` on their native build hosts. Durable product packages are attached to the matching GitHub Release; the lab uses its own `network-lab-v*` release. Dedicated signed client channel manifests and package-location pointers live under [`releases/`](releases/README.md).
 
 ### Local-first collaborative documents
 
@@ -453,7 +460,7 @@ Select the **?** button in the top bar to open the searchable offline documentat
 
 The flag selector switches **English**, **German**, **French**, **Spanish**, **Arabic**, or **Hebrew** immediately and stores the choice privately. Arabic and Hebrew labels and documentation use right-to-left text flow without moving the interface controls. Provider and rclone diagnostics may remain in their source language so technical evidence is not mistranslated.
 
-The current suite contains 790 unit test definitions (776 Python, including 26 display-dependent checks, and 14 Android JVM tests), including automatic, manual-only and Codex chat-only AI-backup discovery, secret exclusions, root-symlink rejection, incremental retention cleanup and progress reporting; approval-based LAN discovery; encrypted `.tdx`/QR interoperability and malformed-frame rejection; aggregate automatic bandwidth protection and independent directional limits; protocol-provider capability guards; selective transfer rules; per-file recovery resolution; checksum-failure pausing with exact provider paths and correlation-safe provider diagnostics; cross-platform network-counter failure handling; path, symlink and signing-key security; bounded opt-in search previews; recovery retention and confinement; visual themes; aggregate tray state and error summaries; newest-first live logs; exact Nautilus 4.1 integration; bounded FUSE hydration; asynchronous cloud-folder editing; drag/drop groups; GitHub and Proton guards; signed update channels; bounded server requests and relays; Network Lab isolation/scenarios/progress; server installation, isolation and GUI privilege boundaries; hostile ODF/CRDT input; Android serialization and input validation; responsive desktop-window constraints; release packaging; and six-language help parity. See [Testing and release verification](docs/TESTING.md) for details.
+The current suite contains 814 unit test definitions (800 Python, including 28 display-dependent checks, and 14 Android JVM tests), including automatic, manual-only and Codex chat-only AI-backup discovery, secret exclusions, root-symlink rejection, incremental retention cleanup and progress reporting; approval-based LAN discovery; encrypted `.tdx`/QR interoperability and malformed-frame rejection; aggregate automatic bandwidth protection and independent directional limits; protocol-provider capability guards; selective transfer rules; per-file recovery resolution; checksum-failure pausing with exact provider paths and correlation-safe provider diagnostics; cross-platform network-counter failure handling; path, symlink and signing-key security; bounded opt-in search previews; recovery retention and confinement; visual themes; aggregate tray state and error summaries; newest-first live logs; exact Nautilus 4.1 integration; bounded FUSE hydration; asynchronous cloud-folder editing; drag/drop groups; GitHub and Proton guards; signed update channels; bounded server requests and relays; Network Lab isolation/scenarios/progress; server installation, isolation and GUI privilege boundaries; hostile ODF/CRDT input; Android serialization and input validation; responsive desktop-window constraints; release packaging; and six-language help parity. See [Testing and release verification](docs/TESTING.md) for details.
 
 ## Suggestions and roadmap
 

@@ -106,8 +106,9 @@ from .mail_auth import (
     MailAccount, MailAccountStore, MailAuthorization, MailError, MailProvider,
     authorize as authorize_mail, configured_gmail_application, default_mail_client_id,
 )
-from .mail_connectors import MailClient, safe_message_url
+from .mail_connectors import safe_message_url
 from .mail_index import MailSearchIndex, MailSearchResult
+from .mail_activity import MailIndexActivity
 from .file_preview import PreviewData, PreviewError, preview_path
 from .error_details import details_for_job
 from .network_recovery import plan_network_retry, retry_wait_seconds
@@ -153,11 +154,15 @@ def _account_card_markup(account: Account, state: str) -> str:
     )
 
 
-def _mail_account_card_markup(account: MailAccount, count: int, scan=None, *, indexing=False) -> str:
+def _mail_account_card_markup(account: MailAccount, count: int, scan=None, *, indexing=False, activity=None) -> str:
     provider = MailProvider(account.provider)
     identity = f"Login hint: {account.email}" if account.email else "Read-only OAuth"
+    if account.index_interval_minutes:
+        identity += f" · every {account.index_interval_minutes} min"
     state = f"{count} indexed attachments"
-    if indexing:
+    if activity is not None and activity.status in {"running", "queued", "cancelling", "failed", "deferred", "interrupted"}:
+        state = activity.detail
+    elif indexing:
         state = "Indexing attachments…"
     elif scan is None and not count:
         state = "Not indexed yet — choose Index attachments"
@@ -3670,7 +3675,7 @@ class MailConnectDialog(ResponsiveDialog):
         self.index_after_connect.set_active(existing is None)
         self.index_after_connect.set_tooltip_text(
             "New mailboxes index attachment names, subjects and senders, not attachment contents. "
-            "Reconnecting uses the mailbox's saved indexing options. Later refreshes remain manual."
+            "Reconnecting uses the mailbox's saved indexing options. Recurring indexing is optional under Indexing options."
         )
         area.pack_start(self.index_after_connect, False, False, 0)
         self.advanced = Gtk.Expander(label="Advanced OAuth application settings")
@@ -3804,13 +3809,12 @@ class MailConnectDialog(ResponsiveDialog):
 
 
 class MailAccountsDialog(ResponsiveDialog):
-    """Cancellable indexing, explicitly selected during sign-in or manually."""
+    """Control app-owned activities; closing this view never cancels a scan."""
 
     def __init__(self, parent, controller, *, selected_id=None):
         super().__init__(title="Mail attachment indexing", transient_for=parent, modal=False)
         self.controller, self._closed, self._busy = controller, False, False
         self._selected_id = selected_id
-        self._stop = threading.Event()
         self.set_default_size(760, 530)
         self.add_button("Close", Gtk.ResponseType.CLOSE)
         self.connect("response", lambda *_args: self.destroy())
@@ -3820,15 +3824,16 @@ class MailAccountsDialog(ResponsiveDialog):
         area.set_spacing(10)
         intro = Gtk.Label(label=(
             "Connect Gmail or Microsoft 365 to search attachment names, subjects and senders. "
-            "Run Index attachments now to populate search; later refreshes are manual. "
+            "Run Index attachments now or enable a recurring interval for each mailbox. "
+            "Indexing continues in the background when this window closes; Stop cancels the selected activity. "
             "Optional bounded attachment text stays in the private local index; "
             "full attachment files are not retained."
         ), xalign=0)
         intro.set_line_wrap(True)
         area.pack_start(intro, False, False, 0)
-        self.store = Gtk.ListStore(str, str, str, str)
+        self.store = Gtk.ListStore(str, str, str, str, str)
         self.view = Gtk.TreeView(model=self.store)
-        for index, title in enumerate(("Account", "Provider", "Indexed attachments"), start=1):
+        for index, title in enumerate(("Account", "Provider", "Indexed attachments", "Activity"), start=1):
             column = Gtk.TreeViewColumn(title, Gtk.CellRendererText(), text=index)
             column.set_resizable(True)
             column.set_expand(index == 1)
@@ -3850,8 +3855,12 @@ class MailAccountsDialog(ResponsiveDialog):
         self.refresh_button.connect("clicked", self._refresh)
         row.pack_start(self.refresh_button, False, False, 0)
         self.operations.append(self.refresh_button)
+        background = Gtk.Button(label="Run in background")
+        background.connect("clicked", self._background_refresh)
+        row.pack_start(background, False, False, 0)
+        self.operations.append(background)
         stop = Gtk.Button(label="Stop")
-        stop.connect("clicked", lambda *_args: self._stop.set())
+        stop.connect("clicked", self._cancel)
         row.pack_start(stop, False, False, 0)
         area.pack_start(row, False, False, 0)
         grid = Gtk.Grid(column_spacing=12, row_spacing=8)
@@ -3867,6 +3876,14 @@ class MailAccountsDialog(ResponsiveDialog):
         self.contents.set_tooltip_text("Opt-in: 8 MiB per file, 64 MiB/500 downloads per refresh. Images/executables/links are excluded.")
         self.contents.set_sensitive(controller.managed_policy.allow_content_indexing)
         grid.attach(self.contents, 0, 2, 2, 1)
+        self.automatic = Gtk.CheckButton(label="Automatically index every (minutes)")
+        self.interval = Gtk.SpinButton.new_with_range(5, 43200, 5)
+        self.interval.set_value(60)
+        self.automatic.set_tooltip_text("Opt-in, while TuxInDrive is running, including minimized/background mode. Missed cycles run once, not in a burst.")
+        self.automatic.connect("toggled", lambda button: self.interval.set_sensitive(button.get_active()))
+        self.interval.set_sensitive(False)
+        grid.attach(self.automatic, 0, 3, 1, 1)
+        grid.attach(self.interval, 1, 3, 1, 1)
         area.pack_start(grid, False, False, 0)
         options = Gtk.Box(spacing=8)
         save = Gtk.Button(label="Save indexing options")
@@ -3886,7 +3903,6 @@ class MailAccountsDialog(ResponsiveDialog):
 
     def _destroyed(self, *_args):
         self._closed = True
-        self._stop.set()
 
     def _reload(self):
         selected = self._account()
@@ -3898,7 +3914,8 @@ class MailAccountsDialog(ResponsiveDialog):
             for account in self.accounts:
                 self.store.append((account.id, account.display_name,
                                    "Gmail" if account.provider == "gmail" else "Microsoft 365",
-                                   str(self.controller.mail_search_index.count(account.id))))
+                                   str(self.controller.mail_search_index.count(account.id)),
+                                   self._activity_label(account)))
             if self.accounts:
                 index = next((i for i, a in enumerate(self.accounts) if a.id == selected_id), 0)
                 self.view.get_selection().select_path(Gtk.TreePath.new_from_indices([index]))
@@ -3918,6 +3935,13 @@ class MailAccountsDialog(ResponsiveDialog):
             self.days.set_value(account.days)
             self.limit.set_value(account.max_messages)
             self.contents.set_active(account.include_content and self.controller.managed_policy.allow_content_indexing)
+            self.automatic.set_active(bool(account.index_interval_minutes))
+            self.interval.set_value(account.index_interval_minutes or 60)
+            activity = self.controller.mail_indexer.activity(account.id)
+            self._busy = account.id in self.controller.mail_indexer.running_ids
+            if activity is not None:
+                self.status.set_text(activity.detail)
+                return
             scan = self.controller.mail_search_index.last_scan(account.id)
             count = self.controller.mail_search_index.count(account.id)
             if scan is None and not count:
@@ -3941,13 +3965,27 @@ class MailAccountsDialog(ResponsiveDialog):
         self.status.set_text(f"{account.display_name} connected read-only. Choose Index attachments now to populate search.")
 
     def _persist_options(self, account):
-        updated = replace(account, days=self.days.get_value_as_int(), max_messages=self.limit.get_value_as_int(),
-                          include_content=self.contents.get_active() and self.controller.managed_policy.allow_content_indexing)
+        current = next((item for item in self.controller.mail_accounts.load() if item.id == account.id), None)
+        if current is None:
+            raise MailError("This mailbox was disconnected; add it again from Add account.")
+        values = dict(days=self.days.get_value_as_int(), max_messages=self.limit.get_value_as_int(),
+                      include_content=self.contents.get_active() and self.controller.managed_policy.allow_content_indexing,
+                      index_interval_minutes=self.interval.get_value_as_int() if self.automatic.get_active() else 0)
+        if replace(current, **values) == current:
+            # An unchanged manual request can queue behind another mailbox
+            # without taking its scan's maintenance lock or rewriting settings.
+            return current
         with self.controller.mail_search_index.maintenance():
+            current = next((item for item in self.controller.mail_accounts.load() if item.id == account.id), None)
+            if current is None:
+                raise MailError("This mailbox was disconnected; add it again from Add account.")
+            updated = replace(current, **values)
             self.controller.mail_accounts.upsert(updated, existing=True)
             if not updated.include_content:
                 self.controller.mail_search_index.clear_contents(account.id)
         self.accounts = [updated if a.id == account.id else a for a in self.accounts]
+        if getattr(self.controller, "window", None):
+            self.controller.window.refresh()
         return updated
 
     def _save_options(self, *_args):
@@ -3956,76 +3994,69 @@ class MailAccountsDialog(ResponsiveDialog):
             self.status.set_text("Select a mailbox first.")
             return
         try:
-            self._persist_options(account)
+            updated = self._persist_options(account)
             self._reload()
-            self.status.set_text("Options saved. Choose Index attachments now to update this mailbox; disabling content removes its indexed text immediately.")
+            self.status.set_text("Options saved. " + (f"Background indexing repeats every {updated.index_interval_minutes} minutes while TuxInDrive runs."
+                                                     if updated.index_interval_minutes else "Recurring indexing is off; manual indexing remains available."))
+            self.controller.mail_indexer.tick()
         except (MailError, OSError) as exc:
             self.status.set_text(str(exc))
 
     def _refresh(self, *_args):
         if self._busy:
-            return
+            return True
         account = self._account()
         if account is None:
             self.status.set_text("Select a mailbox first.")
-            return
+            return False
         try:
             account = self._persist_options(account)
         except (MailError, OSError) as exc:
             self.status.set_text(str(exc))
-            return
-        self._busy = True
-        self.view.set_sensitive(False)
-        self._stop = threading.Event()
-        for button in self.operations:
-            button.set_sensitive(False)
-        self.status.set_text("Reading attachment metadata…")
+            return False
         self._active_account_id = account.id
-        if getattr(self.controller, "window", None):
-            self.controller.window.refresh()
-
-        def progress(messages, maximum, attachments):
-            GLib.idle_add(self._progress, messages, maximum, attachments)
-
-        def operation():
-            if not self.controller.managed_policy.mail_provider_allowed(account.provider):
-                raise MailError("This mail provider is disabled by the managed desktop policy; the offline index is retained.")
-            client = MailClient(account, self.controller.mail_authorization, bandwidth=self.controller.bandwidth, stop=self._stop)
-            return self.controller.mail_search_index.refresh(
-                account, client, stop_event=self._stop,
-                include_content=account.include_content and self.controller.managed_policy.allow_content_indexing,
-                progress=progress,
-            )
-
-        def ready(result, error):
-            self._busy = False
-            if getattr(self.controller, "window", None):
-                self.controller.window.refresh()
-            if self._closed:
-                return False
-            self.view.set_sensitive(True)
-            for button in self.operations:
-                button.set_sensitive(True)
-            self._reload()
-            if error:
-                self.status.set_text(str(error))
-            else:
-                if result.skipped_messages:
-                    note = (f" Partial scan: {result.skipped_messages} unreadable message(s) skipped; "
-                            "older results were retained. Index again to retry them.")
-                else:
-                    note = " Complete scan." if result.complete else " Scan/index limit reached; older results were retained."
-                self.status.set_text(
-                    f"Indexed {result.indexed} attachments from {result.messages} messages; removed {result.removed} stale entries. "
-                    f"Text: {result.reused} reused, {result.downloaded} download attempts, {result.content_skipped} skipped." + note)
+        try:
+            accepted = self.controller.mail_indexer.request(account.id)
+            self._activity_changed()
+            return accepted or account.id in self.controller.mail_indexer.running_ids
+        except (MailError, OSError) as exc:
+            self.status.set_text(str(exc))
             return False
 
-        _run_thread(operation, ready)
+    def _background_refresh(self, *_args):
+        if self._refresh():
+            self.destroy()
 
-    def _progress(self, messages, maximum, attachments):
-        if not self._closed and self._busy:
-            self.status.set_text(f"Scanned {messages} messages (limit {maximum}); found {attachments} attachments. Content extraction follows metadata scanning.")
-        return False
+    def _cancel(self, *_args):
+        account = self._account()
+        if account is not None:
+            self.controller.mail_indexer.cancel(account.id)
+            self._activity_changed()
+
+    def _activity_label(self, account):
+        activity = self.controller.mail_indexer.activity(account.id)
+        if activity is not None and account.id in self.controller.mail_indexer.running_ids:
+            return activity.detail
+        if account.index_interval_minutes:
+            due = self.controller.mail_indexer.due_at(account)
+            when = datetime.fromtimestamp(due, timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M") if due else "next scheduler check"
+            return f"Every {account.index_interval_minutes} minutes · next: {when}" + (f" · {activity.status}" if activity else "")
+        return activity.status if activity else "Manual only"
+
+    def _activity_changed(self):
+        if self._closed:
+            return
+        account = self._account()
+        self._busy = account is not None and account.id in self.controller.mail_indexer.running_ids
+        if account is not None:
+            activity = self.controller.mail_indexer.activity(account.id)
+            if activity is not None:
+                self.status.set_text(activity.detail)
+        for row in self.store:
+            item = next((a for a in self.accounts if a.id == row[0]), None)
+            if item:
+                row[3] = str(self.controller.mail_search_index.count(item.id))
+                row[4] = self._activity_label(item)
 
     def _remove(self, *_args):
         account = self._account()
@@ -5041,7 +5072,9 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def _update_dynamic_rows(self) -> None:
         self.summary_values["services"].set_text(str(len(self.controller.config.accounts) + len(self._mail_account_snapshot)))
-        self.summary_values["active"].set_text(str(len(self.controller.engine.running_jobs)))
+        mail_indexer = getattr(self.controller, "mail_indexer", None)
+        mail_running = mail_indexer.running_ids if mail_indexer is not None else frozenset()
+        self.summary_values["active"].set_text(str(len(self.controller.engine.running_jobs) + len(mail_running)))
         self.summary_values["protected"].set_text(str(len(self.controller.config.jobs)))
         running = self.controller.engine.running_jobs
         mounted = self.controller.engine.mounted_jobs
@@ -5059,14 +5092,13 @@ class MainWindow(Gtk.ApplicationWindow):
         for account in self._mail_account_snapshot:
             widgets = self._account_widgets.get("mail:" + account.id)
             if widgets:
-                dialog = getattr(self.controller, "_mail_dialog", None)
-                busy = dialog is not None and not dialog._closed and dialog._busy
-                indexing = busy and getattr(dialog, "_active_account_id", None) == account.id
+                indexing = account.id in mail_running
+                activity = mail_indexer.activity(account.id) if mail_indexer is not None else None
                 widgets["label"].set_markup(_mail_account_card_markup(
                     account, self.controller.mail_search_index.count(account.id),
-                    self.controller.mail_search_index.last_scan(account.id), indexing=indexing))
-                widgets["index"].set_sensitive(not busy)
-                widgets["index"].set_label("Indexing…" if indexing else "Index attachments")
+                    self.controller.mail_search_index.last_scan(account.id), indexing=indexing, activity=activity))
+                widgets["index"].set_sensitive(not indexing)
+                widgets["index"].set_label("Queued…" if indexing and activity.status == "queued" else "Indexing…" if indexing else "Index attachments")
         for job in self.controller.config.jobs:
             widgets = self._job_widgets.get(job.id)
             if not widgets:
@@ -5203,7 +5235,7 @@ class MainWindow(Gtk.ApplicationWindow):
         box = Gtk.Box(spacing=10)
         box.set_border_width(8)
         icon = Gtk.Image.new_from_icon_name(MailProvider(account.provider).icon_name, Gtk.IconSize.DND)
-        icon.set_tooltip_text("Read-only mailbox · manual attachment indexing · no folder sync")
+        icon.set_tooltip_text("Read-only mailbox · optional scheduled background indexing · no folder sync")
         text = Gtk.Label(xalign=0)
         text.set_ellipsize(3)
         text.set_max_width_chars(32)
@@ -5216,6 +5248,7 @@ class MainWindow(Gtk.ApplicationWindow):
         for label, callback in (
             ("Search attachments", self._search_mail_account),
             ("Index attachments now", self._index_mail_account),
+            ("Stop indexing", lambda _item, selected: self.controller.mail_indexer.cancel(selected.id)),
             ("Indexing options / refresh", self._mail_indexing),
             (tr("open_online"), self._open_mail_online),
             (tr("rename_account"), self._rename_account),
@@ -5261,9 +5294,6 @@ class MainWindow(Gtk.ApplicationWindow):
     def _mail_indexing(self, _item, account: MailAccount):
         dialog = getattr(self.controller, "_mail_dialog", None)
         if dialog is not None and not dialog._closed:
-            if dialog._busy:
-                dialog.present()
-                return dialog
             dialog._selected_id = account.id
             dialog._reload()
             dialog.present()
@@ -6878,6 +6908,13 @@ class TuxInDriveApplication(Gtk.Application):
             else None
         )
         self.window: MainWindow | None = None
+        self.mail_indexer = MailIndexActivity(
+            self.mail_accounts, self.mail_search_index, self.mail_authorization, bandwidth=self.bandwidth,
+            provider_allowed=lambda provider: self.managed_policy.mail_provider_allowed(provider),
+            content_allowed=lambda: self.managed_policy.allow_content_indexing,
+            admission=self._mail_admission,
+            changed=lambda: GLib.idle_add(self._mail_activity_changed),
+        )
         self.indicator = None
         self.activity_indicator = None
         self._tray_icon = TrayIconModel()
@@ -7847,6 +7884,7 @@ class TuxInDriveApplication(Gtk.Application):
                 )
 
     def _scheduler_tick(self) -> bool:
+        self.mail_indexer.tick()
         monotonic = time.monotonic()
         has_streaming_jobs = any(
             job.enabled and job.mode is SyncMode.VIRTUAL_DRIVE
@@ -7906,6 +7944,20 @@ class TuxInDriveApplication(Gtk.Application):
                 # receive higher admission priority.
                 break
         return True
+
+    def _mail_admission(self):
+        decision = TransferPolicy(self.config.settings).evaluate()
+        return "" if decision.allowed else decision.reason
+
+    def _mail_activity_changed(self):
+        if self.mail_indexer.closed:
+            return False
+        if self.window is not None:
+            self.window.refresh()
+        dialog = getattr(self, "_mail_dialog", None)
+        if dialog is not None and not dialog._closed:
+            dialog._activity_changed()
+        return False
 
     def _cache_maintenance_ready(self, results, error: Exception | None) -> bool:
         self._cache_maintenance_running = False
@@ -8350,6 +8402,7 @@ class TuxInDriveApplication(Gtk.Application):
 
     def do_shutdown(self) -> None:
         LOGGER.info("TuxInDrive shutting down")
+        self.mail_indexer.shutdown()
         running_jobs = set(self.engine.running_jobs)
         interrupted_ai_backup = False
         interrupted_at = datetime.now(timezone.utc).isoformat()

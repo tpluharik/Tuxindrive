@@ -82,6 +82,7 @@ class MailAccount:
     days: int = 365
     max_messages: int = 2000
     include_content: bool = False
+    index_interval_minutes: int = 0
 
     def validate(self) -> None:
         if any(not isinstance(value, str) for value in
@@ -108,6 +109,9 @@ class MailAccount:
             raise MailError("The message limit must be between 1 and 50000.")
         if type(self.include_content) is not bool:
             raise MailError("Invalid attachment-content setting.")
+        if (type(self.index_interval_minutes) is not int
+                or self.index_interval_minutes != 0 and not 5 <= self.index_interval_minutes <= 43200):
+            raise MailError("Automatic mail indexing must be off or repeat every 5 to 43200 minutes.")
 
 
 def configured_gmail_application(accounts: list[MailAccount]) -> MailAccount | None:

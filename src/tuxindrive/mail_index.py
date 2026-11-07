@@ -71,6 +71,16 @@ class MailIndexState:
     skipped_messages: int = 0
 
 
+@dataclass(frozen=True)
+class MailRefreshState:
+    started_at: float
+    finished_at: float = 0
+    status: str = "running"
+    detail: str = ""
+    failures: int = 0
+    retry_at: float = 0
+
+
 def _fingerprint(item: MailAttachment) -> str:
     value = [item.message_id, item.attachment_id, item.name, item.size, item.received,
              item.mime_type, item.revision]
@@ -100,6 +110,11 @@ class MailSearchIndex(FolderSearchIndex):
                   days INTEGER NOT NULL, max_messages INTEGER NOT NULL,
                   skipped_messages INTEGER NOT NULL DEFAULT 0
                 );
+                CREATE TABLE IF NOT EXISTS mail_refresh_activity (
+                  account_id TEXT PRIMARY KEY, started_at REAL NOT NULL,
+                  finished_at REAL NOT NULL, status TEXT NOT NULL, detail TEXT NOT NULL,
+                  failures INTEGER NOT NULL, retry_at REAL NOT NULL
+                );
             """)
             columns = {row["name"] for row in connection.execute("PRAGMA table_info(mail_scan_state)")}
             if "skipped_messages" not in columns:
@@ -128,6 +143,22 @@ class MailSearchIndex(FolderSearchIndex):
         finally:
             self.refresh_lock.release()
 
+    def activity(self, account_id: str) -> MailRefreshState | None:
+        with self._connect() as connection:
+            row = connection.execute("SELECT * FROM mail_refresh_activity WHERE account_id=?", (account_id,)).fetchone()
+            return (MailRefreshState(row["started_at"], row["finished_at"], row["status"], row["detail"],
+                                     row["failures"], row["retry_at"]) if row else None)
+
+    def record_activity(self, account_id: str, state: MailRefreshState) -> None:
+        with self._connect() as connection:
+            connection.execute("""
+                INSERT INTO mail_refresh_activity VALUES(?,?,?,?,?,?,?)
+                ON CONFLICT(account_id) DO UPDATE SET started_at=excluded.started_at,
+                  finished_at=excluded.finished_at,status=excluded.status,detail=excluded.detail,
+                  failures=excluded.failures,retry_at=excluded.retry_at
+            """, (account_id, state.started_at, state.finished_at, state.status, state.detail[:1000],
+                  state.failures, state.retry_at))
+
     def clear_contents(self, account_id: str | None = None) -> None:
         with self.maintenance(), self._connect() as connection:
             if account_id:
@@ -139,6 +170,7 @@ class MailSearchIndex(FolderSearchIndex):
         with self.maintenance(), self._connect() as connection:
             connection.execute("DELETE FROM mail_attachments WHERE account_id=?", (account_id,))
             connection.execute("DELETE FROM mail_scan_state WHERE account_id=?", (account_id,))
+            connection.execute("DELETE FROM mail_refresh_activity WHERE account_id=?", (account_id,))
 
     def search(self, query: str, *, stop_event: Event | None = None, limit: int = 200,
                account_id: str | None = None) -> list[MailSearchResult]:

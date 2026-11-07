@@ -187,7 +187,7 @@ class ControllerNetworkRecoveryTests(unittest.TestCase):
             _mount_failures={}, window=None, audit=Mock(), save=Mock(),
             _refresh_tray_from_jobs=Mock(), start_callbacks=Mock(), refresh_search_index=Mock(),
             _publish_nautilus_state=Mock(), _job_finished=Mock(), _refresh_job_progress=Mock(),
-            run_job=Mock(), notify=Mock(),
+            run_job=Mock(), notify=Mock(), mail_indexer=Mock(),
         )
 
     def test_third_dns_failure_does_not_disable_but_third_auth_failure_does(self):

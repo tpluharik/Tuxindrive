@@ -77,8 +77,8 @@ do not force unnecessary full-window reconstruction.
 The 0.26.71 desktop mail extension adds `mail_auth.py` (system-browser PKCE,
 loopback callback and native-only credential storage), `mail_connectors.py`
 (bounded read-only Gmail/Graph metadata and opt-in bytes), and `mail_index.py`
-(private separate SQLite cache and literal Unicode search). Only explicit
-mailbox refresh contacts providers. Complete scans prune stale rows;
+(private separate SQLite cache and literal Unicode search). Manual refresh or an
+explicitly enabled per-mailbox interval contacts providers. Complete scans prune stale rows;
 failed/cancelled or limited scans preserve previous metadata. From 0.26.77,
 Gmail MIME parsing stages each message atomically and isolates unreadable
 messages from valid results. Skipped-message counts force incomplete scan
@@ -90,6 +90,15 @@ maintenance lock prevents late work from resurrecting removed accounts/text.
 The GUI merges offline results and validates provider message URLs before
 opening them. Mail account settings are separate from sync jobs and profile
 exports. See [mail setup and trust boundaries](MAIL_ATTACHMENTS.md).
+
+From 0.26.83, `mail_activity.py` owns a single background worker and a bounded,
+per-account-deduplicated queue. Dialog lifetime is independent of work lifetime;
+explicit Stop/application shutdown sets cancellation. The existing 30-second
+app scheduler admits due mailboxes, with native credentials, policy checks and
+provider I/O confined to the worker. Attempts/results/backoff are stored in the
+mail database, while transient progress is memory-only and GUI notifications
+are throttled. Saved intervals default to zero (manual); missed cycles do not
+create catch-up work. Queued tasks reload accounts inside the maintenance lock.
 
 Version 0.26.72 supplies only the registered Microsoft native app's public
 client identifier as an editable connection-dialog default. It does not

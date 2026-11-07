@@ -43,9 +43,15 @@ metadata/opt-in text. Account settings contain `id`, `provider`, `display_name`,
 `client_id`, `tenant`, optional `email` login hint, `days` (365; 0 means all),
 `max_messages` (2000) and `include_content` (false). Tokens and optional Google
 desktop secrets are native-credential-store-only, not fields in this JSON.
+From 0.26.83, `index_interval_minutes` defaults to `0` (manual only); opt-in
+values from `5` to `43200` enable recurring background indexing while the app
+runs. Missing fields in older settings remain manual-only. Private persisted
+activity timing/backoff lives in `mail_refresh_activity` in the mail database;
+transient progress is not written on every callback.
 Mail accounts are not synchronization jobs and are not exported by profile
-migration. Mail search cache rebuilding requires a manual authenticated refresh;
-it is not reconstructed by app startup. See [mail attachment search](MAIL_ATTACHMENTS.md).
+migration. Mail search cache rebuilding requires an authenticated manual scan
+or an explicitly enabled recurring interval. App startup does not enable
+schedules for previously manual accounts. See [mail attachment search](MAIL_ATTACHMENTS.md).
 
 Since 0.26.72, a new Microsoft mail connection pre-fills the registered public
 TuxInDrive Mail client ID and tenant `common`. Both fields remain editable.

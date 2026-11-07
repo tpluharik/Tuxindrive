@@ -1,10 +1,21 @@
-# TuxInDrive 0.26.82 security hardening and secure operation
+# TuxInDrive 0.26.83 security hardening and secure operation
 
-This document explains the controls retained through TuxInDrive 0.26.82,
+This document explains the controls retained through TuxInDrive 0.26.83,
 including distribution hardening and the boundaries of existing sync, backup,
 peer sharing, encrypted migration and update verification. It complements the
 concise [security policy](../SECURITY.md), [architecture](ARCHITECTURE.md) and
 operational [runbook](OPERATIONS.md).
+
+## Background mail activities in 0.26.83
+
+Recurring mailbox indexing is opt-in per account; old settings load as manual
+only. Background activities keep the same read-only scopes, bounded metadata
+and opt-in text extraction. One deduplicated serial queue prevents overlapping
+mail scans. Native credential access and policy/network work occur only in the
+worker after account/settings revalidation. Application shutdown cancels work;
+closing the indexing dialog does not. Persisted attempts/backoff prevent restart
+or error loops, and transactional index commits/maintenance guards are retained.
+No signing credentials, provider permissions or account defaults are expanded.
 
 ## Build-time verification in 0.26.82
 

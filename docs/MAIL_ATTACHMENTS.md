@@ -63,7 +63,9 @@ select the mailbox, and choose **Refresh selected mailbox** to populate search.
 Refresh applies the displayed
 indexing options and saves them. **Save indexing options** can save options
 without contacting the provider. Refresh and disconnect run in the background;
-**Stop** or closing the manager cancels refresh at the next cancellation check.
+In versions through 0.26.82, **Stop** or closing the manager cancels refresh.
+From **0.26.83**, only **Stop** cancels; closing the manager leaves the app-owned
+background activity running.
 An in-flight network read can take up to its timeout before returning.
 
 ### Initial scan and visible index status (from 0.26.75)
@@ -74,7 +76,8 @@ credential storage. New accounts index attachment names, subjects and senders
 only; attachment-content downloads remain off. Uncheck it to connect without
 scanning. Reconnect defaults to no scan and preserves existing settings;
 explicitly selecting the checkbox on reconnect uses those saved options.
-Later refreshes remain manual: no recurring mailbox scan is scheduled.
+Later refreshes remain manual by default. From 0.26.83, a mailbox can explicitly
+opt into a recurring background interval as described below.
 
 Each mailbox card has a visible **Index attachments** button, with the same
 action available in its account menu. It opens the selected mailbox's options
@@ -87,6 +90,47 @@ and survive restarting the app. Empty and limited scans report their actual
 status and history/message limits. Failure or cancellation keeps the last
 committed metadata and successful summary; disconnect removes both.
 Existing indexes are preserved without requiring a migration or another login.
+
+### Scheduled background activities (from 0.26.83)
+
+Open a mailbox's **Indexing options / refresh**, select **Automatically index
+every (minutes)**, enter an interval from **5 to 43200 minutes**, then choose
+**Save indexing options**. The default interval shown is 60 minutes; the checkbox
+is off for existing and new mailboxes until explicitly enabled. Uncheck it and
+save to return to manual-only indexing. This does not cancel an activity already
+running; use **Stop** for that.
+
+**Index attachments now** starts a manual activity and keeps the manager open.
+**Run in background** starts the same activity and closes the view. Closing the
+manager or minimizing the main window does not cancel indexing. Reopen the
+manager to see progress/results or stop the selected mailbox. The Activity
+column shows queued/running state, the recurring interval and next due time;
+mailbox cards and the main active count also reflect background work. Activity
+start/completion is recorded in the local Live activity log without message
+subjects, senders or attachment names.
+
+Only one mail scan runs at a time. Requests are deduplicated per mailbox,
+manual requests take priority, and the pending queue is bounded by the account
+limit. A queued activity reloads current settings before it starts, so a removed
+mailbox cannot repopulate its index. Account/index changes remain protected by
+the existing maintenance guard.
+
+The app must remain running, including tray/background mode; this is not a new
+operating-system service and cannot run while TuxInDrive or the computer is off.
+Use the existing launch-at-login/background settings if desired. The scheduler
+checks every 30 seconds. Last-attempt timing and failure backoff are private and
+persistent. Missed cycles produce at most one due scan, not a replay of every
+missed interval. Temporary failures back off from five minutes up to one hour,
+without scanning more frequently than the configured interval. Transfer
+network/battery/time-window rules and managed mail/content policy still apply.
+No browser consent is launched by scheduling; expired/revoked credentials show
+an activity error and need explicit reconnection.
+
+Metadata-only remains the default. Existing attachment-download/extraction
+limits, API pacing, transactional scan commits, partial-scan retention and
+read-only scopes are unchanged. Closing the app cancels active work at the next
+cancellation check and discards queued manual requests; opted-in schedules are
+re-evaluated on the next launch. Searches continue to use committed results.
 
 ### Gmail setup
 

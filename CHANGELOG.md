@@ -2,6 +2,22 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.83 — scheduled background mail indexing
+
+- Add opt-in recurring Gmail/Microsoft 365 attachment indexing per mailbox,
+  every 5–43200 minutes, while TuxInDrive is running, including background mode.
+  Existing accounts remain manual-only. Saved intervals and activity timing
+  survive restarts; missed cycles run once without a catch-up burst.
+- Move manual and scheduled indexing into one app-owned, bounded, deduplicated
+  queue. Closing its dialog no longer cancels a scan; Run in background closes
+  the view, while Stop explicitly cancels the selected queued/running activity.
+- Show activity/progress and schedules in the mail manager, mailbox cards and
+  live activity log. Preserve successful scan summaries and index contents on
+  failures/cancellation, with bounded persisted failure backoff.
+- Respect managed provider/content rules, transfer policy, existing API pacing,
+  read-only OAuth and attachment limits. No sending, deletion, new OAuth scopes,
+  automatic mailbox opt-in or Android mailbox indexing is introduced.
+
 ## 0.26.82 — reliable release checks and supported native build hosts
 
 - Install the same hash-pinned tools and dependencies before reliability checks

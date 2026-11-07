@@ -2,7 +2,7 @@
 
 <p align="center"><img src="../branding/tuxindrive-logo.png" width="150" alt="TuxInDrive circular black-and-white penguin logo with a red bow tie"></p>
 
-This guide covers TuxInDrive 0.26.82 on Linux, Windows, macOS and Android. Windows and macOS retain the Linux GTK desktop layout, while Android reorganizes accounts, synchronized folders, cloud files, activity and settings for touch displays. Platform-specific installation and signing details are in [Platform support](PLATFORM_SUPPORT.md). Administrators and developers can continue with the [documentation index](README.md), [operations guide](OPERATIONS.md), and [architecture reference](ARCHITECTURE.md).
+This guide covers TuxInDrive 0.26.83 on Linux, Windows, macOS and Android. Windows and macOS retain the Linux GTK desktop layout, while Android reorganizes accounts, synchronized folders, cloud files, activity and settings for touch displays. Platform-specific installation and signing details are in [Platform support](PLATFORM_SUPPORT.md). Administrators and developers can continue with the [documentation index](README.md), [operations guide](OPERATIONS.md), and [architecture reference](ARCHITECTURE.md).
 
 Credentials for rclone-backed providers are kept in rclone's authenticated encrypted configuration. TuxInDrive generates its configuration key locally and stores it in GNOME Secret Service; existing rclone configurations already encrypted by an advanced user are left under that user's password-command setup. Proton's official CLI separately stores its browser session in Secret Service under `ch.proton.drive/drive-sdk-cli`; TuxInDrive never reads or exports it. Do not delete either secret until the related accounts have been disconnected.
 
@@ -183,6 +183,14 @@ distinguishes a missing scan from one that found no attachments; limited scans
 report that more history may remain. Live Microsoft metadata indexing has been
 checked on one mailbox, not every organization or shared-mailbox setup.
 
+**From 0.26.83:** mailbox **Indexing options / refresh** offers an optional
+**Automatically index every (minutes)** interval (5–43200). Save to enable it;
+existing mailboxes stay manual-only. **Run in background** starts a manual scan
+and closes the view. Closing the manager no longer cancels a scan; **Stop** does.
+The app must remain running, including minimized/background mode. The mail
+manager shows queued/running progress, next due time and completed results.
+See [scheduled mail activities](MAIL_ATTACHMENTS.md#scheduled-background-activities-from-02683).
+
 **From 0.26.77:** Gmail indexing continues past unreadable messages instead of
 aborting the entire refresh. **Partial scan: N unreadable message(s) skipped**
 means valid results were indexed, but old entries were retained without pruning.
@@ -193,7 +201,7 @@ mailbox. Authorization, quota and network failures still stop safely.
 **Added in 0.26.71 desktop builds:** search now also offers **Mail
 accounts** and the **Files and mail / Synchronized files / Mail attachments**
 scope selector. Gmail/Microsoft 365 indexing requires separate read-only OAuth
-consent and explicit **Refresh selected mailbox**. Mail results open the
+consent and explicit indexing or an opted-in recurring interval. Mail results open the
 original email, not a local attachment copy; optional bounded attachment-text
 indexing is configured per mailbox. See [mail setup, limits and privacy](MAIL_ATTACHMENTS.md).
 Version 0.26.72 pre-fills the registered Microsoft desktop app, while allowing
@@ -932,10 +940,10 @@ Reinstall the current package with `sudo apt install ./tuxindrive_0.26.61_all.de
 - Do not point multiple normal jobs at overlapping local folders.
 - Removing a TuxInDrive job does not delete its local or cloud files.
 
-### Security upgrade checklist for 0.26.82
+### Security upgrade checklist for 0.26.83
 
-1. Install `tuxindrive_0.26.82_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
-2. Confirm **Settings → Check for updates** reports 0.26.82 and no signature or expiry error.
+1. Install `tuxindrive_0.26.83_all.deb`; the upgrade closes an older running TuxInDrive instance. Reopen TuxInDrive and restart Nautilus.
+2. Confirm **Settings → Check for updates** reports 0.26.83 and no signature or expiry error.
 3. Reconnect only when the provider actually rejects authorization, not for DNS failures. pCloud requires the Client ID and secret of an approved pCloud application because its shared rclone OAuth application was revoked. Verify that `~/.config/rclone/rclone.conf` is encrypted and mode `0600`; do not print or upload it.
 4. Confirm the `TuxInDrive rclone configuration` entry exists in GNOME Passwords and Keys/Secret Service. Do not delete it without an export/recovery plan.
 5. Review peer invitations, revoke unused device and Onion credentials, and exchange replacements through an authenticated channel when compromise is suspected.
