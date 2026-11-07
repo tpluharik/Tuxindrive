@@ -27,7 +27,7 @@ CI pins third-party actions by immutable commit, runs high-severity Bandit check
 
 The source defines **790 unit checks: 776 Python tests and 14 Android JVM tests**, plus three separate isolated process-lifecycle checks and four clean historical-upgrade scenarios. These counts describe test definitions, not evidence that a particular revision has passed CI. Twenty-six Python checks require an isolated GTK display. Tests use temporary directories and mocked cloud/Git/Tor processes where possible, so they do not require or expose real credentials or personal files. Coverage includes automatic, manual-only and Codex chat-only AI-tool backups, protocol-provider capability guards, selective transfer rules, non-destructive per-file recovery, managed policy, cloud copy, content indexing, aggregate tray state and error summaries, historical upgrades, and Gmail/Microsoft 365 attachment indexing. Server API and Network Lab integration use only temporary loopback listeners and fictional ciphertext-like bytes.
 
-### CI audit remediation (no application version bump)
+### CI audit remediation (released in 0.26.82)
 
 `tests.test_ci_workflows` adds eight checks: reliability uses the same
 hash-pinned build tools, Linux CI dependencies and package installation as the

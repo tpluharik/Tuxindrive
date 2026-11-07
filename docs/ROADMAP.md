@@ -7,7 +7,16 @@ This document records completed safety work and proposes future work. Suggestion
 
 The longer-term product direction is a **“Signal for files and cooperation”**: private workspaces in which people verify devices, exchange files and messages, synchronize offline changes, and—where a format supports it—edit together in real time. This is a design goal, not a present security claim. Every feature must ship with an explicit threat model and must identify which content and metadata remain visible to endpoints, relays, storage providers, Tor observers, and workspace administrators.
 
-## Current baseline: 0.26.80
+## Current baseline: 0.26.82
+
+### Implemented in 0.26.81–0.26.82: frozen native inputs and release checks
+
+Reviewed, hash-pinned native dependency archives replace live package resolution.
+Supported macOS 15 ARM64 hosts replay the same dependencies. Reliability checks
+use the ordinary build's pinned setup and require complete benchmark evidence.
+Opt-in native verification gates exist, but Windows Authenticode and Apple
+Developer ID signing/notarization still require approved credentials and a
+protected signing producer. Application runtime behavior is unchanged.
 
 ### Implemented in 0.26.80: distribution and server hardening
 

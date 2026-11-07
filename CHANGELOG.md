@@ -2,6 +2,19 @@
 
 This changelog summarizes user-visible releases. Detailed operation, safety limitations, and recovery instructions are maintained in the [user guide](docs/USER_GUIDE.md).
 
+## 0.26.82 — reliable release checks and supported native build hosts
+
+- Install the same hash-pinned tools and dependencies before reliability checks
+  as the main build; require all three scenario/benchmark evidence files.
+- Replace retired macOS 14 CI hosts with supported macOS 15 ARM64 hosts, keeping
+  the existing reviewed native dependency snapshots and startup checks.
+- Add opt-in, fail-closed verification gates for future approved Windows and
+  Apple signing identities, timestamps, hardened runtime and notarization.
+  Native Authenticode/Developer ID signing and notarization remain pending;
+  no new credentials, signing identities or permissions are introduced.
+- Preserve existing Android and offline updater signing, application behavior,
+  synchronization, backup and credential formats, with no added runtime work.
+
 ## 0.26.81 — frozen native build dependencies
 
 - Build Windows and macOS from reviewed, SHA-256-pinned native dependency

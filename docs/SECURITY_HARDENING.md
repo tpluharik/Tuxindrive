@@ -1,10 +1,20 @@
-# TuxInDrive 0.26.81 security hardening and secure operation
+# TuxInDrive 0.26.82 security hardening and secure operation
 
-This document explains the controls retained through TuxInDrive 0.26.81,
+This document explains the controls retained through TuxInDrive 0.26.82,
 including distribution hardening and the boundaries of existing sync, backup,
 peer sharing, encrypted migration and update verification. It complements the
 concise [security policy](../SECURITY.md), [architecture](ARCHITECTURE.md) and
 operational [runbook](OPERATIONS.md).
+
+## Build-time verification in 0.26.82
+
+Reliability checks install the same hash-pinned dependencies as the ordinary
+build and require complete scenario and benchmark evidence. Native builds use
+supported macOS 15 ARM64 hosts without changing the frozen dependency archives.
+Optional native certificate verification gates fail closed when explicitly
+enabled, but no signing credentials or producer are provisioned. Windows
+Authenticode and Apple Developer ID/notarization remain pending. None of these
+checks run in the installed application or add synchronization overhead.
 
 ## Frozen build inputs in 0.26.81
 
