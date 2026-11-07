@@ -1,8 +1,8 @@
 {
-  "version": "0.26.82",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.82/TuxInDrive-0.26.82-windows-x64-setup.exe",
-  "sha256": "d5554850c59c439b2adbd36bfcb8d572b10913ba66853d0f9b29ab641e5f985c",
-  "notes": "Release-check reliability and frozen dependency replay. Windows Authenticode publisher signing remains pending.",
-  "expires_at": "2027-02-05T07:49:15.240816+00:00",
-  "signature": "ZDcOa8zb9vmAmPO5CSg0IoH36y9JnamaKt9keNlcmXnYEIGellRcsPWG/kEYDOXPG18XPXMbvOd37ZXe8YC4CA=="
+  "version": "0.26.83",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.83/TuxInDrive-0.26.83-windows-x64-setup.exe",
+  "sha256": "373180203f1995f57bd5b26eeae7fd86eb250b284310101804b17755d0df6091",
+  "notes": "Optional recurring background mail indexing for Gmail and Microsoft 365. Windows Authenticode publisher signing remains pending.",
+  "expires_at": "2027-02-05T20:01:11.271390+00:00",
+  "signature": "1nLpXjI7NX169PztZKHGlBDexcjKSY8X0K/4slgKdlWyY7qWrKt8QQrSCiOPL4Rzf/+FK7gGAANdCHV82O6xDA=="
 }

@@ -1,8 +1,8 @@
 {
-  "version": "0.26.82",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.82/TuxInDrive-0.26.82-macos-arm64.dmg",
-  "sha256": "81c6e5184c41eef95d90dc05ed1316198f2e5674c41dbbd031506c02714bc804",
-  "notes": "Supported macOS build host with unchanged frozen dependencies. Developer ID signing and notarization remain pending.",
-  "expires_at": "2027-02-05T07:49:15.334813+00:00",
-  "signature": "B0Y9bxnVh3UNxMJQ2zhsIe+4V2SYFdhn/fPhZ3IhFehojD1y4wELelgnrAnClsEljbCyqSJsSZx2vZY4Oo9iBg=="
+  "version": "0.26.83",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.83/TuxInDrive-0.26.83-macos-arm64.dmg",
+  "sha256": "fdb30b748c6ed6059880500d763eeccf55391d68d620b188fffcdea7fa90dd1d",
+  "notes": "Optional recurring background mail indexing for Gmail and Microsoft 365. Developer ID signing and notarization remain pending.",
+  "expires_at": "2027-02-05T20:01:11.499186+00:00",
+  "signature": "ZXMEluSGTSRZzmMK8wvDvMgP1l9Ma0PEl6aBn9gV7qIxVw11BLTd6/uIUmD6vUkQsPOGptValBMNjeMvmiRlBA=="
 }

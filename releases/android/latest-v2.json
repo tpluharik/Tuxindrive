@@ -1,8 +1,8 @@
 {
-  "version": "0.26.82",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.82/TuxInDrive-0.26.82-android.apk",
-  "sha256": "021f158b7ccf9c8257c945b919736be726e986fa0099f16dbeade825c57cc097",
-  "notes": "Validated 0.26.82 release with the established Android signing identity; application behavior unchanged.",
-  "expires_at": "2027-02-05T07:49:15.589988+00:00",
-  "signature": "sLAL3xcNKY72sMwaQH5BnAY4rb0mPW4SAuhK4FHroj+1NyYW2KNUBmf7bWzK+uZE8IT2/e1+GIl70xVsQm9KDA=="
+  "version": "0.26.83",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.83/TuxInDrive-0.26.83-android.apk",
+  "sha256": "3e4fb4e9f3e104da3b48a08a0c8943fbf9f1614570580b6c95637f45e8a02cae",
+  "notes": "Validated 0.26.83 release with the established Android signing identity. New scheduled mail indexing is desktop-only.",
+  "expires_at": "2027-02-05T20:01:12.105053+00:00",
+  "signature": "RAFLj+yAYB90mEOlxO864b3ifyunE2VrmIap9OY6CyBH3pOz3AmOLMyiNA/OAOnScqh6WkOP1j9xMdDOu+OkBQ=="
 }

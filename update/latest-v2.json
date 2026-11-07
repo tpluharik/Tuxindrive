@@ -1,8 +1,8 @@
 {
-  "version": "0.26.82",
-  "url": "https://raw.githubusercontent.com/tpluharik/Tuxdrive/206ba6de76d57bb2d4ebc2f849072d60aab761fd/dist/tuxdrive_0.26.82_all.deb",
-  "sha256": "e999725377a5defea7941ee98ee83c4deefb9de4fb78a94212576518655b6e1d",
-  "notes": "Release-check reliability and supported native build hosts; synchronization, backups and account behavior unchanged.",
-  "expires_at": "2027-02-05T07:49:15.105451+00:00",
-  "signature": "oX8mIM6gcAW3sBdnQaUnh/JihmTWt0iuPHnEDenpOa/Qg5XfEUB6zZ9joYuZbEuPOJWaG7I2dm4UWbyjhh/5AQ=="
+  "version": "0.26.83",
+  "url": "https://raw.githubusercontent.com/tpluharik/Tuxdrive/7f5dfd329edbbe73cb8b11e25f3297cf581035f6/dist/tuxdrive_0.26.83_all.deb",
+  "sha256": "595cba18e96460500b9ad959f6c6224e55cf751e02bdc136644deb1478af0b53",
+  "notes": "Optional recurring background Gmail/Microsoft 365 indexing. Existing mailboxes stay manual-only; closing the indexing view no longer cancels work.",
+  "expires_at": "2027-02-05T20:00:54.188392+00:00",
+  "signature": "s1q76R3mF1BuuRdkTmdapJ4UKPCc4noS4aqox1zGpSbj9aDXpR7vcujTIaOkFrJX/wzl+w8FkOED2KBUKFIbDw=="
 }
