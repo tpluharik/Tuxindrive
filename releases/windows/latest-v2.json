@@ -1,8 +1,8 @@
 {
-  "version": "0.26.81",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.81/TuxInDrive-0.26.81-windows-x64-setup.exe",
-  "sha256": "2f0d6d1c1dbd825b8c6067f498c7bafce1a7952898fd07e5426fa449bfb511ff",
-  "notes": "Frozen native build dependencies with SHA-256 verification and startup checks. Sync, backup and credential formats unchanged. Native Windows/macOS signing remains pending.",
-  "expires_at": "2027-01-19T04:16:45.045213+00:00",
-  "signature": "5ugbjKWRlEbgJg4IhECpLlPRo4nw+vFUhgtqBUsIjGxva+Q/u0GStGmGVtJ0K6M7erOsDNrA3nmTFyibi/8kBg=="
+  "version": "0.26.82",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.82/TuxInDrive-0.26.82-windows-x64-setup.exe",
+  "sha256": "d5554850c59c439b2adbd36bfcb8d572b10913ba66853d0f9b29ab641e5f985c",
+  "notes": "Release-check reliability and frozen dependency replay. Windows Authenticode publisher signing remains pending.",
+  "expires_at": "2027-02-05T07:49:15.240816+00:00",
+  "signature": "ZDcOa8zb9vmAmPO5CSg0IoH36y9JnamaKt9keNlcmXnYEIGellRcsPWG/kEYDOXPG18XPXMbvOd37ZXe8YC4CA=="
 }

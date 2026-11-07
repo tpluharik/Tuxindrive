@@ -1,8 +1,8 @@
 {
-  "version": "0.26.81",
-  "url": "https://raw.githubusercontent.com/tpluharik/Tuxdrive/6be80f78ff25c5b12f07d424abd9193949e309c4/dist/tuxdrive_0.26.81_all.deb",
-  "sha256": "6ffadef2efb7aedcc464dccc1a78c93d3e9252be2c9cd69d2a7cd86fb2b4df16",
-  "notes": "Frozen native build dependencies with SHA-256 verification and startup checks. Sync, backup and credential formats unchanged. Native Windows/macOS signing remains pending.",
-  "expires_at": "2027-01-19T04:16:44.968255+00:00",
-  "signature": "lodAxWcqeNoEDOMZTOrxd8FKgpTRrdxnXkXWcxbB+5NkY/FgRBaY5AXPvOYZ1lO/R5NWWVNeVBJdARWVcnwfCg=="
+  "version": "0.26.82",
+  "url": "https://raw.githubusercontent.com/tpluharik/Tuxdrive/206ba6de76d57bb2d4ebc2f849072d60aab761fd/dist/tuxdrive_0.26.82_all.deb",
+  "sha256": "e999725377a5defea7941ee98ee83c4deefb9de4fb78a94212576518655b6e1d",
+  "notes": "Release-check reliability and supported native build hosts; synchronization, backups and account behavior unchanged.",
+  "expires_at": "2027-02-05T07:49:15.105451+00:00",
+  "signature": "oX8mIM6gcAW3sBdnQaUnh/JihmTWt0iuPHnEDenpOa/Qg5XfEUB6zZ9joYuZbEuPOJWaG7I2dm4UWbyjhh/5AQ=="
 }

@@ -1,8 +1,8 @@
 {
-  "version": "0.26.81",
-  "url": "https://raw.githubusercontent.com/tpluharik/Tuxdrive/6be80f78ff25c5b12f07d424abd9193949e309c4/dist/tuxdrive_0.26.81_all.deb",
-  "sha256": "6ffadef2efb7aedcc464dccc1a78c93d3e9252be2c9cd69d2a7cd86fb2b4df16",
-  "notes": "Verified direct compatibility upgrade to 0.26.81 using the original trusted signing key.",
-  "expires_at": "2027-01-19T04:16:45.424951+00:00",
-  "signature": "usVGHOlR/6B/pSOTfJDbdoQT3BiZ+ozoT9Kg8mX85Vs5pew0MPodpThcPvYSeSYKR6XlpedSkfqBWz7vX9r5AQ=="
+  "version": "0.26.82",
+  "url": "https://raw.githubusercontent.com/tpluharik/Tuxdrive/206ba6de76d57bb2d4ebc2f849072d60aab761fd/dist/tuxdrive_0.26.82_all.deb",
+  "sha256": "e999725377a5defea7941ee98ee83c4deefb9de4fb78a94212576518655b6e1d",
+  "notes": "Verified direct compatibility upgrade to 0.26.82 using the original trusted signing key.",
+  "expires_at": "2027-02-05T07:49:15.153755+00:00",
+  "signature": "83JkskS56D6/yJHtG4vAIvKCOrARunlHsCxypnFviMXCEAXW54Dg44+K27llFZbKc16MHhGdWXronOwxX3yaDg=="
 }

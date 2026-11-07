@@ -1,8 +1,8 @@
 {
-  "version": "0.26.81",
-  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.81/TuxInDrive-0.26.81-android.apk",
-  "sha256": "0dce58b51d85d269b256bd6bd351f7aa79eb260c457f517a036a0c51b09a2010",
-  "notes": "Frozen native build dependencies with SHA-256 verification and startup checks. Sync, backup and credential formats unchanged. Native Windows/macOS signing remains pending.",
-  "expires_at": "2027-01-19T04:16:45.370968+00:00",
-  "signature": "yaakqCcRkuYUncRsC61P6bzc9KqxprBH6vjgK8xphR3dBHECpYrjsUIoPdUnS+U+XAp4ggiRxcvkiI084EOADw=="
+  "version": "0.26.82",
+  "url": "https://github.com/tpluharik/Tuxindrive/releases/download/v0.26.82/TuxInDrive-0.26.82-android.apk",
+  "sha256": "021f158b7ccf9c8257c945b919736be726e986fa0099f16dbeade825c57cc097",
+  "notes": "Validated 0.26.82 release with the established Android signing identity; application behavior unchanged.",
+  "expires_at": "2027-02-05T07:49:15.589988+00:00",
+  "signature": "sLAL3xcNKY72sMwaQH5BnAY4rb0mPW4SAuhK4FHroj+1NyYW2KNUBmf7bWzK+uZE8IT2/e1+GIl70xVsQm9KDA=="
 }
